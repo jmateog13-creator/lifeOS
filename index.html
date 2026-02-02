@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JAVIER OS | POLYMATHEIA</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <div id="bg-animation"></div>
+
+    <div id="logbook-modal">
+        <div class="close-btn" onclick="toggleLogbook()">×</div>
+        <h1 style="color:var(--cyan); border-bottom:2px solid var(--cyan); padding-bottom:10px; margin-bottom:30px;">THE
+            LOGBOOK</h1>
+
+        <div class="data-controls" style="margin-bottom: 30px; display: flex; gap: 10px;">
+            <button class="vital-btn" onclick="exportData()"
+                style="flex:1; border-color: var(--gold); color:var(--gold);">💾 EXPORT DATA</button>
+            <button class="vital-btn" onclick="document.getElementById('file-input').click()"
+                style="flex:1; border-color: var(--purple); color:var(--purple);">📂 IMPORT DATA</button>
+            <button class="vital-btn" onclick="resetProgress()"
+                style="flex:1; border-color: var(--danger); color:var(--danger);">⚠️ RESET ALL</button>
+            <input type="file" id="file-input" style="display: none;" onchange="importData(this)">
+        </div>
+
+        <div id="logbook-content" style="max-width:800px; margin:0 auto;"></div>
+    </div>
+
+    <header>
+        <div class="vital-btn vital-big" onclick="startVital('🚶 CAMINATA / FIELD REC (1h)', 60)">
+            🚶 CAMINATA TÁCTICA (19:00)
+        </div>
+        <div class="vital-btn vital-big vital-social" onclick="recordSocial()">
+            🍻 SOCIAL / AMIGOS
+        </div>
+        <div class="vital-btn" onclick="startVital('👂 TONEGYM (EAR TRAINING)', 15)">
+            👂 TONEGYM
+        </div>
+        <div class="vital-btn" onclick="startVital('🏋️ GIMNASIO (CUELLO)', 15)">
+            🏋️ CUELLO
+        </div>
+    </header>
+
+    <div class="hud-bar">
+        <span>JAVIER // POLYMATH OS</span>
+        <span class="level-indicator">LVL <span id="level-val">1</span></span>
+        <span class="streak-indicator">🔥 <span id="streak-val">0</span> DAYS</span>
+        <span class="logbook-link" onclick="toggleLogbook()">📜 LOGBOOK (STATS)</span>
+        <span class="money">💸 <span id="money-val">0</span> €</span>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-area"></div>
+
+    <!-- MANIFESTO QUOTE -->
+    <div class="manifesto-quote">
+        "A jack of all trades is a master of none,<br>
+        but oftentimes <span class="highlight-gold">better than a master of one</span>."
+    </div>
+
+    <div class="random-container">
+        <button class="random-btn" onclick="spinWheel()">🎲 RANDOM MISSION</button>
+    </div>
+
+    <h2>✨ GOLDEN TASK (x2 MONEY)</h2>
+    <div class="grid-container">
+        <div class="skill-btn golden-btn" onclick="startTask('🧠 ZETTELKASTEN', 20, 2)">
+            ✨ PROCESAR NOTAS (ZETTELKASTEN)
+        </div>
+    </div>
+
+    <h2>💻 TECH, SAAS & IA</h2>
+    <div class="grid-container" id="grid-tech"></div>
+
+    <h2>🎹 MÚSICA & INSTRUMENTOS</h2>
+    <div class="grid-container" id="grid-music"></div>
+
+    <h2>🎛️ STUDIO, VISUALS & MAX</h2>
+    <div class="grid-container" id="grid-studio"></div>
+
+    <h2>🛠️ MAKER & HARDWARE</h2>
+    <div class="grid-container" id="grid-maker"></div>
+
+    <h2>🌍 MIND, APUNTES & IDIOMAS</h2>
+    <div class="grid-container" id="grid-mind"></div>
+
+
+    <div id="timer-overlay">
+        <div id="current-task">TASK</div>
+
+        <!-- VISUAL TIMER RING -->
+        <div
+            style="position:relative; width: 300px; height: 300px; display:flex; align-items:center; justify-content:center;">
+            <svg width="300" height="300" style="position:absolute; transform: rotate(-90deg);">
+                <circle cx="150" cy="150" r="140" stroke="#222" stroke-width="10" fill="transparent"></circle>
+                <circle id="timer-ring-circle" cx="150" cy="150" r="140" stroke="var(--cyan)" stroke-width="10"
+                    fill="transparent"
+                    style="stroke-dasharray: 879; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear;">
+                </circle>
+            </svg>
+            <div id="timer-display" style="z-index:10; font-size:4rem; margin:0;">00:00</div>
+        </div>
+
+        <div class="controls">
+            <button id="btn-start" onclick="beginTimer()" style="color:var(--cyan); border-color:var(--cyan);">🚀 START
+                MISSION</button>
+            <button id="btn-stop" class="btn-stop" onclick="stopTimer()" style="display:none;">MISSION COMPLETE</button>
+            <button class="btn-money" id="btn-overtime" onclick="goOvertime()">💰 OVERTIME (+€)</button>
+        </div>
+    </div>
+
+    <!-- SCRIPTS (Loaded sequentially for local file support) -->
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>

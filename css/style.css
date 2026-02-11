@@ -425,3 +425,136 @@ h2::after {
     color: #fff;
     transform: rotate(90deg);
 }
+
+/* --- 6. VICTORY OVERLAY --- */
+#victory-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 3000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    backdrop-filter: blur(20px);
+    animation: fadeIn 0.5s ease-out;
+}
+
+.victory-content {
+    background: linear-gradient(135deg, rgba(20, 20, 25, 0.9), rgba(5, 5, 10, 0.9));
+    padding: 60px;
+    border: 1px solid var(--gold);
+    box-shadow: 0 0 50px rgba(255, 215, 0, 0.2);
+    border-radius: 20px;
+    max-width: 800px;
+    width: 90%;
+    transform: scale(0.9);
+    animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* --- 7. SHOP STYLES --- */
+.shop-content {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    padding: 30px;
+    border: 1px solid var(--cyan);
+    border-radius: 15px;
+    max-width: 900px !important;
+    width: 95%;
+}
+
+.shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.shop-item {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    transition: 0.3s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.shop-item:hover {
+    border-color: var(--gold);
+    transform: translateY(-5px);
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.shop-icon {
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+
+.shop-name {
+    font-weight: bold;
+    color: var(--cyan);
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.shop-desc {
+    font-size: 0.75rem;
+    color: #aaa;
+    margin-bottom: 10px;
+    flex-grow: 1;
+}
+
+.shop-cost {
+    color: var(--gold);
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.shop-owned {
+    font-size: 0.7rem;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.shop-buy-btn {
+    width: 100%;
+    padding: 8px;
+    font-size: 0.8rem;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+}
+
+.shop-buy-btn:hover {
+    background: var(--gold);
+    color: black;
+}

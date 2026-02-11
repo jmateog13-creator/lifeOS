@@ -12,6 +12,86 @@
 
     <div id="bg-animation"></div>
 
+    <div id="shop-modal" class="modal" style="display:none;">
+        <div class="modal-content shop-content">
+            <span class="close-btn" onclick="closeShop()">×</span>
+            <h2>🛒 POLY-SHOP</h2>
+            <div class="shop-header"
+                style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+                <div style="font-size:1.2rem;">BALANCE: <span id="shop-money"
+                        style="color:var(--cyan); font-weight:bold;">0</span> PTS</div>
+            </div>
+            <div id="shop-grid" class="shop-grid">
+                <!-- Items injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <div id="bank-modal" class="modal" style="display:none;">
+        <div class="modal-content shop-content" style="text-align:center; position:relative;">
+            <div onclick="closeBank()"
+                style="position:absolute; top:10px; right:20px; font-size:2.5rem; cursor:pointer; color:var(--danger); font-weight:bold;">
+                &times;</div>
+            <h2>🏦 POLY-BANK</h2>
+            <div style="margin:30px 0;">
+                <p style="color:#aaa; margin-bottom:10px; font-size:0.9rem;">
+                    EXCHANGE RATE: <span style="color:var(--cyan);">100 PTS</span> =
+                    <input type="number" id="rate-input" value="5.00" step="0.5" oninput="calcExchange()"
+                        style="width:60px; background:transparent; border:1px solid #555; color:#2ecc71; text-align:center; padding:2px; border-radius:4px;">
+                    €
+                </p>
+                <div style="font-size:2rem; margin-bottom:20px;">
+                    💎 <span id="bank-balance">0</span> PTS AVAILABLE
+                </div>
+
+                <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:20px;">
+                    <input type="number" id="exchange-input" placeholder="Amount" value="100"
+                        style="background:rgba(0,0,0,0.5); border:1px solid var(--cyan); color:#fff; padding:10px; font-size:1.5rem; width:150px; text-align:center; border-radius:10px;"
+                        oninput="calcExchange()">
+                </div>
+
+                <div style="font-size:1.5rem; margin-bottom:30px;">
+                    RECEIVE: <span id="exchange-preview" style="color:#2ecc71; font-weight:bold;">5.00 €</span>
+                </div>
+
+                <button class="vital-btn" onclick="performExchange()"
+                    style="border-color:#2ecc71; color:#2ecc71; padding:15px 40px; font-size:1.2rem; width:100%;">
+                    CONFIRM TRANSACTION
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="capricho-modal" class="modal" style="display:none;">
+        <div class="modal-content shop-content" style="text-align:center; position:relative; border-color:#ff9ff3;">
+            <div onclick="closeCapricho()"
+                style="position:absolute; top:10px; right:20px; font-size:2.5rem; cursor:pointer; color:var(--danger); font-weight:bold;">
+                &times;</div>
+            <h2 style="color:#ff9ff3;">🍭 POLY-CAPRICHO</h2>
+            <div style="margin:30px 0;">
+                <p style="color:#aaa; margin-bottom:10px; font-size:0.9rem;">
+                    Gasta dinero real de tu banco.
+                </p>
+                <div style="font-size:2rem; margin-bottom:20px;">
+                    🏦 <span id="capricho-wallet">0.00</span> € DISPONIBLES
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:15px; align-items:center; margin-bottom:20px;">
+                    <input type="text" id="capricho-item" placeholder="¿Qué te vas a comprar?"
+                        style="background:rgba(0,0,0,0.5); border:1px solid #ff9ff3; color:#fff; padding:10px; font-size:1.2rem; width:100%; text-align:center; border-radius:10px;">
+
+                    <input type="number" id="capricho-cost" placeholder="Coste €" step="0.01"
+                        style="background:rgba(0,0,0,0.5); border:1px solid #ff9ff3; color:#fff; padding:10px; font-size:1.5rem; width:150px; text-align:center; border-radius:10px;">
+                </div>
+
+                <button class="vital-btn" onclick="buyCapricho()"
+                    style="border-color:#ff9ff3; color:#ff9ff3; padding:15px 40px; font-size:1.2rem; width:100%;">
+                    CONFIRMAR COMPRA
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="logbook-modal">
         <div class="close-btn" onclick="toggleLogbook()">×</div>
         <h1 style="color:var(--cyan); border-bottom:2px solid var(--cyan); padding-bottom:10px; margin-bottom:30px;">THE
@@ -31,6 +111,15 @@
     </div>
 
     <header>
+        <div class="vital-btn vital-big" onclick="openShop()" style="border-color:var(--gold); color:var(--gold);">
+            🛒 SHOP / TIENDA
+        </div>
+        <div class="vital-btn vital-big" onclick="openBank()" style="border-color:#2ecc71; color:#2ecc71;">
+            🏦 BANK / BANCO
+        </div>
+        <div class="vital-btn vital-big" onclick="openCapricho()" style="border-color:#ff9ff3; color:#ff9ff3;">
+            🍭 CAPRICHO
+        </div>
         <div class="vital-btn vital-big" onclick="startVital('🚶 CAMINATA / FIELD REC (1h)', 60)">
             🚶 CAMINATA TÁCTICA (19:00)
         </div>
@@ -50,7 +139,8 @@
         <span class="level-indicator">LVL <span id="level-val">1</span></span>
         <span class="streak-indicator">🔥 <span id="streak-val">0</span> DAYS</span>
         <span class="logbook-link" onclick="toggleLogbook()">📜 LOGBOOK (STATS)</span>
-        <span class="money">💸 <span id="money-val">0</span> €</span>
+        <span class="money">💎 <span id="money-val">0</span> PTS</span>
+        <span class="money" style="color:#2ecc71; margin-left:15px;">🏦 <span id="wallet-val">0.00</span> €</span>
     </div>
 
     <!-- Notification Container -->
@@ -90,6 +180,10 @@
 
 
     <div id="timer-overlay">
+        <!-- CLOSE / BACK BUTTON -->
+        <div class="close-btn" onclick="cancelTask()"
+            style="position:absolute; top:30px; left:30px; font-size:2rem; cursor:pointer; z-index:200;">← BACK</div>
+
         <div id="current-task">TASK</div>
 
         <!-- VISUAL TIMER RING -->
@@ -110,6 +204,18 @@
                 MISSION</button>
             <button id="btn-stop" class="btn-stop" onclick="stopTimer()" style="display:none;">MISSION COMPLETE</button>
             <button class="btn-money" id="btn-overtime" onclick="goOvertime()">💰 OVERTIME (+€)</button>
+        </div>
+    </div>
+
+    <div id="victory-overlay" style="display:none;">
+        <div class="victory-content">
+            <h1 style="color:var(--gold); font-size: 3rem; margin-bottom: 20px;">🎉 MISSION ACCOMPLISHED!</h1>
+            <div id="victory-details" style="font-size: 1.5rem; margin-bottom: 30px;">
+                You earned <span id="victory-xp" style="color:var(--cyan); font-weight:bold;">0</span> XP and <span
+                    id="victory-money" style="color:var(--gold); font-weight:bold;">0.00€</span>.
+            </div>
+            <button class="vital-btn" onclick="closeVictory()"
+                style="border-color:var(--cyan); color:var(--cyan); font-size: 1.5rem; padding: 20px 40px;">CONTINUE</button>
         </div>
     </div>
 

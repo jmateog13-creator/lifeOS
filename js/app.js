@@ -1,7 +1,10 @@
 // IMPORTS REMOVED FOR LOCAL FILE COMPATIBILITY
 
 // --- CORE LOGIC ---
+// --- CORE LOGIC ---
+// ECONOMY 2.0: chronos = POINTS (PTS) | wallet = REAL MONEY (€)
 let chronos = parseFloat(localStorage.getItem('poly_chronos')) || 0;
+let wallet = parseFloat(localStorage.getItem('poly_wallet')) || 0.00;
 let stats = JSON.parse(localStorage.getItem('poly_stats')) || {};
 let timerInt, timeLeft, isOvertime = false, xpMult = 1, currentTaskName = "";
 
@@ -21,6 +24,9 @@ function init() {
     window.recordSocial = recordSocial;
     window.toggleLogbook = toggleLogbook;
     window.resetProgress = resetProgress;
+    window.openCapricho = openCapricho;
+    window.closeCapricho = closeCapricho;
+    window.buyCapricho = buyCapricho;
 }
 
 
@@ -41,8 +47,13 @@ function renderGrid() {
 }
 
 function updateHUD() {
+    // Show Points (PTS)
     const moneyEl = document.getElementById('money-val');
-    if (moneyEl) moneyEl.innerText = (chronos / 10).toFixed(2);
+    if (moneyEl) moneyEl.innerText = `${Math.floor(chronos)} PTS`;
+
+    // Show Wallet (€) if element exists (will add to HTML next)
+    const walletEl = document.getElementById('wallet-val');
+    if (walletEl) walletEl.innerText = wallet.toFixed(2);
 
     // Level Update
     const levelVal = document.getElementById('level-val');
@@ -54,7 +65,213 @@ function updateHUD() {
     if (streakVal) streakVal.innerText = streak;
 
     localStorage.setItem('poly_chronos', chronos);
+    localStorage.setItem('poly_wallet', wallet);
     localStorage.setItem('poly_stats', JSON.stringify(stats));
+}
+
+// --- SHOP SYSTEM ---
+function openShop() {
+    const modal = document.getElementById('shop-modal');
+    if (!modal) return;
+    renderShop();
+    modal.style.display = 'block';
+}
+
+function closeShop() {
+    document.getElementById('shop-modal').style.display = 'none';
+}
+
+function renderShop() {
+    const container = document.getElementById('shop-grid');
+    if (!container) return;
+
+    // Get stats for active items
+    const inventory = JSON.parse(localStorage.getItem('poly_inventory_consumables')) || {};
+
+    container.innerHTML = '';
+    window.SHOP_ITEMS.forEach(item => {
+        const owned = inventory[item.id] || 0;
+        const div = document.createElement('div');
+        div.className = 'shop-item';
+        div.innerHTML = `
+            <div class="shop-icon">${item.icon}</div>
+            <div class="shop-name">${item.name}</div>
+            <div class="shop-desc">${item.desc}</div>
+            <div class="shop-cost">${item.cost} €</div>
+            <div class="shop-owned">Owned: ${owned}</div>
+            <button class="vital-btn shop-buy-btn" onclick="buyItem('${item.id}')">BUY</button>
+        `;
+        container.appendChild(div);
+    });
+
+    // Update Money Display in Shop
+    // Update Money Display in Shop
+    const moneyDisplay = document.getElementById('shop-money');
+    if (moneyDisplay) moneyDisplay.innerText = `${Math.floor(chronos)} PTS`;
+}
+
+// --- BANK SYSTEM ---
+// --- BANK SYSTEM ---
+function openBank() {
+    const modal = document.getElementById('bank-modal');
+    if (!modal) return;
+
+    document.getElementById('bank-balance').innerText = Math.floor(chronos);
+    document.getElementById('exchange-input').value = 100;
+    calcExchange(); // init preview
+
+    modal.style.display = 'block';
+}
+
+function closeBank() {
+    document.getElementById('bank-modal').style.display = 'none';
+}
+
+function calcExchange() {
+    const input = document.getElementById('exchange-input');
+    const preview = document.getElementById('exchange-preview');
+    const amount = parseInt(input.value) || 0;
+
+    // RATE: 100 PTS = 5.00€ (MOTIVATION BOOST)
+    const rate = 5.00;
+    const euro = (amount / 100) * rate;
+
+    preview.innerText = `${euro.toFixed(2)} €`;
+}
+
+function performExchange() {
+    const input = document.getElementById('exchange-input');
+    const amount = parseInt(input.value) || 0;
+
+    if (amount <= 0) {
+        showNotification("❌ Invalid amount", "danger");
+        return;
+    }
+
+    if (chronos >= amount) {
+        chronos -= amount;
+        // RATE: 100 PTS = 5.00€
+        const rate = 5.00;
+        const euro = (amount / 100) * rate;
+
+        wallet += euro;
+
+        updateHUD();
+        // Update Modal UI
+        document.getElementById('bank-balance').innerText = Math.floor(chronos);
+
+        showNotification(`🏦 DEPOSITED ${euro.toFixed(2)}€`, 'gold');
+
+        const aud = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
+        aud.play().catch(e => { });
+
+        closeBank();
+
+    } else {
+        showNotification("❌ NOT ENOUGH POINTS", "danger");
+    }
+}
+
+// --- CAPRICHO SYSTEM ---
+function openCapricho() {
+    const modal = document.getElementById('capricho-modal');
+    if (!modal) return;
+
+    document.getElementById('capricho-wallet').innerText = wallet.toFixed(2);
+    document.getElementById('capricho-item').value = "";
+    document.getElementById('capricho-cost').value = "";
+
+    modal.style.display = 'block';
+}
+
+function closeCapricho() {
+    document.getElementById('capricho-modal').style.display = 'none';
+}
+
+function buyCapricho() {
+    const itemInput = document.getElementById('capricho-item');
+    const costInput = document.getElementById('capricho-cost');
+    const item = itemInput.value.trim();
+    const cost = parseFloat(costInput.value) || 0;
+
+    if (!item) {
+        showNotification("❌ Escribe qué vas a comprar", "danger");
+        return;
+    }
+
+    if (cost <= 0) {
+        showNotification("❌ Coste inválido", "danger");
+        return;
+    }
+
+    if (wallet >= cost) {
+        wallet -= cost;
+        updateHUD();
+
+        // Record in History
+        addToHistory(`💸 CAPRICHO: ${item}`, 0, -cost); // Using XP slot for money display in history or just description
+
+        showNotification(`🍭 COMPRADO: ${item} (-${cost.toFixed(2)}€)`, 'pink');
+
+        const aud = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
+        aud.play().catch(e => { });
+
+        closeCapricho();
+    } else {
+        showNotification("❌ DINERO INSUFICIENTE EN EL BANCO", "danger");
+    }
+}
+
+function buyItem(id) {
+    const item = window.SHOP_ITEMS.find(i => i.id === id);
+    if (!item) return;
+
+    // Changes: Cost is now in PTS (integer check)
+    if (chronos >= item.cost) {
+        if (confirm(`Buy ${item.name} for ${item.cost} PTS?`)) {
+            chronos -= item.cost;
+
+            // Add to Inventory
+            let inventory = JSON.parse(localStorage.getItem('poly_inventory_consumables')) || {};
+            inventory[id] = (inventory[id] || 0) + 1;
+
+            // IMMEDIATE EFFECTS
+            if (id === 'wisdom') {
+                stats['wisdom_used'] = (stats['wisdom_used'] || 0) + 1;
+                inventory[id]--; // Consumed immediately
+                checkLevel(true);
+                showNotification("🧠 WISDOM CONSUMED! +1 Task Count", "purple");
+            }
+            else if (id === 'time_warp') {
+                let streak = parseInt(localStorage.getItem('poly_streak')) || 0;
+                streak++;
+                localStorage.setItem('poly_streak', streak);
+                inventory[id]--; // Consumed immediately
+                checkStreak(); // updates UI
+                showNotification("⏰ TIME WARP! Streak +1", "purple");
+            }
+            else if (id === 'lottery') {
+                inventory[id]--; // Consumed
+                const win = Math.random() < 0.01; // 1%
+                if (win) {
+                    // JACKPOT: 5000 POINTS
+                    chronos += 5000;
+                    showNotification("🎰 JACKPOT!!! +5000 PTS", "gold");
+                    const snd = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
+                    snd.play();
+                } else {
+                    showNotification("🎟️ No luck... try again!", "grey");
+                }
+            }
+
+            localStorage.setItem('poly_inventory_consumables', JSON.stringify(inventory));
+            updateHUD();
+            renderShop();
+            showNotification(`🛒 Bought ${item.name}`, 'gold');
+        }
+    } else {
+        showNotification("❌ Not enough points!", "danger");
+    }
 }
 
 // --- GAMIFICATION SYSTEM ---
@@ -108,7 +325,16 @@ function hasAllCategories(s) {
 
 function calculateLevel() {
     const totalTasks = Object.values(stats).reduce((a, b) => typeof b === 'number' ? a + b : a, 0);
-    return Math.floor(Math.sqrt(totalTasks)) + 1;
+
+    // EXPONENTIAL LOGIC
+    // 1-20: 1 task per level
+    if (totalTasks <= 20) return totalTasks + 1;
+
+    // 20-40: 2 tasks per level
+    if (totalTasks <= 60) return 21 + Math.floor((totalTasks - 20) / 2);
+
+    // 40+: 3 tasks per level
+    return 41 + Math.floor((totalTasks - 60) / 3);
 }
 
 function checkLevel(notify = true) {
@@ -116,9 +342,18 @@ function checkLevel(notify = true) {
     const storedLvl = parseInt(localStorage.getItem('poly_level')) || 1;
 
     if (currentLvl > storedLvl) {
-        if (notify) showNotification(`🚀 LEVEL UP! NOVEL ${currentLvl} REACHED`, 'levelup');
-        const snd = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
-        snd.play().catch(e => { });
+        if (notify) {
+            showNotification(`🚀 LEVEL UP! NOVEL ${currentLvl} REACHED`, 'levelup');
+            const snd = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
+            snd.play().catch(e => { });
+
+            // BONUS EVERY 10 LEVELS
+            if (currentLvl % 10 === 0) {
+                const bonusPts = 2500; // ~62.50€ equivalent
+                chronos += bonusPts;
+                showNotification(`🎉 DECADE BONUS! +${bonusPts} PTS`, 'gold');
+            }
+        }
     }
     localStorage.setItem('poly_level', currentLvl);
     checkAchievements(notify);
@@ -164,17 +399,23 @@ function checkStreak() {
         if (lastDate === yesterday.toDateString()) {
             streak++; // Streak continues
             showNotification(`🔥 DACH STREAK: ${streak} DAYS!`, 'fire');
-        } else if (lastDate) {
-            // If missed more than a day, reset? Or keep it gentle? Let's reset for now.
-            // Unless it's the very first time.
-            const d = new Date(lastDate);
-            if ((new Date() - d) > (86400000 * 2)) {
-                streak = 1; // Reset to 1 (today)
-            } else {
-                streak++; // Grace period logic or just first day
-            }
         } else {
-            streak = 1; // First day ever
+            // MISSED A DAY (or more)
+            // CHECK FOR FREEZE
+            let inventory = JSON.parse(localStorage.getItem('poly_inventory_consumables')) || {};
+
+            if (inventory['freeze'] > 0) {
+                inventory['freeze']--;
+                localStorage.setItem('poly_inventory_consumables', JSON.stringify(inventory));
+
+                // SAVE STREAK (Do not increment, but do not reset)
+                // Just update the date to today so it looks like we logged in
+                showNotification(`❄️ STREAK FROZEN! consumed 1 freeze`, 'cyan');
+            } else {
+                // STRICT MODE: If you missed a day (or more), streak resets to 1 (today counts as 1)
+                streak = 1;
+                showNotification(`❄️ STREAK LOST! STARTED NEW STREAK day 1`, 'blue');
+            }
         }
 
         localStorage.setItem('poly_last_login', today);
@@ -220,6 +461,41 @@ function showNotification(msg, type = '') {
 function startTask(name, mins, mult) {
     currentTaskName = name;
 
+    // CHECK CONSUMABLES
+    let inventory = JSON.parse(localStorage.getItem('poly_inventory_consumables')) || {};
+    let activeMult = mult;
+    let activeMins = mins;
+
+    // XP POTION
+    if (inventory['xp_potion'] > 0) {
+        if (confirm("🧪 Use XP POTION? (x2 XP)")) {
+            activeMult *= 2;
+            inventory['xp_potion']--;
+            showNotification("🧪 XP BOOST ACTIVE", "purple");
+        }
+    }
+
+    // GOLDEN TICKET logic needs to happen at reward time, so we need a flag.
+    window.activeGoldenTicket = false;
+    if (inventory['gold_ticket'] > 0) {
+        if (confirm("💰 Use GOLDEN TICKET? (x2 Money)")) {
+            window.activeGoldenTicket = true;
+            inventory['gold_ticket']--;
+            showNotification("💰 MONEY BOOST ACTIVE", "gold");
+        }
+    }
+
+    // CAFFEINE SHOT
+    if (inventory['caffeine'] > 0) {
+        if (confirm("☕ Use CAFFEINE SHOT? (15 min timer)")) {
+            activeMins = 15;
+            inventory['caffeine']--;
+            showNotification("☕ CAFFEINE RUSH ACTIVE", "orange");
+        }
+    }
+
+    localStorage.setItem('poly_inventory_consumables', JSON.stringify(inventory));
+
     // UI Init
     document.getElementById('timer-overlay').style.display = 'flex';
     document.getElementById('current-task').innerText = name;
@@ -238,17 +514,17 @@ function startTask(name, mins, mult) {
     }
 
     // Logic Init (Wait for Start)
-    const duration = mins * 60;
+    const duration = activeMins * 60;
     timeLeft = duration;
     isOvertime = false;
-    xpMult = mult;
+    xpMult = activeMult;
 
     clearInterval(timerInt);
     updateTimerVis(null, duration);
 
     // STORE CONFIG FOR START
     window.currentTimerConfig = { duration: duration };
-    window.lastTaskMins = mins;
+    window.lastTaskMins = mins; // Store original mins for records
 }
 
 function beginTimer() {
@@ -270,6 +546,71 @@ function beginTimer() {
             updateHUD();
         }
     }, 1000);
+}
+
+function alarm() {
+    clearInterval(timerInt);
+    isOvertime = true; // Flag to prevent multiple triggers if logic overlaps
+
+    // 1. REWARD (Standard: 100 PTS)
+    let reward = 100 * xpMult;
+
+    // GOLDEN TICKET CHECK
+    if (window.activeGoldenTicket) {
+        reward *= 2;
+        window.activeGoldenTicket = false;
+    }
+
+    chronos += reward;
+
+    // 2. STATS & LEVEL
+    stats[currentTaskName] = (stats[currentTaskName] || 0) + 1;
+
+    // 3. HISTORY
+    addToHistory(currentTaskName, 20, reward);
+
+    // 4. SAVE & UPDATE
+    checkStreak();
+    checkLevel(true); // Checks achievements, plays sound, saves data
+    updateHUD(); // Updates UI and saves to localStorage
+
+    // 5. VICTORY SCREEN
+    showVictory(currentTaskName, reward);
+
+    // 6. AUDIO
+    const snd = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+    snd.play().catch(e => { });
+
+    // 7. UI FEEDBACK (Transition to Overtime or Stop behind overlay)
+    document.getElementById('timer-display').innerText = "DONE!";
+    document.getElementById('timer-display').style.color = "var(--gold)";
+    document.getElementById('timer-ring-circle').style.stroke = "var(--gold)";
+
+    document.getElementById('btn-stop').innerText = "✅ FINISH & CLOSE";
+    document.getElementById('btn-overtime').style.display = 'inline-block';
+}
+
+function showVictory(taskName, reward) {
+    const overlay = document.getElementById('victory-overlay');
+    const xpVal = document.getElementById('victory-xp');
+    const moneyVal = document.getElementById('victory-money');
+
+    xpVal.innerText = `${20 * xpMult}`; // XP Estimate
+    moneyVal.innerText = `${Math.floor(reward)} PTS`;
+
+    overlay.style.display = 'flex';
+
+    // Play celebratory sound
+    const snd = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
+    snd.play().catch(e => { });
+}
+
+function closeVictory() {
+    const overlay = document.getElementById('victory-overlay');
+    overlay.style.display = 'none';
+
+    // Also close the timer overlay to return to main menu effectively
+    stopTimer();
 }
 
 function updateTimerVis(msg, totalDuration) {
@@ -358,6 +699,14 @@ function spinWheel() {
 
 
 // --- LOGBOOK COMPONENT ---
+function cancelTask() {
+    clearInterval(timerInt);
+    document.getElementById('timer-overlay').style.display = 'none';
+    currentTaskName = "";
+    isOvertime = false;
+    // Just close, no penalties for now (or maybe checking Shield if we wanted to be strict, but USER just asked for a back button)
+}
+
 function addToHistory(taskName, duration, xp) {
     let history = JSON.parse(localStorage.getItem('poly_history')) || [];
     const entry = {
@@ -371,6 +720,24 @@ function addToHistory(taskName, duration, xp) {
     localStorage.setItem('poly_history', JSON.stringify(history));
 }
 
+function goOvertime() {
+    isOvertime = true;
+
+    // UI Update
+    document.getElementById('btn-overtime').style.display = 'none';
+    document.getElementById('btn-stop').innerText = "STOP & COLLECT";
+    document.getElementById('timer-display').style.color = "var(--cyan)";
+    document.getElementById('timer-ring-circle').style.stroke = "var(--cyan)";
+
+    // Resume Timer Loop for Overtime (Money accumulates)
+    const duration = window.currentTimerConfig.duration;
+    timerInt = setInterval(() => {
+        chronos += (0.017 * xpMult); // ~1 Chronos per minute
+        updateTimerVis("MONEY++", duration);
+        updateHUD();
+    }, 1000);
+}
+
 function stopTimer() {
     const overlay = document.getElementById('timer-overlay');
     overlay.style.display = 'none';
@@ -378,13 +745,18 @@ function stopTimer() {
 
     // Logic
     if (currentTaskName) {
-        // Record Stat
-        stats[currentTaskName] = (stats[currentTaskName] || 0) + 1;
+        // Only record 'completion' if we are NOT in overtime (meaning alarm hasn't triggered yet)
+        // If alarm triggered, we already recorded the base session stats.
+        if (!isOvertime) {
+            // Record Stat (Early finish)
+            stats[currentTaskName] = (stats[currentTaskName] || 0) + 1;
 
-        // Record History
-        const duration = window.currentTimerConfig.duration / 60;
-        addToHistory(currentTaskName, duration, (chronos - parseFloat(document.getElementById('money-val').innerText) * 10));
-        // Note: XP calc is approximate here, just logging completion.
+            // Record History
+            const duration = window.currentTimerConfig.duration / 60; // Or calculate actual time spent?
+            // For now, logged as full duration or we could calc (duration - timeLeft/60).
+            addToHistory(currentTaskName, duration, 0);
+            checkStreak();
+        }
 
         checkLevel(true); // Checks achievements too
         updateHUD();
@@ -393,6 +765,10 @@ function stopTimer() {
     // Play Sound
     const snd = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg'); // Success sound
     snd.play().catch(e => { });
+
+    // Reset flags
+    isOvertime = false;
+    currentTaskName = "";
 }
 
 function recordSocial() {

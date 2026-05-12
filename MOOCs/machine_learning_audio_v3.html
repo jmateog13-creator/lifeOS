@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOOC: Machine Learning para Audio — Zero to Hero (v3)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f172a; --surface:#1e293b; --surface2:#334155;
+  --accent:#06b6d4; --accent2:#a855f7; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#334155;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'JetBrains Mono',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+/* SIDEBAR */
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* MAIN */
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+/* METRICS GRID */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:22px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+/* CODE */
+pre,code{font-family:var(--font-mono)}
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;color:#c9d1d9}
+code{font-size:12.5px;background:#0d1117;padding:2px 6px;border-radius:4px;color:#c9d1d9}
+.kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}.com{color:#5c6370;font-style:italic}.typ{color:#e5c07b}
+/* SVG WRAP */
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+/* FORMULA */
+.formula{background:rgba(6,182,212,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+/* HERO RUBRIC */
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+/* QUIZ BLOCK */
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(6,182,212,.07);border-radius:6px;line-height:1.6}
+/* COLLAPSIBLE */
+details.collapsible{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem}
+details.collapsible[open]{background:#161e2d}
+details.collapsible summary{cursor:pointer;font-weight:600;color:#fff;outline:none;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:14px}
+details.collapsible summary::-webkit-details-marker{display:none}
+details.collapsible summary::after{content:'+';font-size:1.5rem;color:var(--accent);transition:transform .2s}
+details.collapsible[open] summary::after{content:'−'}
+/* WARN BOX */
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-weight:700}
+.badge-theory{background:rgba(168,85,247,.15);color:#d8b4fe;border:1px solid rgba(168,85,247,.3)}
+.badge-lab{background:rgba(6,182,212,.15);color:#67e8f9;border:1px solid rgba(6,182,212,.3)}
+.badge-hero{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+.badge-feynman{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.3)}
+.badge-tools{background:rgba(148,163,184,.15);color:#cbd5e1;border:1px solid rgba(148,163,184,.3)}
+.badge-drill{background:rgba(236,72,153,.15);color:#f9a8d4;border:1px solid rgba(236,72,153,.3)}
+/* BTN */
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:#0891b2}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+/* EXERCISE */
+.exercise{background:rgba(236,72,153,.05);border:1px dashed rgba(236,72,153,.4);border-radius:8px;padding:12px 16px;margin:.5rem 0;font-size:13px;color:var(--text)}
+.ex-num{font-family:var(--font-mono);color:#f9a8d4;font-weight:700;font-size:12px}
+/* TOOLS GRID */
+.grid-tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.75rem;margin-top:.75rem}
+.tool-link{display:block;background:var(--surface2);border:1px solid var(--border);padding:12px;border-radius:8px;color:var(--text);text-decoration:none;transition:all .15s}
+.tool-link:hover{background:var(--border);border-color:var(--accent);transform:translateY(-2px)}
+.tool-link .t-type{font-size:10px;letter-spacing:.1em;color:var(--accent);text-transform:uppercase}
+.tool-link .t-name{font-weight:600;color:#fff;margin:4px 0 2px}
+.tool-link .t-desc{font-size:12px;color:var(--muted)}
+/* PILL */
+.pill{display:inline-block;background:var(--surface2);border:1px solid var(--border);color:#cbd5e1;padding:2px 8px;border-radius:6px;font-family:var(--font-mono);font-size:12px}
+/* SECTION TITLES */
+h2.module-title{font-size:2.25rem;font-weight:900;color:#fff;line-height:1.2}
+h3.section-title{font-size:1.4rem;font-weight:700;color:#fff;margin:1.5rem 0 .75rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+h4.subsection{font-size:1.1rem;font-weight:700;color:var(--accent);margin:1.25rem 0 .5rem}
+/* HIGHLIGHT */
+.hl-green{color:var(--green)} .hl-red{color:var(--red)} .hl-blue{color:var(--blue)} .hl-amber{color:var(--warn)} .hl-cyan{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>ML para Audio</h2>
+    <p>Zero → Hero · 15 módulos · Perfil Teleco/Sonólogo</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Briefing</div>
+    <div class="module-title">El Cartógrafo del Sonido</div>
+    <div class="module-sub">Industrializa el oído: features → modelos → evaluación → deployment</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 760 380" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="g0" x1="0" x2="1"><stop offset="0" stop-color="#06b6d4"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs>
+      <rect x="290" y="10" width="180" height="50" rx="10" fill="url(#g0)"/>
+      <text x="380" y="40" text-anchor="middle" fill="#0b0f17" font-weight="800" font-size="14" font-family="Inter,sans-serif">PIPELINE ML AUDIO</text>
+      <rect x="20" y="100" width="150" height="44" rx="8" fill="#1e293b" stroke="#06b6d4"/>
+      <text x="95" y="120" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700" font-family="Inter,sans-serif">M1 Features</text>
+      <text x="95" y="135" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="Inter,sans-serif">MFCC · Mel · Chroma</text>
+      <rect x="200" y="100" width="150" height="44" rx="8" fill="#1e293b" stroke="#06b6d4"/>
+      <text x="275" y="120" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700" font-family="Inter,sans-serif">M2 Augment</text>
+      <text x="275" y="135" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="Inter,sans-serif">SMOTE · Focal · audiomentations</text>
+      <rect x="380" y="100" width="150" height="44" rx="8" fill="#1e293b" stroke="#a855f7"/>
+      <text x="455" y="120" text-anchor="middle" fill="#d8b4fe" font-size="11" font-weight="700" font-family="Inter,sans-serif">M3-M4 Clásicos</text>
+      <text x="455" y="135" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="Inter,sans-serif">SVM · RF · XGB · SHAP</text>
+      <rect x="560" y="100" width="180" height="44" rx="8" fill="#1e293b" stroke="#f59e0b"/>
+      <text x="650" y="120" text-anchor="middle" fill="#fcd34d" font-size="11" font-weight="700" font-family="Inter,sans-serif">M5-M7 Modernos</text>
+      <text x="650" y="135" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="Inter,sans-serif">CNN · Transfer · Demucs</text>
+      <rect x="20" y="180" width="180" height="44" rx="8" fill="#1e293b" stroke="#22c55e"/>
+      <text x="110" y="200" text-anchor="middle" fill="#86efac" font-size="11" font-weight="700" font-family="Inter,sans-serif">M8-M10 MIR</text>
+      <text x="110" y="215" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="Inter,sans-serif">tempo · key · anomaly · calibration</text>
+      <rect x="220" y="180" width="180" height="44" rx="8" fill="#1e293b" stroke="#ec4899"/>
+      <text x="310" y="200" text-anchor="middle" fill="#f9a8d4" font-size="11" font-weight="700" font-family="Inter,sans-serif">M11-M12 Avanzado</text>
+      <text x="310" y="215" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="Inter,sans-serif">Active · Few-Shot · stat. sig.</text>
+      <rect x="420" y="180" width="180" height="44" rx="8" fill="#1e293b" stroke="#3b82f6"/>
+      <text x="510" y="200" text-anchor="middle" fill="#93c5fd" font-size="11" font-weight="700" font-family="Inter,sans-serif">M13 Producción</text>
+      <text x="510" y="215" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="Inter,sans-serif">FastAPI · ONNX · drift</text>
+      <rect x="620" y="180" width="120" height="44" rx="8" fill="#1e293b" stroke="#ef4444"/>
+      <text x="680" y="200" text-anchor="middle" fill="#fca5a5" font-size="11" font-weight="700" font-family="Inter,sans-serif">M14 HERO</text>
+      <text x="680" y="215" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="Inter,sans-serif">end-to-end</text>
+      <rect x="290" y="280" width="180" height="50" rx="10" fill="#a855f7"/>
+      <text x="380" y="312" text-anchor="middle" fill="#fff" font-weight="800" font-size="14" font-family="Inter,sans-serif">PROYECTO PROFESIONAL</text>
+      <line x1="380" y1="60" x2="95" y2="100" stroke="#374151"/>
+      <line x1="380" y1="60" x2="275" y2="100" stroke="#374151"/>
+      <line x1="380" y1="60" x2="455" y2="100" stroke="#374151"/>
+      <line x1="380" y1="60" x2="650" y2="100" stroke="#374151"/>
+      <line x1="95" y1="144" x2="110" y2="180" stroke="#374151"/>
+      <line x1="275" y1="144" x2="310" y2="180" stroke="#374151"/>
+      <line x1="455" y1="144" x2="510" y2="180" stroke="#374151"/>
+      <line x1="650" y1="144" x2="680" y2="180" stroke="#374151"/>
+      <line x1="110" y1="224" x2="380" y2="280" stroke="#374151"/>
+      <line x1="310" y1="224" x2="380" y2="280" stroke="#374151"/>
+      <line x1="510" y1="224" x2="380" y2="280" stroke="#374151"/>
+      <line x1="680" y1="224" x2="380" y2="280" stroke="#374151"/>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">≥0.40</div><div class="metric-label">mAP top-50 tags</div></div>
+    <div class="metric"><div class="metric-val">&lt;100ms</div><div class="metric-label">p95 latencia</div></div>
+    <div class="metric"><div class="metric-val">&lt;10MB</div><div class="metric-label">modelo INT8</div></div>
+    <div class="metric"><div class="metric-val">&gt;30 req/s</div><div class="metric-label">throughput</div></div>
+    <div class="metric"><div class="metric-val">&lt;0.03</div><div class="metric-label">ECE calibration</div></div>
+    <div class="metric"><div class="metric-val">5-fold</div><div class="metric-label">CV stratified</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Stack profesional asumido y target</h3>
+    <p style="color:var(--muted);margin-bottom:12px">Asumimos: ya conoces STFT, ventaneo Hann, escalas Mel y mel-cepstrum, normalización LUFS. El curso es ML-céntrico, no DSP-céntrico.</p>
+    <table>
+      <tr><th>Capa</th><th>Tecnología</th><th>Rol</th></tr>
+      <tr><td>I/O Audio</td><td>librosa · soundfile · torchaudio</td><td>Carga, resampling, decoding</td></tr>
+      <tr><td>Augmentation</td><td>audiomentations · torch-audiomentations</td><td>Pitch shift · time stretch · room IR</td></tr>
+      <tr><td>Features</td><td>librosa.feature · madmom · openl3</td><td>MFCC · Chroma · embeddings preentrenados</td></tr>
+      <tr><td>Clásicos</td><td>scikit-learn · XGBoost · LightGBM</td><td>SVM · RF · GBDT</td></tr>
+      <tr><td>Deep</td><td>PyTorch · torchaudio · pytorch-lightning</td><td>CNN · transfer · embeddings</td></tr>
+      <tr><td>MIR</td><td>mir_eval · madmom · essentia</td><td>tempo · key · beat · onset</td></tr>
+      <tr><td>Interpretabilidad</td><td>SHAP · ELI5 · captum</td><td>Feature importance · saliency</td></tr>
+      <tr><td>Active/Few-shot</td><td>modAL · learn2learn · pytorch-metric-learning</td><td>Sampling estratégico · prototípicas</td></tr>
+      <tr><td>Producción</td><td>ONNX Runtime · FastAPI · uvicorn · Docker</td><td>Inference · API · contenedor</td></tr>
+      <tr><td>Monitoring</td><td>Evidently AI · Prometheus · Grafana</td><td>Data drift · model decay</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>¿Qué sabrás hacer al terminar?</h3>
+    <ul>
+      <li>Diseñar un <strong>feature engineering pipeline</strong> reproducible para cualquier corpus de audio.</li>
+      <li>Elegir entre <strong>SVM/RF/XGBoost/CNN/Transfer</strong> con criterio según tamaño y heterogeneidad del dataset.</li>
+      <li>Construir un <strong>sistema de evaluación honesta</strong>: stratified k-fold, paired t-test, bootstrap CI, McNemar.</li>
+      <li>Detectar <strong>data drift en producción</strong> con Evidently AI y Wasserstein distance.</li>
+      <li>Servir el modelo en <strong>FastAPI + ONNX INT8</strong> con latencia &lt; 50 ms en CPU commodity.</li>
+      <li>Justificar cada decisión con <strong>explainability SHAP</strong> y ablation studies.</li>
+    </ul>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Features</div>
+    <div class="module-title">Audio → Features: el contrato con el modelo</div>
+    <div class="module-sub">La tabla periódica de features de audio — cuándo usar cada una</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-theory">A</span> Núcleo Teórico Pareto</h3>
+    <h4 class="subsection">1.1 Taxonomía: temporales · espectrales · perceptuales · armónicas</h4>
+    <table>
+      <tr><th>Familia</th><th>Qué captura</th><th>Ejemplos</th><th>API librosa</th></tr>
+      <tr><td>Temporal</td><td>energía, periodicidad bruta</td><td>RMS, ZCR, autocorr</td><td><span class="pill">librosa.feature.rms</span></td></tr>
+      <tr><td>Espectral</td><td>distribución de energía en frecuencia</td><td>centroide, rolloff, flux, contrast, bandwidth</td><td><span class="pill">librosa.feature.spectral_*</span></td></tr>
+      <tr><td>Perceptual</td><td>imita cóclea humana</td><td>Mel-spectrogram, MFCC, log-mel, PCEN</td><td><span class="pill">librosa.feature.mfcc</span></td></tr>
+      <tr><td>Armónica</td><td>contenido tonal/musical</td><td>Chroma, Tonnetz, harmonic-percussive sep.</td><td><span class="pill">librosa.feature.chroma_cqt</span></td></tr>
+      <tr><td>Embedding</td><td>features aprendidas en gran corpus</td><td>OpenL3, VGGish, YAMNet, PaSST</td><td>(M6 transfer)</td></tr>
+    </table>
+    <h4 class="subsection">1.2 STFT: las 3 perillas que importan</h4>
+    <table>
+      <tr><th>Parámetro</th><th>Trade-off</th><th>Default razonable</th></tr>
+      <tr><td><span class="pill">n_fft</span></td><td>resolución frecuencia ↔ resolución temporal</td><td>2048 (música), 512 (voz)</td></tr>
+      <tr><td><span class="pill">hop_length</span></td><td>solapamiento ↔ coste computacional</td><td>n_fft/4 = 512</td></tr>
+      <tr><td><span class="pill">window</span></td><td>leakage espectral ↔ resolución</td><td>Hann (default)</td></tr>
+    </table>
+    <h4 class="subsection">1.3 MFCC paso a paso</h4>
+    <ol style="padding-left:18px;font-size:14px;color:var(--text);line-height:1.8">
+      <li>STFT → magnitud²</li>
+      <li>Banco de filtros Mel (típico 40 o 128 bandas)</li>
+      <li>log(·) → log-mel</li>
+      <li>DCT → coeficientes. Quedarse con los <strong>13 primeros</strong></li>
+      <li>Añadir <strong>Δ</strong> y <strong>Δ²</strong> → 39 features por frame</li>
+    </ol>
+    <pre><span class="kw">import</span> librosa, numpy <span class="kw">as</span> np
+y, sr = librosa.<span class="fn">load</span>(<span class="str">"audio.wav"</span>, sr=<span class="num">22050</span>)
+mfcc  = librosa.feature.<span class="fn">mfcc</span>(y=y, sr=sr, n_mfcc=<span class="num">13</span>, hop_length=<span class="num">512</span>)
+d1    = librosa.feature.<span class="fn">delta</span>(mfcc, order=<span class="num">1</span>)
+d2    = librosa.feature.<span class="fn">delta</span>(mfcc, order=<span class="num">2</span>)
+feat  = np.<span class="fn">vstack</span>([mfcc, d1, d2])   <span class="com"># shape (39, T)</span>
+vec = np.<span class="fn">hstack</span>([feat.<span class="fn">mean</span>(axis=<span class="num">1</span>), feat.<span class="fn">std</span>(axis=<span class="num">1</span>)])  <span class="com"># 78-dim</span></pre>
+    <h4 class="subsection">1.4 Mel vs MFCC vs Log-Mel: cuándo elegir qué</h4>
+    <table>
+      <tr><th>Caso de uso</th><th>Feature óptima</th><th>Razón</th></tr>
+      <tr><td>SVM/RF clásico, dataset &lt; 5k</td><td>MFCC + Δ + Δ²</td><td>compactos, descorrelacionados</td></tr>
+      <tr><td>CNN 2D, dataset &gt; 10k</td><td>Log-Mel-spectrogram (128 bandas)</td><td>la red aprende su propia DCT</td></tr>
+      <tr><td>Detección de eventos en ruido</td><td>PCEN (Per-Channel Energy Normalization)</td><td>robustez ante variaciones de gain</td></tr>
+      <tr><td>Clasificación armónica/tonal</td><td>Chroma + Tonnetz</td><td>invariante a octava</td></tr>
+    </table>
+  </div>
+
+  <details class="collapsible">
+    <summary><span class="badge badge-lab">B</span> Laboratorio Guiado · Extractor canónico de 7 features</summary>
+    <pre style="margin-top:12px"><span class="kw">import</span> librosa, numpy <span class="kw">as</span> np, pandas <span class="kw">as</span> pd
+<span class="kw">from</span> pathlib <span class="kw">import</span> Path
+SR, N_FFT, HOP = <span class="num">22050</span>, <span class="num">2048</span>, <span class="num">512</span>
+FEATS = [<span class="str">"mfcc"</span>,<span class="str">"chroma"</span>,<span class="str">"contrast"</span>,<span class="str">"centroid"</span>,<span class="str">"rolloff"</span>,<span class="str">"zcr"</span>,<span class="str">"rms"</span>]
+<span class="kw">def</span> <span class="fn">extract</span>(path):
+    y, _ = librosa.<span class="fn">load</span>(path, sr=SR, mono=<span class="kw">True</span>)
+    f = {}
+    f[<span class="str">"mfcc"</span>]     = librosa.feature.<span class="fn">mfcc</span>(y=y, sr=SR, n_mfcc=<span class="num">13</span>, hop_length=HOP)
+    f[<span class="str">"chroma"</span>]   = librosa.feature.<span class="fn">chroma_cqt</span>(y=y, sr=SR, hop_length=HOP)
+    f[<span class="str">"contrast"</span>] = librosa.feature.<span class="fn">spectral_contrast</span>(y=y, sr=SR, hop_length=HOP)
+    f[<span class="str">"centroid"</span>] = librosa.feature.<span class="fn">spectral_centroid</span>(y=y, sr=SR, hop_length=HOP)
+    f[<span class="str">"rolloff"</span>]  = librosa.feature.<span class="fn">spectral_rolloff</span>(y=y, sr=SR, hop_length=HOP)
+    f[<span class="str">"zcr"</span>]      = librosa.feature.<span class="fn">zero_crossing_rate</span>(y, hop_length=HOP)
+    f[<span class="str">"rms"</span>]      = librosa.feature.<span class="fn">rms</span>(y=y, hop_length=HOP)
+    vec = []
+    <span class="kw">for</span> k <span class="kw">in</span> FEATS:
+        vec.<span class="fn">append</span>(f[k].<span class="fn">mean</span>(axis=<span class="num">1</span>))
+        vec.<span class="fn">append</span>(f[k].<span class="fn">std</span>(axis=<span class="num">1</span>))
+    <span class="kw">return</span> np.<span class="fn">concatenate</span>(vec)</pre>
+  </details>
+
+  <details class="collapsible">
+    <summary><span class="badge badge-hero">C</span> Reto HERO · "Feature Foundry"</summary>
+    <p style="margin-top:12px;font-size:14px;color:var(--text)"><strong>Briefing:</strong> Eres ingeniero MLOps en una startup de música generativa. Te dan 50.000 clips (~30s) en 12 géneros (FMA-medium). Debes producir un dataset de features reproducible: <span class="pill">features.parquet</span> con 78 columnas + <span class="pill">labels.parquet</span>. Tiempo total &lt; 15 min en 8 cores. Baseline LinearSVC → accuracy &gt; 0.45.</p>
+  </details>
+
+  <div class="card">
+    <h3><span class="badge badge-drill">D</span> Drills</h3>
+    <div class="exercise"><span class="ex-num">EX 1.1</span> · Extrae MFCC de un clip 5 s a sr=22050 con hop=512. ¿Cuántos frames obtienes? ¿Y a hop=256?</div>
+    <div class="exercise"><span class="ex-num">EX 1.2</span> · Compara <span class="pill">mfcc.shape</span> con <span class="pill">log_mel.shape</span> para n_mfcc=20 y n_mels=128. Explícalo en términos de DCT truncada.</div>
+    <div class="exercise"><span class="ex-num">EX 1.3</span> · Toma un clip de batería pura y otro de violín solo. Visualiza chroma de ambos. ¿Cuál tiene patrón más estable?</div>
+    <div class="exercise"><span class="ex-num">EX 1.4</span> · Paraleliza el extractor con <span class="pill">joblib.Parallel(n_jobs=-1)</span>. Mide speedup en 1000 clips.</div>
+    <div class="exercise"><span class="ex-num">EX 1.5</span> · Calcula spectral centroid de ruido blanco, rosa y tono 440 Hz. ¿Qué orden esperas?</div>
+    <div class="exercise"><span class="ex-num">EX 1.6</span> · Implementa PCEN sobre mel-spectrogram con librosa.pcen. Compara con log-mel ante variaciones de gain.</div>
+    <div class="exercise"><span class="ex-num">EX 1.7</span> · ZCR de voz hablada vs cantada vs susurrada. Calcula media y std.</div>
+    <div class="exercise"><span class="ex-num">EX 1.8</span> · Aplica librosa.effects.harmonic_percussive_source_separation. Extrae chroma de la parte armónica.</div>
+    <div class="exercise"><span class="ex-num">EX 1.9</span> · Construye un VLAD de 32 centroides sobre MFCC de 5000 clips. Compara SVM contra mean+std.</div>
+    <div class="exercise"><span class="ex-num">EX 1.10</span> · Diseña una "tarjeta de feature": input range, NaN handling, sample rate asumido, dependencias.</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-feynman">E</span> Espacio Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Waveform directo en SVM</h4>
+      <p class="quiz-q">Tu jefe pregunta: "¿Por qué no metemos directamente el waveform en un SVM?". Responde antes de mirar.</p>
+      <details><summary>Ver respuesta</summary><p>Porque la dimensionalidad sería gigantesca (~660k samples para 30 s @ 22050 Hz), las muestras no son comparables temporalmente y un SVM con kernel RBF colapsaría sin features que comprimieran información perceptual. La solución: comprimir a 78 dims con MFCC mean/std (curse of dimensionality + falta de invariancia a desplazamiento + información perceptual diluida).</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · Invariancia a octava</h4>
+      <p class="quiz-q">¿Qué feature es invariante a transposición de octava?</p>
+      <details><summary>Ver respuesta</summary><p>Chroma. Por construcción suma la energía de todas las octavas en 12 bins (pitch class profile), colapsando C2, C3, C4, C5… en un único bin "C". Es la feature canónica para chord detection y key estimation.</p></details>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-tools">F</span> Caja de Herramientas</h3>
+    <div class="grid-tools">
+      <a class="tool-link" href="https://librosa.org/doc/latest/feature.html" target="_blank"><div class="t-type">Doc</div><div class="t-name">librosa.feature</div><div class="t-desc">API completa de extracción</div></a>
+      <a class="tool-link" href="https://pytorch.org/audio/stable/transforms.html" target="_blank"><div class="t-type">Doc</div><div class="t-name">torchaudio.transforms</div><div class="t-desc">Versión GPU-native</div></a>
+      <a class="tool-link" href="https://github.com/CPJKU/madmom" target="_blank"><div class="t-type">Lib</div><div class="t-name">madmom</div><div class="t-desc">MIR features avanzadas</div></a>
+      <a class="tool-link" href="https://essentia.upf.edu/" target="_blank"><div class="t-type">Lib</div><div class="t-name">essentia (UPF)</div><div class="t-desc">Features industriales C++</div></a>
+      <a class="tool-link" href="https://arxiv.org/abs/1607.05666" target="_blank"><div class="t-type">Paper</div><div class="t-name">PCEN (Wang+ 2017)</div><div class="t-desc">Per-Channel Energy Normalization</div></a>
+      <a class="tool-link" href="https://github.com/mir-dataset-loaders/mirdata" target="_blank"><div class="t-type">Lib</div><div class="t-name">mirdata</div><div class="t-desc">Loaders canónicos de datasets MIR</div></a>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← M0</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Augmentation</div>
+    <div class="module-title">Augmentation y Class Imbalance: hackear la generalización</div>
+    <div class="module-sub">Maximizar el valor de los datos que tienes y compensar el sesgo del optimizer</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-theory">A</span> Núcleo Teórico Pareto</h3>
+    <h4 class="subsection">2.1 Augmentation en audio: tres dominios</h4>
+    <table>
+      <tr><th>Dominio</th><th>Operaciones canónicas</th><th>Cuándo</th></tr>
+      <tr><td>Waveform</td><td>Pitch shift, time stretch, gain, polarity inversion, additive noise</td><td>Siempre que entrenes desde cero</td></tr>
+      <tr><td>Spectrograma</td><td>SpecAugment: TimeMask, FrequencyMask, TimeWarp</td><td>Modelos basados en mel-spec (M5-M9)</td></tr>
+      <tr><td>Acústico</td><td>Convolución con IR (room, reverb), filter EQ, codec degradation (mp3 64k)</td><td>Robustness para deployment real</td></tr>
+    </table>
+    <pre><span class="kw">from</span> audiomentations <span class="kw">import</span> Compose, AddGaussianNoise, PitchShift, TimeStretch, RoomSimulator
+augment = <span class="fn">Compose</span>([
+    <span class="fn">AddGaussianNoise</span>(min_amplitude=<span class="num">0.001</span>, max_amplitude=<span class="num">0.015</span>, p=<span class="num">0.3</span>),
+    <span class="fn">PitchShift</span>(min_semitones=-<span class="num">2</span>, max_semitones=<span class="num">2</span>, p=<span class="num">0.4</span>),
+    <span class="fn">TimeStretch</span>(min_rate=<span class="num">0.9</span>, max_rate=<span class="num">1.1</span>, p=<span class="num">0.3</span>),
+    <span class="fn">RoomSimulator</span>(p=<span class="num">0.2</span>),
+])</pre>
+    <h4 class="subsection">2.2 Imbalance: soluciones</h4>
+    <table>
+      <tr><th>Técnica</th><th>Cómo</th><th>Cuándo</th></tr>
+      <tr><td><strong>class_weight</strong></td><td>Pondera la pérdida inversamente a frecuencia</td><td>Casi siempre. Empieza por aquí.</td></tr>
+      <tr><td><strong>Stratified sampling</strong></td><td>Split que preserva proporción de clases</td><td>Siempre en validación.</td></tr>
+      <tr><td><strong>SMOTE / ADASYN</strong></td><td>Genera ejemplos sintéticos en espacio de features</td><td>Cuando minoritaria &lt; 100 muestras.</td></tr>
+      <tr><td><strong>Focal Loss</strong></td><td>Reduce contribución de ejemplos fáciles FL(p) = -α(1-p)^γ·log(p)</td><td>Detección con muchos negativos triviales.</td></tr>
+    </table>
+    <pre><span class="kw">from</span> imblearn.over_sampling <span class="kw">import</span> SMOTE
+<span class="kw">from</span> imblearn.pipeline <span class="kw">import</span> Pipeline
+pipe = <span class="fn">Pipeline</span>([
+    (<span class="str">"smote"</span>, <span class="fn">SMOTE</span>(k_neighbors=<span class="num">5</span>, random_state=<span class="num">42</span>)),
+    (<span class="str">"clf"</span>,   <span class="fn">LinearSVC</span>(class_weight=<span class="str">"balanced"</span>, max_iter=<span class="num">5000</span>)),
+])</pre>
+  </div>
+
+  <details class="collapsible">
+    <summary><span class="badge badge-lab">B</span> Laboratorio Guiado · Pipeline robusto con SMOTE + class_weight + augmentation</summary>
+    <pre style="margin-top:12px"><span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> StratifiedKFold
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> f1_score
+<span class="kw">from</span> imblearn.pipeline <span class="kw">import</span> Pipeline
+skf = <span class="fn">StratifiedKFold</span>(n_splits=<span class="num">5</span>, shuffle=<span class="kw">True</span>, random_state=<span class="num">42</span>)
+f1s = []
+<span class="kw">for</span> fold, (tr, va) <span class="kw">in</span> <span class="fn">enumerate</span>(skf.<span class="fn">split</span>(X, y)):
+    pipe = <span class="fn">Pipeline</span>([
+        (<span class="str">"sc"</span>,    <span class="fn">StandardScaler</span>()),
+        (<span class="str">"smote"</span>, <span class="fn">SMOTE</span>(k_neighbors=<span class="num">5</span>, random_state=<span class="num">42</span>)),
+        (<span class="str">"clf"</span>,   <span class="fn">LinearSVC</span>(class_weight=<span class="str">"balanced"</span>, max_iter=<span class="num">5000</span>, C=<span class="num">1.0</span>)),
+    ])
+    pipe.<span class="fn">fit</span>(X[tr], y[tr])
+    yp = pipe.<span class="fn">predict</span>(X[va])
+    f1s.<span class="fn">append</span>(<span class="fn">f1_score</span>(y[va], yp, average=<span class="str">"macro"</span>))</pre>
+  </details>
+
+  <div class="card">
+    <h3><span class="badge badge-feynman">E</span> Espacio Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · SMOTE antes del split</h4>
+      <p class="quiz-q">¿Por qué es un error grave aplicar SMOTE antes del split train/test?</p>
+      <details><summary>Ver respuesta</summary><p>Introduces leakage: SMOTE genera ejemplos sintéticos a partir de los reales y, si sintetizas usando muestras que luego van al test, el modelo "ve" información del test durante el entrenamiento, inflando el rendimiento reportado. Por eso imblearn.Pipeline aplica SMOTE sólo a fold de train en cada iteración de CV.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · class_weight='balanced' perjudicial</h4>
+      <p class="quiz-q">¿Cuándo es perjudicial usar class_weight='balanced' en lugar de re-balancear muestras?</p>
+      <details><summary>Ver respuesta</summary><p>Cuando la métrica final es accuracy y la distribución de test refleja la del mundo real: balanced sobrepondera la minoritaria y degrada la accuracy global frente a un threshold tuning post-hoc. class_weight optimiza F1 implícitamente, no accuracy.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← M1</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Modelos Clásicos</div>
+    <div class="module-title">SVM · Random Forest · XGBoost — cuándo elegir cada uno</div>
+    <div class="module-sub">Baselines fuertes antes de saltar a redes — matemáticas y validación honesta</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-theory">A</span> Núcleo Teórico Pareto</h3>
+    <h4 class="subsection">3.1 Matriz de decisión</h4>
+    <table>
+      <tr><th>Método</th><th>Cuándo brilla</th><th>Cuándo cae</th><th>Hyperparams clave</th></tr>
+      <tr><td>LinearSVC</td><td>features lineales+separables, alta dim</td><td>relaciones no-lineales fuertes</td><td>C, class_weight</td></tr>
+      <tr><td>SVC RBF</td><td>frontera no-lineal, dataset &lt; 50k</td><td>escala mal &gt; 50k</td><td>C, gamma</td></tr>
+      <tr><td>RandomForest</td><td>features mixtas, robusto</td><td>extrapolación pobre</td><td>n_estimators, max_depth, max_features</td></tr>
+      <tr><td>XGBoost / LightGBM</td><td>GBDT estado del arte tabular</td><td>requiere tuning serio</td><td>learning_rate, max_depth, n_estimators</td></tr>
+    </table>
+    <h4 class="subsection">3.2 XGBoost con early stopping</h4>
+    <pre><span class="kw">import</span> xgboost <span class="kw">as</span> xgb
+clf = xgb.<span class="fn">XGBClassifier</span>(
+    n_estimators=<span class="num">500</span>, learning_rate=<span class="num">0.05</span>, max_depth=<span class="num">6</span>,
+    subsample=<span class="num">0.8</span>, colsample_bytree=<span class="num">0.8</span>,
+    objective=<span class="str">"multi:softprob"</span>, eval_metric=<span class="str">"mlogloss"</span>,
+    tree_method=<span class="str">"hist"</span>, n_jobs=-<span class="num">1</span>, random_state=<span class="num">42</span>,
+)
+clf.<span class="fn">fit</span>(X_tr, y_tr, eval_set=[(X_va, y_va)], verbose=<span class="kw">False</span>)</pre>
+    <h4 class="subsection">3.3 Cross-validation honesta</h4>
+    <ol style="padding-left:18px;font-size:14px;color:var(--text);line-height:1.8">
+      <li>Split inicial 80/20 → train/test (test SOLO para reporting final)</li>
+      <li>Sobre el 80%, k-fold estratificado (k=5 o 10) para tuning</li>
+      <li>Reentrenar con todo el 80% usando mejores hyperparams</li>
+      <li>Evaluar UNA vez en test</li>
+    </ol>
+    <h4 class="subsection">3.4 Hyperparameter tuning con Optuna</h4>
+    <pre><span class="kw">import</span> optuna
+<span class="kw">def</span> <span class="fn">objective</span>(trial):
+    params = {
+        <span class="str">"n_estimators"</span>:  trial.<span class="fn">suggest_int</span>(<span class="str">"n_estimators"</span>, <span class="num">100</span>, <span class="num">800</span>),
+        <span class="str">"max_depth"</span>:     trial.<span class="fn">suggest_int</span>(<span class="str">"max_depth"</span>, <span class="num">3</span>, <span class="num">10</span>),
+        <span class="str">"learning_rate"</span>: trial.<span class="fn">suggest_float</span>(<span class="str">"learning_rate"</span>, <span class="num">1e-3</span>, <span class="num">0.3</span>, log=<span class="kw">True</span>),
+        <span class="str">"subsample"</span>:     trial.<span class="fn">suggest_float</span>(<span class="str">"subsample"</span>, <span class="num">0.6</span>, <span class="num">1.0</span>),
+    }
+    clf = xgb.<span class="fn">XGBClassifier</span>(**params, tree_method=<span class="str">"hist"</span>, n_jobs=-<span class="num">1</span>)
+    <span class="kw">return</span> <span class="fn">cross_val_score</span>(clf, X_tr, y_tr, cv=<span class="num">5</span>, scoring=<span class="str">"f1_macro"</span>).<span class="fn">mean</span>()</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-feynman">E</span> Espacio Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Overfitting XGBoost</h4>
+      <p class="quiz-q">Tu modelo XGBoost da 87% accuracy en train y 67% en validación. ¿Diagnóstico?</p>
+      <details><summary>Ver respuesta</summary><p>Overfitting fuerte. Acciones: reducir max_depth, aumentar reg_lambda, bajar learning_rate, activar subsample &lt; 1.0, añadir early stopping. La brecha train-val de 20 puntos grita overfitting.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · Distribución de producción diferente</h4>
+      <p class="quiz-q">Tu cliente usa accuracy global como KPI. La distribución de su producción es muy diferente a la del dataset etiquetado. ¿Cómo ajustar?</p>
+      <details><summary>Ver respuesta</summary><p>Reponderar la evaluación con los pesos de la distribución de producción (importance weighting), o re-etiquetar una muestra representativa, o reportar accuracy estratificada por clase. Reportar accuracy de lab cuando la distribución de producción difiere es lying-with-statistics.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← M2</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Feature Selection &amp; SHAP</div>
+    <div class="module-title">Feature Selection &amp; Interpretabilidad: por qué decide tu modelo</div>
+    <div class="module-sub">Filtros estadísticos, wrappers, embedded methods, SHAP, permutation importance</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-theory">A</span> Núcleo Teórico Pareto</h3>
+    <h4 class="subsection">4.1 Tres familias</h4>
+    <table>
+      <tr><th>Familia</th><th>Cómo funciona</th><th>Ventaja</th><th>Desventaja</th></tr>
+      <tr><td><strong>Filter</strong></td><td>Estadístico univariante (mutual info, ANOVA F, χ²)</td><td>rápido, model-agnostic</td><td>ignora interacciones</td></tr>
+      <tr><td><strong>Wrapper</strong></td><td>Selección iterativa con un modelo (RFE, Boruta)</td><td>captura interacciones</td><td>caro computacionalmente</td></tr>
+      <tr><td><strong>Embedded</strong></td><td>Selección durante entrenamiento (L1, tree importances)</td><td>integra con el modelo</td><td>específico del modelo</td></tr>
+    </table>
+    <h4 class="subsection">4.2 SHAP: de importance global a explicación local</h4>
+    <pre><span class="kw">import</span> shap
+explainer = shap.<span class="fn">TreeExplainer</span>(xgb_model)
+shap_values = explainer.<span class="fn">shap_values</span>(X_test)
+<span class="com"># Plot global summary</span>
+shap.<span class="fn">summary_plot</span>(shap_values, X_test, feature_names=feature_names)
+<span class="com"># Explicación local de una predicción</span>
+shap.<span class="fn">force_plot</span>(explainer.expected_value, shap_values[<span class="num">0</span>], X_test[<span class="num">0</span>])</pre>
+    <h4 class="subsection">4.3 Mutual Information + curva de features</h4>
+    <pre><span class="kw">from</span> sklearn.feature_selection <span class="kw">import</span> mutual_info_classif
+mi_scores = <span class="fn">mutual_info_classif</span>(X, y, random_state=<span class="num">42</span>)
+top30 = np.<span class="fn">argsort</span>(mi_scores)[::-<span class="num">1</span>][:<span class="num">30</span>]</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-feynman">E</span> Espacio Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · RF importance vs permutation importance</h4>
+      <p class="quiz-q">Tu RF dice que "MFCC[3] mean" es la feature más importante. Permutation importance dice que es "spectral_centroid mean". ¿Quién tiene razón?</p>
+      <details><summary>Ver respuesta</summary><p>Depende. RF importance puede inflar features con alta cardinalidad/entropy y subestimar features correlacionadas. Permutation evalúa el impacto real en métrica pero subestima features correlacionadas (otra feature compensa). Lo correcto: reportar AMBAS y SHAP encima. Si los tres coinciden, alta confianza.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← M3</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · CNN Audio</div>
+    <div class="module-title">CNN Audio: la red que ve el espectrograma</div>
+    <div class="module-sub">Deja de extraer features y pásale el log-mel a una CNN end-to-end</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-theory">A</span> Núcleo Teórico Pareto</h3>
+    <h4 class="subsection">5.1 Mel-spectrogram como imagen 2D</h4>
+    <ul style="padding-left:18px;font-size:14px;color:var(--text);line-height:1.8">
+      <li>El eje frecuencia <strong>NO es traslación-invariante</strong>: un patrón a 200 Hz no significa lo mismo que a 2 kHz.</li>
+      <li>El eje tiempo <strong>SÍ</strong> tiende a ser invariante. Filtros asimétricos (3×7, 5×5) y pooling moderado en frecuencia.</li>
+    </ul>
+    <h4 class="subsection">5.2 Arquitectura canónica VGG-style + regularización</h4>
+    <pre><span class="kw">import</span> torch, torch.nn <span class="kw">as</span> nn
+
+<span class="kw">class</span> <span class="typ">AudioCNN</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, n_classes=<span class="num">10</span>, n_mels=<span class="num">128</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        <span class="kw">def</span> <span class="fn">block</span>(in_c, out_c):
+            <span class="kw">return</span> nn.<span class="fn">Sequential</span>(
+                nn.<span class="fn">Conv2d</span>(in_c, out_c, kernel_size=<span class="num">3</span>, padding=<span class="num">1</span>),
+                nn.<span class="fn">BatchNorm2d</span>(out_c), nn.<span class="fn">ReLU</span>(inplace=<span class="kw">True</span>),
+                nn.<span class="fn">Conv2d</span>(out_c, out_c, kernel_size=<span class="num">3</span>, padding=<span class="num">1</span>),
+                nn.<span class="fn">BatchNorm2d</span>(out_c), nn.<span class="fn">ReLU</span>(inplace=<span class="kw">True</span>),
+                nn.<span class="fn">MaxPool2d</span>(<span class="num">2</span>),
+            )
+        self.backbone = nn.<span class="fn">Sequential</span>(<span class="fn">block</span>(<span class="num">1</span>,<span class="num">32</span>),<span class="fn">block</span>(<span class="num">32</span>,<span class="num">64</span>),<span class="fn">block</span>(<span class="num">64</span>,<span class="num">128</span>),<span class="fn">block</span>(<span class="num">128</span>,<span class="num">256</span>))
+        self.gap = nn.<span class="fn">AdaptiveAvgPool2d</span>(<span class="num">1</span>)
+        self.fc  = nn.<span class="fn">Sequential</span>(nn.<span class="fn">Dropout</span>(<span class="num">0.4</span>), nn.<span class="fn">Linear</span>(<span class="num">256</span>, n_classes))
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        h = self.<span class="fn">backbone</span>(x)
+        <span class="kw">return</span> self.<span class="fn">fc</span>(self.<span class="fn">gap</span>(h).<span class="fn">flatten</span>(<span class="num">1</span>))</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-feynman">E</span> Espacio Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · MaxPool agresivo en frecuencia</h4>
+      <p class="quiz-q">¿Por qué un MaxPool agresivo en el eje frecuencia puede destruir la performance en clasificación de instrumentos?</p>
+      <details><summary>Ver respuesta</summary><p>Porque la frecuencia NO es invariante a traslación: una signature espectral a 200 Hz (bombo) ≠ 2000 Hz (platillo). Pooling agresivo en frecuencia mezcla información tonal crítica. Por eso muchas arquitecturas usan pool sólo en tiempo o asimétrico (1×2).</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← M4</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Transfer Learning</div>
+    <div class="module-title">Transfer Learning: hombros de gigantes</div>
+    <div class="module-sub">VGGish, YAMNet, OpenL3, PaSST, CLAP — qué es cada uno y cuándo usarlo</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-theory">A</span> Núcleo Teórico Pareto</h3>
+    <h4 class="subsection">6.1 Catálogo de backbones audio (2024)</h4>
+    <table>
+      <tr><th>Modelo</th><th>Pretrain</th><th>Embedding</th><th>Mejor para</th></tr>
+      <tr><td><strong>VGGish</strong></td><td>YouTube-8M</td><td>128-d / 0.96 s</td><td>Baseline rápido, sonidos generales</td></tr>
+      <tr><td><strong>YAMNet</strong></td><td>AudioSet (521 clases)</td><td>1024-d / 0.96 s</td><td>Sonidos ambientales / urbanos</td></tr>
+      <tr><td><strong>OpenL3</strong></td><td>AudioSet music + env</td><td>512/6144-d</td><td>Música, mood, género</td></tr>
+      <tr><td><strong>PaSST</strong></td><td>AudioSet, ImageNet</td><td>768-d</td><td>SOTA tagging, transformer</td></tr>
+      <tr><td><strong>BEATs</strong></td><td>AudioSet self-supervised</td><td>768-d</td><td>SOTA pretrain SSL</td></tr>
+      <tr><td><strong>CLAP</strong></td><td>633k pairs audio-text</td><td>512-d</td><td>Zero-shot por texto, retrieval</td></tr>
+    </table>
+    <h4 class="subsection">6.2 PaSST + LoRA: el patrón moderno</h4>
+    <ul style="padding-left:18px;font-size:14px;color:var(--text);line-height:1.8">
+      <li>Backbone congelado. Insertar LoRA r=8, α=16 en attention layers.</li>
+      <li>Head MLP entrenable. Optimizer AdamW lr=1e-4 sobre LoRA, lr=3e-4 sobre head.</li>
+      <li>Cosine annealing 20 epochs. Para datasets 1k-20k clips.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-feynman">E</span> Espacio Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Linear probe vs from scratch</h4>
+      <p class="quiz-q">Tu cliente entrena from scratch sobre 1.500 clips y obtiene 0.55 F1. Tú aplicas linear probe sobre embeddings PaSST y obtienes 0.78. Argumenta el trade-off.</p>
+      <details><summary>Ver respuesta</summary><p>Linear probe gana cuando el dataset es pequeño y el dominio se solapa con el pretrain. From scratch puede ganar si dispones de &gt;50k clips de tu dominio específico, porque el pretrain mete sesgos. La regla profesional: linear probe siempre primero como baseline. Es barato y a menudo competitivo.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← M5</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Source Separation</div>
+    <div class="module-title">Source Separation: el "rip" inverso</div>
+    <div class="module-sub">Demucs/HTDemucs/BS-Roformer a nivel comercial — arquitecturas, datasets, métricas</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-theory">A</span> Núcleo Teórico Pareto</h3>
+    <h4 class="subsection">7.1 Arquitecturas SOTA (2024)</h4>
+    <table>
+      <tr><th>Modelo</th><th>SDR vocals MUSDB18</th><th>Cuándo usar</th></tr>
+      <tr><td>Spleeter (4-stems)</td><td>~6.7 dB</td><td>Quick &amp; dirty, productividad</td></tr>
+      <tr><td>Demucs v3</td><td>~7.2 dB</td><td>Calidad media, consolidado</td></tr>
+      <tr><td>HTDemucs (hybrid)</td><td>~9.0 dB</td><td>Producción musical seria</td></tr>
+      <tr><td>BS-Roformer</td><td>~10.3 dB (vocals)</td><td>SOTA, top de leaderboards</td></tr>
+    </table>
+    <h4 class="subsection">7.2 Demucs en 5 líneas</h4>
+    <pre><span class="kw">from</span> demucs.api <span class="kw">import</span> Separator
+sep = <span class="fn">Separator</span>(model=<span class="str">"htdemucs"</span>)
+origin, separated = sep.<span class="fn">separate_audio_file</span>(<span class="str">"track.wav"</span>)
+<span class="kw">for</span> stem, audio <span class="kw">in</span> separated.<span class="fn">items</span>():
+    sf.<span class="fn">write</span>(<span class="str">f"{stem}.wav"</span>, audio.T, <span class="num">44100</span>)</pre>
+    <h4 class="subsection">7.3 Métricas honestas</h4>
+    <ul style="padding-left:18px;font-size:14px;color:var(--text);line-height:1.8">
+      <li><strong>SDR</strong>: la métrica histórica. Sensible a alineamiento.</li>
+      <li><strong>SI-SDR</strong>: Scale-Invariant SDR. Más robusta a ganancia.</li>
+      <li><strong>SI-SDRi</strong>: improvement vs el baseline (mezcla a sí misma).</li>
+      <li><strong>FAD (Fréchet Audio Distance)</strong>: estimación perceptual con embeddings.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-feynman">E</span> Espacio Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · SDR 8.5 dB</h4>
+      <p class="quiz-q">Tu modelo separa vocals con SDR 8.5 dB en MUSDB18. ¿Qué significa exactamente ese número?</p>
+      <details><summary>Ver respuesta</summary><p>Es la relación entre energía de la señal estimada bien recuperada y energía del error (suma de interferencia + artefactos + ruido). 8.5 dB ≈ ratio energético 7:1. Calidad audible buena, no de masterización. Para comercial-master grade se necesitan 10+ dB.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← M6</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · MIR</div>
+    <div class="module-title">MIR: tempo, key, beat, chord, onset</div>
+    <div class="module-sub">Extraer estructura musical con madmom, librosa, essentia y métricas MIREX</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-theory">A</span> Núcleo Teórico Pareto</h3>
+    <h4 class="subsection">8.1 Tareas canónicas MIR</h4>
+    <table>
+      <tr><th>Tarea</th><th>Output</th><th>Estado del arte</th><th>Métrica MIREX</th></tr>
+      <tr><td>Tempo estimation</td><td>BPM</td><td>RNN madmom</td><td>Acc1 / Acc2</td></tr>
+      <tr><td>Beat tracking</td><td>tiempos beat</td><td>RNN madmom + DBN</td><td>F-measure ±70 ms</td></tr>
+      <tr><td>Key estimation</td><td>tónica + modo</td><td>Krumhansl + DL</td><td>weighted score</td></tr>
+      <tr><td>Onset detection</td><td>inicios de eventos</td><td>RNN superflux</td><td>F-measure ±50 ms</td></tr>
+      <tr><td>Chord recognition</td><td>etiqueta acorde por frame</td><td>CRNN/Transformer</td><td>Weighted CSR</td></tr>
+    </table>
+    <h4 class="subsection">8.2 Beat tracking con madmom</h4>
+    <pre><span class="kw">from</span> madmom.features.beats <span class="kw">import</span> RNNBeatProcessor, DBNBeatTrackingProcessor
+proc = <span class="fn">DBNBeatTrackingProcessor</span>(fps=<span class="num">100</span>)
+act = <span class="fn">RNNBeatProcessor</span>()(<span class="str">"track.mp3"</span>)
+beats_madmom = <span class="fn">proc</span>(act)</pre>
+    <h4 class="subsection">8.3 mir_eval: la regla del juego</h4>
+    <pre><span class="kw">import</span> mir_eval
+f1 = mir_eval.beat.<span class="fn">f_measure</span>(reference_beats, estimated_beats)
+score = mir_eval.key.<span class="fn">weighted_score</span>(reference_key, estimated_key)</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-feynman">E</span> Espacio Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Error de octava en tempo</h4>
+      <p class="quiz-q">¿Por qué un beat tracker reporta a menudo el doble (o la mitad) del tempo correcto?</p>
+      <details><summary>Ver respuesta</summary><p>Porque el "beat" es perceptualmente ambiguo: una salsa a 90 BPM puede ser igualmente "sentida" a 180 BPM (subdivisiones). El modelo aprende los dos modos. Por eso MIREX reporta Acc1 (estricta) y Acc2 (tolera octava). Es un problema fundamental, no de implementación.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← M7</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Multi-label</div>
+    <div class="module-title">Music Tagging Multi-label: una canción, muchas etiquetas</div>
+    <div class="module-sub">BCE+sigmoid, AudioSet ontology, mAP/AUC, y por qué softmax+CE es un error</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-theory">A</span> Núcleo Teórico Pareto</h3>
+    <h4 class="subsection">9.1 Single-label vs multi-label</h4>
+    <table>
+      <tr><th></th><th>Single-label</th><th>Multi-label</th></tr>
+      <tr><td>Activación</td><td>Softmax</td><td>Sigmoid (independiente por clase)</td></tr>
+      <tr><td>Loss</td><td>CrossEntropy</td><td>BCE with logits</td></tr>
+      <tr><td>Decisión</td><td>argmax</td><td>threshold por clase (típico 0.5 o ROC-optimal)</td></tr>
+      <tr><td>Métrica</td><td>Accuracy / F1</td><td>mAP, AUC-ROC, sample/label-F1</td></tr>
+    </table>
+    <h4 class="subsection">9.2 BCE + sigmoid en PyTorch</h4>
+    <pre><span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+<span class="com"># BCEWithLogitsLoss aplica sigmoid internamente — más estable numéricamente</span>
+criterion = nn.<span class="fn">BCEWithLogitsLoss</span>(pos_weight=class_weights)
+probs = torch.<span class="fn">sigmoid</span>(model(x))   <span class="com"># shape (B, n_tags), cada uno 0-1 independiente</span>
+preds = (probs > <span class="num">0.5</span>).<span class="fn">float</span>()</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-feynman">E</span> Espacio Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Accuracy tóxica en multi-label</h4>
+      <p class="quiz-q">¿Por qué accuracy es una métrica tóxica en multi-label classification?</p>
+      <details><summary>Ver respuesta</summary><p>Porque "exact match accuracy" pide acertar TODAS las etiquetas simultáneamente. Con 195 tags, predecir 194 correctamente y 1 mal cuenta como 0. Métricas razonables: F1-sample (parcial), mAP (per-class) o Hamming loss.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← M8</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Anomaly &amp; Calibration</div>
+    <div class="module-title">Anomaly Detection y Calibration: cuando "no lo sé" vale dinero</div>
+    <div class="module-sub">IsolationForest, OneClassSVM, autoencoders, Platt scaling e isotonic regression</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-theory">A</span> Núcleo Teórico Pareto</h3>
+    <h4 class="subsection">10.1 Calibration: por qué tu modelo dice "0.97" cuando debería decir "0.7"</h4>
+    <table>
+      <tr><th>Método</th><th>Idea</th><th>Cuándo</th></tr>
+      <tr><td>Platt scaling</td><td>logistic regression sobre logits/probs</td><td>SVM, modelos no probabilísticos</td></tr>
+      <tr><td>Isotonic regression</td><td>regresión monótona no-paramétrica</td><td>Modelos con suficientes datos validación (&gt; 1k)</td></tr>
+      <tr><td>Temperature scaling</td><td>divide logits por T &gt; 1 antes de softmax</td><td>DL, una sola variable, casi gratis</td></tr>
+    </table>
+    <pre><span class="kw">from</span> sklearn.ensemble <span class="kw">import</span> IsolationForest
+iso = <span class="fn">IsolationForest</span>(contamination=<span class="num">0.05</span>, random_state=<span class="num">42</span>, n_jobs=-<span class="num">1</span>)
+iso.<span class="fn">fit</span>(X_train)
+scores = iso.<span class="fn">score_samples</span>(X_test)   <span class="com"># más alto = más normal</span>
+
+<span class="kw">from</span> sklearn.calibration <span class="kw">import</span> CalibratedClassifierCV
+clf = <span class="fn">CalibratedClassifierCV</span>(base_clf, method=<span class="str">"isotonic"</span>, cv=<span class="num">5</span>)
+clf.<span class="fn">fit</span>(X_tr, y_tr)</pre>
+    <p style="font-size:13px;color:var(--muted);margin-top:8px"><strong>ECE (Expected Calibration Error):</strong> ECE = Σ |bin| / N · |acc(bin) - conf(bin)|. ECE = 0 ideal. DL típico sin calibrar: 0.05-0.15. Con temperature scaling: 0.01-0.03.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-feynman">E</span> Espacio Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · 98% confianza pero 75% acierto</h4>
+      <p class="quiz-q">Tu modelo dice "98% confianza" pero acierta sólo 75% de esas predicciones. ¿Es bueno o malo el modelo?</p>
+      <details><summary>Ver respuesta</summary><p>Es accurate pero NO calibrado. Para muchos usos (decisiones automatizadas con threshold, expected utility) la calibración importa tanto como la accuracy. Aplica isotonic regression o temperature scaling sobre validation. Accuracy ≠ calibration.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← M9</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Active/Few-Shot/SSL</div>
+    <div class="module-title">Active Learning · Few-Shot · Self-Supervised: cuando los datos son caros</div>
+    <div class="module-sub">Reducir el coste de etiquetado en órdenes de magnitud</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-theory">A</span> Núcleo Teórico Pareto</h3>
+    <h4 class="subsection">11.1 Active Learning: estrategias de query</h4>
+    <table>
+      <tr><th>Estrategia</th><th>Score</th><th>Pros</th></tr>
+      <tr><td>Uncertainty (least confident)</td><td>1 - max(p)</td><td>Simple, eficaz</td></tr>
+      <tr><td>Entropy</td><td>-Σ p log p</td><td>Captura ambigüedad global</td></tr>
+      <tr><td>BALD (Bayesian)</td><td>I(y; θ | x) con MC dropout</td><td>SOTA bayesiano</td></tr>
+      <tr><td>Coreset</td><td>cubrimiento óptimo</td><td>Diversidad principiada</td></tr>
+    </table>
+    <pre><span class="kw">from</span> modAL.models <span class="kw">import</span> ActiveLearner
+<span class="kw">from</span> modAL.uncertainty <span class="kw">import</span> uncertainty_sampling
+learner = <span class="fn">ActiveLearner</span>(
+    estimator=<span class="fn">SVC</span>(probability=<span class="kw">True</span>),
+    query_strategy=uncertainty_sampling,
+    X_training=X_init, y_training=y_init,
+)
+<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">20</span>):
+    query_idx, _ = learner.<span class="fn">query</span>(X_pool, n_instances=<span class="num">5</span>)
+    learner.<span class="fn">teach</span>(X_pool[query_idx], y_pool[query_idx])</pre>
+    <h4 class="subsection">11.2 Few-Shot: redes prototípicas</h4>
+    <p style="font-size:14px;color:var(--text);line-height:1.7">Snell 2017: aprende un embedding tal que la clase = media de los embeddings de N ejemplos (prototype). Test: distancia al prototype más cercano. Funciona muy bien con N=5-20 por clase.</p>
+    <h4 class="subsection">11.3 SSL para audio: BYOL-A, Wav2Vec2, HuBERT, BEATs</h4>
+    <p style="font-size:14px;color:var(--text);line-height:1.7">BYOL-A (Niizumi 2021): dos copias del modelo (online + target con momentum), cosine similarity entre vistas augmentadas. No requiere negativos. SOTA en linear probe sobre AudioSet.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-feynman">E</span> Espacio Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · ROI del Active Learning</h4>
+      <p class="quiz-q">Tu cliente argumenta: "Etiquétame todo aleatoriamente, total el modelo aprenderá". ¿Cómo le rebates?</p>
+      <details><summary>Ver respuesta</summary><p>Con AL converges a la misma accuracy con 30-50% MENOS labels. En audio, eso significa decenas de horas de experto ahorradas. El argumento es ROI puro: si 1h experto = 50€, ahorrar 50 horas = 2500€. AL es una decisión económica de presupuesto de etiquetado.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← M10</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Statistical Significance</div>
+    <div class="module-title">Statistical Significance: cuándo tu mejora del 1% es real</div>
+    <div class="module-sub">Paired t-test, McNemar, bootstrap CI, y por qué p-value sin effect size es engañar</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-theory">A</span> Núcleo Teórico Pareto</h3>
+    <h4 class="subsection">12.1 Tests apropiados según escenario</h4>
+    <table>
+      <tr><th>Escenario</th><th>Test</th><th>Output</th></tr>
+      <tr><td>Comparar 2 modelos en mismo dataset (CV)</td><td>Paired t-test</td><td>p-value de igualdad de medias</td></tr>
+      <tr><td>Comparar 2 clasificadores binarios (mismas instancias)</td><td>McNemar</td><td>p-value sobre tabla de discordancias</td></tr>
+      <tr><td>Comparar &gt;2 modelos</td><td>Friedman + Nemenyi post-hoc</td><td>ranking + groups</td></tr>
+      <tr><td>Diferencia robusta (no-normal)</td><td>Wilcoxon signed-rank</td><td>test no-paramétrico</td></tr>
+    </table>
+    <h4 class="subsection">12.2 Paired t-test + Cohen's d</h4>
+    <pre><span class="kw">from</span> scipy.stats <span class="kw">import</span> ttest_rel
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> StratifiedKFold, cross_val_score
+skf = <span class="fn">StratifiedKFold</span>(n_splits=<span class="num">10</span>, shuffle=<span class="kw">True</span>, random_state=<span class="num">42</span>)
+scores_A = <span class="fn">cross_val_score</span>(model_A, X, y, cv=skf, scoring=<span class="str">"f1_macro"</span>)
+scores_B = <span class="fn">cross_val_score</span>(model_B, X, y, cv=skf, scoring=<span class="str">"f1_macro"</span>)
+t, p = <span class="fn">ttest_rel</span>(scores_A, scores_B)
+diff = scores_A.<span class="fn">mean</span>() - scores_B.<span class="fn">mean</span>()
+cohen_d = diff / np.<span class="fn">std</span>(scores_A - scores_B, ddof=<span class="num">1</span>)
+<span class="fn">print</span>(<span class="str">f"Diff: {diff:.4f}, Cohen's d: {cohen_d:.3f}, p: {p:.4f}"</span>)
+<span class="com"># d &lt; 0.2: pequeño; 0.5: medio; 0.8: grande</span></pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-feynman">E</span> Espacio Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · p-value sin contexto</h4>
+      <p class="quiz-q">"Mi modelo da 92% accuracy, p=0.001 vs baseline. ¡Es mucho mejor!". ¿Qué le falta a esta afirmación?</p>
+      <details><summary>Ver respuesta</summary><p>Falta accuracy del baseline (¿91%? ¿70%?), tamaño del test (con 1M muestras casi todo es p&lt;0.001), effect size (Cohen's d), CI 95% de la diferencia, y si la mejora es práctica (¿0.5 puntos sobre baseline humano de 95%?). Sin contexto, "p=0.001" es un número vacío. Reporta diff absoluta + CI + effect size + métrica relativa al baseline humano.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← M11</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Deployment</div>
+    <div class="module-title">Deployment: FastAPI · ONNX · INT8 · Drift Monitoring</div>
+    <div class="module-sub">ONNX para portabilidad, INT8 para CPU, FastAPI para servirlo, Evidently para drift</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-theory">A</span> Núcleo Teórico Pareto</h3>
+    <h4 class="subsection">13.1 ONNX export + runtime</h4>
+    <pre><span class="kw">import</span> torch
+<span class="kw">import</span> onnx, onnxruntime <span class="kw">as</span> ort
+model.<span class="fn">eval</span>()
+dummy = torch.<span class="fn">randn</span>(<span class="num">1</span>, <span class="num">1</span>, <span class="num">128</span>, <span class="num">256</span>)
+torch.onnx.<span class="fn">export</span>(
+    model, dummy, <span class="str">"audio_clf.onnx"</span>,
+    input_names=[<span class="str">"input"</span>], output_names=[<span class="str">"logits"</span>],
+    dynamic_axes={<span class="str">"input"</span>: {<span class="num">0</span>: <span class="str">"batch"</span>, <span class="num">3</span>: <span class="str">"time"</span>}},
+    opset_version=<span class="num">17</span>, do_constant_folding=<span class="kw">True</span>,
+)
+sess = ort.<span class="fn">InferenceSession</span>(<span class="str">"audio_clf.onnx"</span>, providers=[<span class="str">"CPUExecutionProvider"</span>])</pre>
+    <h4 class="subsection">13.2 Quantización INT8 con calibration</h4>
+    <pre><span class="kw">from</span> onnxruntime.quantization <span class="kw">import</span> quantize_static, CalibrationDataReader
+<span class="fn">quantize_static</span>(
+    <span class="str">"audio_clf.onnx"</span>, <span class="str">"audio_clf_int8.onnx"</span>,
+    calibration_data_reader=<span class="fn">AudioCalib</span>(calib_samples),
+    quant_format=<span class="str">"QDQ"</span>, per_channel=<span class="kw">True</span>,
+)
+<span class="com"># Resultado: ~25 MB → ~6 MB. Latencia CPU: 80 ms → 25 ms.</span></pre>
+    <h4 class="subsection">13.3 FastAPI service</h4>
+    <pre><span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, UploadFile, File
+app = <span class="fn">FastAPI</span>()
+sess = ort.<span class="fn">InferenceSession</span>(<span class="str">"audio_clf_int8.onnx"</span>)
+<span class="kw">@app.<span class="fn">post</span>(<span class="str">"/predict"</span>)</span>
+<span class="kw">async def</span> <span class="fn">predict</span>(file: UploadFile = <span class="fn">File</span>(...)):
+    wav = <span class="kw">await</span> file.<span class="fn">read</span>()
+    x = <span class="fn">preprocess</span>(wav)
+    logits = sess.<span class="fn">run</span>(<span class="kw">None</span>, {<span class="str">"input"</span>: x})[<span class="num">0</span>][<span class="num">0</span>]
+    probs = np.<span class="fn">exp</span>(logits) / np.<span class="fn">exp</span>(logits).<span class="fn">sum</span>()
+    <span class="kw">return</span> {<span class="str">"label"</span>: LABELS[np.<span class="fn">argmax</span>(probs)], <span class="str">"prob"</span>: <span class="fn">float</span>(probs.<span class="fn">max</span>())}</pre>
+    <h4 class="subsection">13.4 Data drift detection con Evidently</h4>
+    <pre><span class="kw">from</span> evidently.report <span class="kw">import</span> Report
+<span class="kw">from</span> evidently.metric_preset <span class="kw">import</span> DataDriftPreset
+report = <span class="fn">Report</span>(metrics=[<span class="fn">DataDriftPreset</span>()])
+report.<span class="fn">run</span>(reference_data=df_train, current_data=df_production)
+report.<span class="fn">save_html</span>(<span class="str">"drift_report.html"</span>)</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-feynman">E</span> Espacio Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Data drift en producción</h4>
+      <p class="quiz-q">Tu modelo en lab tiene 0.91 F1. En producción a las 3 semanas baja a 0.78. ¿Diagnóstico?</p>
+      <details><summary>Ver respuesta</summary><p>Data drift: la distribución de input (calidad de mic, codec, ruido de fondo, demografía de usuarios) cambió respecto a training. El modelo sigue intacto, lo que cambió es el input. Solución: monitorización drift + reentrenamiento periódico con muestras recientes. Decay temporal en producción = data drift al 95%.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← M12</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO FINAL -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO Final</div>
+    <div class="module-title">Proyecto HERO: Sistema de Auto-Tagging Musical en Producción</div>
+    <div class="module-sub">15 semanas. 14 módulos. Un proyecto que demuestra que sabes hacerlo.</div>
+  </div>
+
+  <div class="card">
+    <h3>Briefing del proyecto</h3>
+    <p>Construye un sistema completo de auto-tagging musical sobre un dataset real (sugerido: <strong>MTG-Jamendo top-50 tags</strong> o <strong>FMA-medium 16 géneros</strong>). El sistema debe:</p>
+    <ul>
+      <li>Extraer features (M1) + augmentation (M2).</li>
+      <li>Comparar 3 modelos (al menos uno clásico M3, uno deep M5/M6) con CV honesta.</li>
+      <li>Reportar SHAP/feature importance (M4). Multi-label si aplica (M9) o single-label calibrado (M10).</li>
+      <li>Statistical significance (M12) entre el final y los baselines.</li>
+      <li>Servicio FastAPI + ONNX INT8 con drift monitoring (M13).</li>
+      <li>Documentación profesional (model card + datasheet).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Especificaciones técnicas mínimas</h3>
+    <div class="metrics">
+      <div class="metric"><div class="metric-val">≥ 0.40</div><div class="metric-label">mAP top-50</div></div>
+      <div class="metric"><div class="metric-val">&lt; 100 ms</div><div class="metric-label">p95 latencia</div></div>
+      <div class="metric"><div class="metric-val">&lt; 10 MB</div><div class="metric-label">modelo INT8</div></div>
+      <div class="metric"><div class="metric-val">&gt; 30 req/s</div><div class="metric-label">throughput</div></div>
+      <div class="metric"><div class="metric-val">&lt; 0.03</div><div class="metric-label">ECE calibration</div></div>
+      <div class="metric"><div class="metric-val">5-fold</div><div class="metric-label">CV stratified</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica 100 puntos</h3>
+    <table class="hero-rubric">
+      <tr><th>Criterio</th><th>Puntos</th><th>Excelente (full)</th></tr>
+      <tr><td>Pipeline de datos + Feature engineering justificado</td><td>25</td><td>script run-all + hashes + splits + tabla de features con correlación a target</td></tr>
+      <tr><td>Comparativa de modelos honesta + Interpretabilidad SHAP</td><td>25</td><td>≥3 modelos, CV stratified, paired t-test, SHAP summary + dependence + 3 ejemplos locales</td></tr>
+      <tr><td>Calibración + Significance + Optimización deployment</td><td>25</td><td>reliability diagram, ECE &lt;0.03, diff+CI+Cohen's d+bootstrap, ONNX INT8 caída &lt;1%</td></tr>
+      <tr><td>Servicio FastAPI + Drift monitoring</td><td>20</td><td>Docker + p95 medido + load test + Evidently scheduled + alarma simulada</td></tr>
+      <tr><td>Documentación (model card + datasheet + README)</td><td>5</td><td>limitations, biases, intended use, ethical considerations, quickstart en 3 minutos</td></tr>
+      <tr><td colspan="1"><strong>TOTAL</strong></td><td><strong>100</strong></td><td></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Autoevaluación Feynman expandida</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Defensa del modelo final</h4>
+      <p class="quiz-q">¿Por qué elegiste tu modelo final sobre los baselines? Defiéndelo.</p>
+      <details><summary>Ver respuesta</summary><p>Triangulación de evidencias: diff de mAP con CI, p-value paired t-test, Cohen's d, latencia, tamaño, interpretabilidad. NO sólo "porque da más". Si la diff es marginal, también discute si vale la complejidad añadida. El ingeniero ML defiende con métricas, no con intuición.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · Distribución cambia mañana</h4>
+      <p class="quiz-q">¿Qué pasaría si la distribución de tus datos cambia mañana?</p>
+      <details><summary>Ver respuesta</summary><p>Tu drift monitoring debería disparar alarma cuando Wasserstein de cualquier feature key supera threshold. Plan: reentrenar con muestras frescas, re-calibrar thresholds por clase, comparar contra modelo actual con paired test antes de promocionar. Monitorización no es opcional, es arquitectura.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · Discriminación demográfica</h4>
+      <p class="quiz-q">¿Tu modelo discrimina demográficamente?</p>
+      <details><summary>Ver respuesta</summary><p>Análisis por subgrupos (idioma, época, género de la canción). Si hay disparidad sistemática, documentarla en model card sección "Limitations &amp; Biases". Considerar reweighting o data augmentation dirigida. La ética no es opcional en sistemas de producción.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · Audio fuera de distribución</h4>
+      <p class="quiz-q">¿Qué hace tu modelo cuando recibe un audio que no se parece a nada del training?</p>
+      <details><summary>Ver respuesta</summary><p>Idealmente: anomaly detector (M10) flag low-confidence. El servicio devuelve "uncertain" con probabilidad y sugerencias. Nunca un único tag arbitrario con confidence inflada. El modelo calibrado + OOD detector es arquitectura mínima responsable.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · Coste computacional ante el cliente</h4>
+      <p class="quiz-q">¿Cómo defiendes el coste computacional ante el cliente?</p>
+      <details><summary>Ver respuesta</summary><p>Tabla con coste cloud (latencia × throughput × $/hora vCPU) vs valor business (tags automáticos × tracks/día × valor por tag manual evitado). ROI explícito. El ingeniero habla de negocio, no sólo de arquitectura.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← M13</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_ml_audio_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Briefing & Stack'},
+    {id:'m1',  label:'M1 · Audio → Features'},
+    {id:'m2',  label:'M2 · Augmentation & Imbalance'},
+    {id:'m3',  label:'M3 · SVM/RF/XGBoost'},
+    {id:'m4',  label:'M4 · Feature Selection & SHAP'},
+    {id:'m5',  label:'M5 · CNN Audio'},
+    {id:'m6',  label:'M6 · Transfer Learning'},
+    {id:'m7',  label:'M7 · Source Separation'},
+    {id:'m8',  label:'M8 · MIR (tempo/key/beat)'},
+    {id:'m9',  label:'M9 · Music Tagging Multi-label'},
+    {id:'m10', label:'M10 · Anomaly & Calibration'},
+    {id:'m11', label:'M11 · Active/Few-Shot/SSL'},
+    {id:'m12', label:'M12 · Statistical Significance'},
+    {id:'m13', label:'M13 · Deployment + Drift'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

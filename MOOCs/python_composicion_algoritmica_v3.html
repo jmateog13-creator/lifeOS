@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python & Composicion Algoritmica v3</title>
+<style>
+:root {
+  --bg:#0b0f17; --surface:#111827; --surface2:#1e293b;
+  --accent:#06b6d4; --accent2:#22d3ee; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#1e293b;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'JetBrains Mono','Fira Code',monospace; --font-sans:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+pre{background:#050810;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono);color:#a5f3fc}
+code{font-family:var(--font-mono);font-size:12.5px;background:#0a0e1a;padding:2px 6px;border-radius:4px;color:var(--accent2)}
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+.formula{background:rgba(6,182,212,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(0,0,0,.15);border-radius:6px;line-height:1.6}
+.drill-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.drill-list li{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px 10px 32px;font-size:.87rem;color:var(--muted);position:relative}
+.drill-list li::before{content:"•";position:absolute;left:14px;top:10px;color:var(--accent)}
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>Python & Composicion Algoritmica</h2>
+    <p>v3 · 15 modulos · MOOC</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introduccion</div>
+    <div class="module-title">Briefing &amp; Stack</div>
+    <div class="module-sub">Por que Python para composicion algoritmica — ecosistema, herramientas y hoja de ruta del MOOC</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 720 420" width="100%" style="max-width:720px;" font-family="system-ui,sans-serif" font-size="11">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#475569"/>
+        </marker>
+      </defs>
+      <rect x="305" y="185" width="110" height="50" rx="8" fill="#0891b2" opacity=".9"/>
+      <text x="360" y="215" text-anchor="middle" fill="white" font-size="14" font-weight="bold">Python</text>
+      <rect x="60" y="60" width="130" height="40" rx="6" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="125" y="84" text-anchor="middle" fill="#94a3b8">MIDI · OSC · mido</text>
+      <line x1="190" y1="80" x2="305" y2="198" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+      <rect x="60" y="140" width="130" height="40" rx="6" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="125" y="164" text-anchor="middle" fill="#94a3b8">music21 · analisis</text>
+      <line x1="190" y1="160" x2="305" y2="205" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+      <rect x="60" y="220" width="130" height="40" rx="6" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="125" y="244" text-anchor="middle" fill="#94a3b8">Caos · Markov · L-sys</text>
+      <line x1="190" y1="240" x2="305" y2="215" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+      <rect x="60" y="300" width="130" height="40" rx="6" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="125" y="324" text-anchor="middle" fill="#94a3b8">GA · DEAP · evolucion</text>
+      <line x1="190" y1="320" x2="305" y2="225" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+      <rect x="530" y="60" width="140" height="40" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+      <text x="600" y="84" text-anchor="middle" fill="#94a3b8">numpy · scipy · sintesis</text>
+      <line x1="530" y1="80" x2="415" y2="198" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+      <rect x="530" y="140" width="140" height="40" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+      <text x="600" y="164" text-anchor="middle" fill="#94a3b8">FoxDot · TidalCycles</text>
+      <line x1="530" y1="160" x2="415" y2="205" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+      <rect x="530" y="220" width="140" height="40" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="600" y="244" text-anchor="middle" fill="#94a3b8">Magenta · TensorFlow</text>
+      <line x1="530" y1="240" x2="415" y2="215" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+      <rect x="530" y="300" width="140" height="40" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="600" y="324" text-anchor="middle" fill="#94a3b8">Ableton · Max4Live · OSC</text>
+      <line x1="530" y1="320" x2="415" y2="225" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+      <text x="360" y="268" text-anchor="middle" fill="#64748b" font-size="10">compositor algoritmico</text>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">15</div><div class="metric-label">Modulos</div></div>
+    <div class="metric"><div class="metric-val">50+</div><div class="metric-label">Librerias</div></div>
+    <div class="metric"><div class="metric-val">∞</div><div class="metric-label">Posibilidades creativas</div></div>
+    <div class="metric"><div class="metric-val">30+</div><div class="metric-label">Ejercicios practicos</div></div>
+    <div class="metric"><div class="metric-val">6</div><div class="metric-label">Paradigmas algoritmicos</div></div>
+    <div class="metric"><div class="metric-val">1</div><div class="metric-label">HERO final integrador</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa de Paradigmas</h3>
+    <table>
+      <tr><th>Paradigma</th><th>Descripcion</th><th>Herramientas clave</th><th>Ideal para</th></tr>
+      <tr><td>Sistemas dinamicos</td><td>Caos, fractales, mapas logisticos</td><td>numpy, scipy</td><td>Texturas imprevisibles</td></tr>
+      <tr><td>Probabilistico</td><td>Markov, distribuciones estocasticas</td><td>random, numpy</td><td>Variacion estilistica</td></tr>
+      <tr><td>Generativo simbolico</td><td>L-Systems, gramaticas</td><td>lsystem libs</td><td>Estructuras auto-similares</td></tr>
+      <tr><td>Evolutivo</td><td>Algoritmos geneticos</td><td>DEAP</td><td>Optimizacion musical</td></tr>
+      <tr><td>IA/DL</td><td>RNNs, Transformers, VAEs</td><td>Magenta, TF, PyTorch</td><td>Estilo y continuacion</td></tr>
+      <tr><td>Live Coding</td><td>Codigo como instrumento</td><td>FoxDot, TidalCycles</td><td>Performance en vivo</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Configuracion del Entorno</h3>
+    <pre># Crear entorno virtual
+python -m venv algo-compose
+source algo-compose/bin/activate  # Linux/Mac
+
+# Instalar dependencias core
+pip install numpy scipy matplotlib
+pip install mido pretty_midi midiutil
+pip install music21
+pip install pyo pedalboard soundfile
+pip install deap
+pip install magenta  # requiere TF 2.x
+pip install python-osc  # para OSC
+
+# FoxDot (requiere SuperCollider instalado)
+pip install FoxDot</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Audio Basics</div>
+    <div class="module-title">Python Audio Basics</div>
+    <div class="module-sub">Fundamentos de audio digital con Python: samples, FFT, lectura/escritura de audio</div>
+  </div>
+
+  <div class="card">
+    <h3>Representacion Digital del Audio</h3>
+    <ul>
+      <li><strong>Sample rate</strong>: numero de muestras por segundo. CD = 44 100 Hz, estudio = 48 000/96 000 Hz</li>
+      <li><strong>Bit depth</strong>: resolucion de amplitud. 16-bit = 65 536 niveles, 24-bit = 16 M niveles</li>
+      <li><strong>Frame</strong>: bloque de samples procesado de golpe (tipicamente 512, 1024 o 2048 samples)</li>
+      <li><strong>Nyquist</strong>: la frecuencia maxima representable = sample_rate / 2</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Lectura, Escritura y Sintesis</h3>
+    <pre>import soundfile as sf
+import numpy as np
+
+# Leer archivo WAV
+audio, sr = sf.read("sample.wav")
+print(f"Samples: {len(audio)}, SR: {sr}, Dur: {len(audio)/sr:.2f}s")
+
+# Generar ondas basicas
+SR = 44100
+
+def sine(freq, dur, amp=0.5):
+    t = np.linspace(0, dur, int(SR * dur), endpoint=False)
+    return amp * np.sin(2 * np.pi * freq * t)
+
+def apply_adsr(signal, sr, a=0.01, d=0.1, s=0.7, r=0.2):
+    n = len(signal); a_n = int(a*sr); d_n = int(d*sr); r_n = int(r*sr)
+    env = np.ones(n)
+    env[:a_n] = np.linspace(0, 1, a_n)
+    env[a_n:a_n+d_n] = np.linspace(1, s, d_n)
+    env[a_n+d_n:n-r_n] = s
+    env[n-r_n:] = np.linspace(s, 0, r_n)
+    return signal * env
+
+# Escala Do Mayor
+notes = [261.63, 293.66, 329.63, 349.23, 392.0, 440.0, 493.88, 523.25]
+scale = np.concatenate([apply_adsr(sine(f, 0.4), SR) for f in notes])
+sf.write("c_major_scale.wav", scale, SR)
+
+# FFT y deteccion de pitch
+N = 4096; audio_mono = audio if audio.ndim == 1 else audio.mean(axis=1)
+fft = np.fft.rfft(audio_mono[:N], n=N)
+freqs = np.fft.rfftfreq(N, 1/sr)
+dominant_freq = freqs[np.argmax(np.abs(fft))]
+print(f"Frecuencia dominante: {dominant_freq:.1f} Hz")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Generar una señal sinusoidal de 440 Hz con numpy, aplicar FFT con ventana Hann de 2048 samples y verificar que el pico esta en 440 Hz</li>
+      <li>Implementar un sintetizador ADSR: ataque 10ms, decay 50ms, sustain 0.7, release 100ms</li>
+      <li>Comparar ventanas Hann vs Blackman en FFT de una señal de 440 Hz</li>
+      <li>Detectar onsets en una señal de percusion sintetica usando energia RMS en ventanas de 512 samples</li>
+      <li>Generar espectrograma de una señal de voz sintetica (suma de 5 armonicos)</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q1 · Feynman Quiz — FFT y Pitch</h4>
+    <p class="quiz-q">¿Por que se aplica una ventana (Hann, Blackman) antes de computar la FFT de una señal de audio? ¿Que artefacto evita?</p>
+    <details><summary>Ver respuesta</summary><p>La FFT asume que la señal es periodica dentro de la ventana de analisis. Si la señal no es un multiplo exacto del periodo de la ventana, existe discontinuidad en los bordes (el ultimo sample no se "conecta" suavemente con el primero). Esta discontinuidad genera el "spectral leakage" o fuga espectral: energia de una frecuencia se dispersa a todas las frecuencias vecinas, levantando el suelo de ruido del espectro y dificultando la deteccion de picos. Una ventana como Hann multiplica la señal por una funcion que vale cero en los extremos, eliminando las discontinuidades y concentrando la energia de cada frecuencia en un pico estrecho y bien definido a costa de un leve ensanchamiento del lobulo principal.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← M0</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Protocolo</div>
+    <div class="module-title">MIDI &amp; OSC</div>
+    <div class="module-sub">Protocolo MIDI, lectura/escritura con mido/pretty_midi y comunicacion OSC con python-osc</div>
+  </div>
+
+  <div class="card">
+    <h3>Protocolo MIDI: Estructura Basica</h3>
+    <table>
+      <tr><th>Mensaje</th><th>Bytes</th><th>Descripcion</th></tr>
+      <tr><td><code>Note On</code></td><td>0x90, note, velocity</td><td>Nota suena (velocity 0 = Note Off)</td></tr>
+      <tr><td><code>Note Off</code></td><td>0x80, note, velocity</td><td>Nota se apaga</td></tr>
+      <tr><td><code>Control Change</code></td><td>0xB0, cc_num, value</td><td>Modulacion, volumen, pan, etc.</td></tr>
+      <tr><td><code>Program Change</code></td><td>0xC0, program</td><td>Cambio de instrumento (0-127)</td></tr>
+      <tr><td><code>Pitch Bend</code></td><td>0xE0, lsb, msb</td><td>Pitch bend con resolucion de 14 bits</td></tr>
+      <tr><td><code>SysEx</code></td><td>0xF0 … 0xF7</td><td>Mensajes de fabricante / MIDI 2.0</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>MIDI y OSC con Python</h3>
+    <pre>import mido
+
+# Crear archivo MIDI con progresion I-IV-V-I
+mid = mido.MidiFile(type=0, ticks_per_beat=480)
+track = mido.MidiTrack()
+mid.tracks.append(track)
+track.append(mido.MetaMessage('set_tempo', tempo=500000, time=0))
+
+acordes = [[60,64,67],[65,69,72],[67,71,74],[60,64,67]]  # C-F-G-C
+for acorde in acordes:
+    for nota in acorde:
+        track.append(mido.Message('note_on', note=nota, velocity=80, time=0))
+    for i, nota in enumerate(acorde):
+        track.append(mido.Message('note_off', note=nota, velocity=0,
+                                  time=480 if i==0 else 0))
+mid.save("progresion.mid")
+
+# OSC: enviar notas a SuperCollider
+from pythonosc.udp_client import SimpleUDPClient
+client = SimpleUDPClient("127.0.0.1", 57120)
+scale = [60, 62, 64, 65, 67, 69, 71, 72]
+import time
+for note in scale:
+    client.send_message("/play_note", [note, 0.8, 0.5])
+    time.sleep(0.5)</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Parsear un archivo MIDI con mido y extraer lista de (nota, velocidad, tiempo_inicio_s)</li>
+      <li>Generar una progresion de acordes Am-F-C-G con mido y guardar como MIDI</li>
+      <li>Levantar un servidor OSC con python-osc que recibe mensajes en /note y los imprime</li>
+      <li>Sincronizar MIDI clock (24 pulsos/negra) con timestamps OSC: medir jitter entre pulsos</li>
+      <li>Crear un mapa de control MIDI: CC 7 controla volumen (0-127→0.0-1.0), CC 10 controla pan</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q2 · Feynman Quiz — MIDI vs OSC</h4>
+    <p class="quiz-q">¿Cual es la diferencia fundamental entre MIDI y OSC como protocolos de comunicacion musical? ¿En que escenario usarias cada uno?</p>
+    <details><summary>Ver respuesta</summary><p>MIDI es un protocolo serial de bajo nivel con mensajes de tipo fijo (note_on, note_off, CC, etc.) de 1-3 bytes, disenado en 1983 para comunicacion entre dispositivos hardware. Tiene resolucion de 7 bits (0-127) y latencia muy baja (&lt;1ms en hardware). OSC (Open Sound Control) es un protocolo de red basado en UDP que permite enviar mensajes arbitrarios con rutas tipo URL (/synth/freq, /note/play) y argumentos de cualquier tipo (float64, string, blobs). OSC se usa cuando necesitas flexibilidad semantica (mensajes personalizados), mayor precision (float64 para frecuencia exacta en Hz), o comunicacion entre software en red (Python↔SuperCollider, Python↔TouchDesigner). MIDI se usa cuando la compatibilidad con hardware es prioritaria o cuando trabajas con DAWs que lo requieren nativamente.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← M1</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Caos</div>
+    <div class="module-title">Sistemas Caoticos</div>
+    <div class="module-sub">Mapas logisticos, atractores de Lorenz y bifurcaciones aplicados a parametros musicales</div>
+  </div>
+
+  <div class="card">
+    <h3>El Mapa Logistico</h3>
+    <div class="formula">xₙ₊₁ = r · xₙ · (1 − xₙ) — donde x ∈ (0,1) y r ∈ (0,4]</div>
+    <ul>
+      <li>r &lt; 3.0 → converge a punto fijo</li>
+      <li>r 3.0–3.57 → ciclos periodicos (2, 4, 8...)</li>
+      <li>r &gt; 3.57 → comportamiento caotico</li>
+      <li>r = 4.0 → caos completo, ergodico</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Mapa Logistico y Atractor de Lorenz → MIDI</h3>
+    <pre>import numpy as np; import mido
+
+def logistic_map(r, x0, n):
+    x = x0; values = []
+    for _ in range(n):
+        x = r * x * (1 - x); values.append(x)
+    return np.array(values)
+
+def lorenz(sigma=10, rho=28, beta=8/3, dt=0.01, steps=5000):
+    x, y, z = 0.1, 0, 0; traj = np.zeros((steps, 3))
+    for i in range(steps):
+        dx=sigma*(y-x); dy=x*(rho-z)-y; dz=x*y-beta*z
+        x+=dx*dt; y+=dy*dt; z+=dz*dt; traj[i]=[x,y,z]
+    return traj
+
+# Mapa logistico → notas pentatonicas
+pentatonic = [60,62,64,67,69,72,74,76,79,81]
+chaos = logistic_map(r=3.9, x0=0.4, n=64)
+notes = [pentatonic[int(v*len(pentatonic))%len(pentatonic)] for v in chaos]
+vels  = [int(50 + v*70) for v in logistic_map(r=3.7, x0=0.7, n=64)]
+
+out = mido.MidiFile(ticks_per_beat=480)
+track = mido.MidiTrack(); out.tracks.append(track)
+track.append(mido.MetaMessage('set_tempo', tempo=500000, time=0))
+for note, vel in zip(notes, vels):
+    track.append(mido.Message('note_on', note=note, velocity=vel, time=0))
+    track.append(mido.Message('note_off', note=note, velocity=0, time=240))
+out.save("chaos_melody.mid")
+print(f"{len(notes)} notas generadas con mapa logistico r=3.9")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Comparar bifurcacion del mapa logistico con r=3.5 (2 atractores) vs r=3.9 (caos)</li>
+      <li>Implementar el atractor de Lorenz (σ=10, ρ=28, β=8/3) con Euler dt=0.01 por 5000 pasos</li>
+      <li>Exportar dos series caoticas (r=3.9, x0=0.1 y 0.101) como pitch y velocidad MIDI</li>
+      <li>Comparar entropia de Shannon de series con r=2.0, r=3.2, r=3.9</li>
+      <li>Implementar el mapa de Henon (a=1.4, b=0.3) y usarlo como generador ritmico</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q3 · Feynman Quiz — Caos Musical</h4>
+    <p class="quiz-q">¿Por que el mapa logistico genera caos con r &gt; 3.57? ¿Que propiedad matematica lo hace util como generador musical?</p>
+    <details><summary>Ver respuesta</summary><p>El mapa logistico xₙ₊₁ = r·xₙ·(1−xₙ) es un sistema dinamico no-lineal. Para r≤3 converge a un punto fijo. Entre 3 y 3.57 entra en cascada de duplicaciones de periodo (2, 4, 8...). Por encima de 3.57 el sistema se vuelve caotico: sensible a condiciones iniciales (efecto mariposa), aperiodico e impredecible a largo plazo aunque deterministico. Para la composicion musical esto significa: (1) la misma regla genera texturas siempre diferentes dependiendo del valor inicial — ideal para parametrizar dinamica, tempo rubato o densidad sin repeticion exacta; (2) la estructura interna del caos (atractores, cuencas) crea correlaciones a corto plazo que el oido percibe como coherencia, a diferencia del ruido blanco puro; (3) el parametro r actua como control de complejidad continuo desde orden (r&lt;3) hasta caos completo (r=4).</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← M2</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Markov</div>
+    <div class="module-title">Cadenas de Markov</div>
+    <div class="module-sub">Modelos de Markov de 1er y 2do orden para generacion de melodias y progressiones armonicas</div>
+  </div>
+
+  <div class="card">
+    <h3>Markov de 1er y 2do Orden</h3>
+    <pre>import numpy as np; import mido
+from collections import defaultdict
+
+def build_markov_2(corpus):
+    """Orden 2: estado = (nota_n-1, nota_n)."""
+    transitions = defaultdict(list)
+    for i in range(len(corpus) - 2):
+        transitions[(corpus[i], corpus[i+1])].append(corpus[i+2])
+    probs = {}
+    for state, nexts in transitions.items():
+        unique, counts = np.unique(nexts, return_counts=True)
+        probs[state] = (unique.tolist(), (counts/counts.sum()).tolist())
+    return probs
+
+def generate_markov_2(table, start_pair, length, temperatura=1.0):
+    seq = list(start_pair)
+    for _ in range(length - 2):
+        state = (seq[-2], seq[-1])
+        if state not in table:
+            state = list(table.keys())[np.random.randint(len(table))]
+        nexts, probs = table[state]
+        probs_t = np.array(probs) ** (1.0/temperatura)
+        probs_t /= probs_t.sum()
+        seq.append(np.random.choice(nexts, p=probs_t))
+    return seq
+
+corpus = [60,62,64,65,64,62,60,62,64,67,65,64,62,64,65,67,69,67,65,64,62,60]
+table2 = build_markov_2(corpus)
+melody = generate_markov_2(table2, (60, 62), length=48)
+
+out = mido.MidiFile(ticks_per_beat=480)
+track = mido.MidiTrack(); out.tracks.append(track)
+track.append(mido.MetaMessage('set_tempo', tempo=500000, time=0))
+for note in melody:
+    track.append(mido.Message('note_on', note=note, velocity=75, time=0))
+    track.append(mido.Message('note_off', note=note, velocity=0, time=360))
+out.save("markov2_melody.mid")
+print(f"Melodia Markov ord-2: {len(melody)} notas")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Construir la matriz de transicion de una escala mayor (7 grados) como tabla numpy 7x7</li>
+      <li>Comparar Markov orden 1 vs orden 2 en variedad melodica: contar intervalos unicos producidos</li>
+      <li>Aplicar Markov sobre duraciones (corchea=0.5, negra=1.0, blanca=2.0) y generar 32 duraciones</li>
+      <li>Calcular la entropia de Shannon de cada fila de la matriz de transicion de orden 1</li>
+      <li>Implementar temperatura de muestreo en Markov: comparar T=0.5, T=1.0 y T=2.0</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q4 · Feynman Quiz — Markov Orden 1 vs 2</h4>
+    <p class="quiz-q">¿Por que una cadena de Markov de orden 2 suena mas "musical" que una de orden 1? Explica con terminos de memoria y coherencia intervalica.</p>
+    <details><summary>Ver respuesta</summary><p>Una cadena de Markov de orden 1 solo recuerda la nota anterior para decidir la siguiente, produciendo saltos intervalicos aleatorios con poca coherencia frastica. El modelo captura solo la distribucion de probabilidad de notas individuales, no los patrones de movimiento. Una cadena de orden 2 recuerda los 2 ultimos eventos, capturando patrones de movimiento (ascendente/descendente) y tendencias que el oido percibe como intencion melodica. En terminos practicos, el orden 2 preserva micro-frases y gestos caracteristicos del corpus de entrenamiento: si el corpus tiende a subir de Do a Re y luego a Mi, el modelo de orden 2 aprendera ese patron de dos pasos. El orden 1 solo sabra que despues de Do puede venir Re con cierta probabilidad, sin saber de donde venia antes de Do.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← M3</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · L-Systems</div>
+    <div class="module-title">L-Systems</div>
+    <div class="module-sub">Gramaticas de Lindenmayer para estructuras auto-similares, ritmos fractales y melodias recursivas</div>
+  </div>
+
+  <div class="card">
+    <h3>Gramaticas de Lindenmayer</h3>
+    <p>Un L-System es una tupla G = (V, ω, P) donde V es el alfabeto, ω el axioma inicial y P las reglas de produccion. Cada iteracion reemplaza simultaneamente todos los simbolos aplicables.</p>
+  </div>
+
+  <div class="card">
+    <h3>L-System Musical</h3>
+    <pre>import mido
+
+def lsystem(axiom, rules, iterations):
+    result = axiom
+    for _ in range(iterations):
+        result = ''.join(rules.get(c, c) for c in result)
+    return result
+
+def musical_turtle(lstr, start_note=60, interval=2, beat_ticks=240):
+    """Interpreta cadena L-System como melodia con tortuga musical."""
+    out = mido.MidiFile(ticks_per_beat=480)
+    track = mido.MidiTrack(); out.tracks.append(track)
+    track.append(mido.MetaMessage('set_tempo', tempo=480000, time=0))
+    note = start_note; stack = []
+    for sym in lstr[:256]:
+        if sym == 'F':
+            n = max(36, min(84, note))
+            track.append(mido.Message('note_on', note=n, velocity=75, time=0))
+            track.append(mido.Message('note_off', note=n, velocity=0, time=beat_ticks))
+        elif sym == '+': note = min(note + interval, 84)
+        elif sym == '-': note = max(note - interval, 36)
+        elif sym == '[': stack.append(note)
+        elif sym == ']': note = stack.pop() if stack else note
+    out.save("lsystem_melody.mid")
+
+# L-System para ritmos: F=nota, f=silencio
+rhythm_rules = {'F': 'F-f-F', 'f': 'ff-F', '-': '-'}
+rhythm_str = lsystem('F', rhythm_rules, 4)
+
+# L-System melodico
+melodic_rules = {'F': 'FF+F-F', '+': '+', '-': '-', '[': '[', ']': ']'}
+melodic_str = lsystem('F+F+F', melodic_rules, 3)
+musical_turtle(melodic_str, start_note=60, interval=2)</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Implementar el L-System de Koch (F → F+F−F−F+F) en Python puro. Generar 4 iteraciones</li>
+      <li>Mapear el axioma "F+F+F+F+F" a la escala pentatonica de Do</li>
+      <li>Comparar 5 generaciones del mismo L-System: imprimir longitud y numero de notas</li>
+      <li>Crear un L-System con 3 reglas (A→AB, B→BA, C→A) y verificar sucesion de Fibonacci</li>
+      <li>Exportar 3 generaciones de un L-System con step=2 semitonos vs step=7 (quintas)</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q5 · Feynman Quiz — L-System vs Aleatoriedad</h4>
+    <p class="quiz-q">¿Que ventaja ofrece un L-System sobre una secuencia ritmica aleatoria para composicion musical? ¿Que caracteristica perceptiva emerge de la auto-similaridad?</p>
+    <details><summary>Ver respuesta</summary><p>Los L-Systems generan estructuras auto-similares y jerarquicas mediante reglas de reescritura deterministicas, produciendo patrones ritmicos con coherencia fractal perceptible. Una secuencia aleatoria tiene distribucion uniforme pero carece de estructura interna. El L-System crea relaciones proporcionales entre niveles de escala temporal: el ritmo de la frase refleja el ritmo del motivo (la misma proporcion 2:1 que existe a nivel de corchea/negra puede aparecer a nivel de frase/seccion). El oido percibe esta auto-similaridad como organizacion formal incluso sin haber aprendido explicitamente la regla generadora, porque nuestro sistema auditivo esta entrenado para detectar patrones jerarquicos (silabas, palabras, frases, secciones). La aleatoriedad pura rompe estas expectativas a todos los niveles simultaneamente, resultando en percepcion de "caos sin sentido".</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← M4</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Geneticos</div>
+    <div class="module-title">Algoritmos Geneticos</div>
+    <div class="module-sub">Evolucion de material musical con DEAP: fitness functions, crossover y mutacion para composicion</div>
+  </div>
+
+  <div class="card">
+    <h3>Fundamentos de Algoritmos Geneticos</h3>
+    <table>
+      <tr><th>Componente</th><th>Analogia musical</th><th>Implementacion</th></tr>
+      <tr><td>Individuo (cromosoma)</td><td>Una secuencia de notas</td><td>Lista de enteros MIDI</td></tr>
+      <tr><td>Poblacion</td><td>Conjunto de melodias candidatas</td><td>Lista de individuos</td></tr>
+      <tr><td>Fitness</td><td>Calidad musical de la melodia</td><td>Funcion evaluadora multivariable</td></tr>
+      <tr><td>Seleccion</td><td>Elegir mejores melodias</td><td>Tournament / Roulette selection</td></tr>
+      <tr><td>Cruce (crossover)</td><td>Combinar fragmentos de 2 melodias</td><td>One-point / Two-point / Uniform</td></tr>
+      <tr><td>Mutacion</td><td>Cambiar nota aleatoriamente</td><td>Transposicion / sustitucion</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Implementacion con DEAP</h3>
+    <pre>import random
+from deap import base, creator, tools, algorithms
+import numpy as np
+
+# Definir escala objetivo (Do Mayor)
+C_MAJOR = [60, 62, 64, 65, 67, 69, 71, 72]
+
+creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+creator.create("Individual", list, fitness=creator.FitnessMax)
+
+toolbox = base.Toolbox()
+toolbox.register("attr_note", random.choice, C_MAJOR)
+toolbox.register("individual", tools.initRepeat, creator.Individual,
+                 toolbox.attr_note, n=16)
+toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+def fitness_melody(individual):
+    score = 0.0
+    # 1. Notas en la escala
+    score += sum(1 for n in individual if n in C_MAJOR) / len(individual) * 40
+    # 2. Movimiento preferentemente por grados conjuntos
+    intervals = [abs(individual[i+1] - individual[i]) for i in range(len(individual)-1)]
+    score += sum(1 for iv in intervals if iv <= 2) / len(intervals) * 30
+    # 3. Rango vocal razonable (dentro de una octava)
+    span = max(individual) - min(individual)
+    score += max(0, 30 - span)
+    return (score,)
+
+toolbox.register("evaluate", fitness_melody)
+toolbox.register("mate", tools.cxOnePoint)
+toolbox.register("mutate", tools.mutUniformInt, low=C_MAJOR[0],
+                 up=C_MAJOR[-1], indpb=0.1)
+toolbox.register("select", tools.selTournament, tournsize=3)
+
+pop = toolbox.population(n=100)
+algorithms.eaSimple(pop, toolbox, cxpb=0.7, mutpb=0.2,
+                    ngen=50, verbose=False)
+best = tools.selBest(pop, k=1)[0]
+print(f"Mejor melodia: {list(best)}")
+print(f"Fitness: {best.fitness.values[0]:.1f}/100")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Implementar fitness que penalice saltos de mas de una 5ª (7 semitonos) y recompense movimiento stepwise</li>
+      <li>Comparar evolucion con poblacion de 50 vs 200 individuos: medir generaciones hasta convergencia</li>
+      <li>Añadir un objetivo secundario al fitness: maximizar la diversidad de duraciones ritmicas</li>
+      <li>Implementar crossover de dos puntos y comparar con crossover de un punto en calidad de la solucion</li>
+      <li>Exportar la mejor melodia de cada generacion como archivos MIDI separados para escuchar la evolucion</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q6 · Feynman Quiz — Funcion de Fitness</h4>
+    <p class="quiz-q">¿Como funciona la funcion de fitness en un AG musical? ¿Que metricas usarias y como las balanceas para evitar convergencia prematura?</p>
+    <details><summary>Ver respuesta</summary><p>La funcion de fitness evalua cuantitativamente cuan "buena" es una solucion musical. Metricas tipicas: (1) consonancia intervalica — penalizar intervalos disonantes en posiciones debiles del compas; (2) diversidad ritmica — recompensar variedad de duraciones; (3) rango vocal — penalizar secuencias fuera del rango idiomatico del instrumento; (4) coherencia tonal — recompensar notas pertenecientes a la escala/modo elegido; (5) movimiento por grados conjuntos — favorece stepwise vs saltos grandes. Para evitar convergencia prematura se usan: ponderacion cuidadosa de cada metrica (ninguna debe dominar absolutamente), mantenimiento de diversidad con nichos o sharing, presion de seleccion moderada (torneo de tamaño 2-3 vs seleccion elitista pura), y mutacion suficiente (5-20%) para explorar el espacio. Un fitness demasiado restrictivo produce melodias tecnicamente correctas pero sin caracter.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← M5</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Music21</div>
+    <div class="module-title">Music21 &amp; Analisis</div>
+    <div class="module-sub">Analisis armonico, exportacion MusicXML, analisis de corpus y manipulacion de partituras</div>
+  </div>
+
+  <div class="card">
+    <h3>Music21: Analisis y Generacion de Partituras</h3>
+    <pre>from music21 import stream, note, chord, meter, key, tempo, analysis
+
+# Crear partitura desde cero
+score = stream.Score()
+part = stream.Part()
+score.append(meter.TimeSignature('4/4'))
+score.append(key.Key('C'))
+score.append(tempo.MetronomeMark(number=120))
+
+# Añadir notas y acordes
+for pitch_name, dur in [('C4',1.0), ('E4',0.5), ('G4',0.5), ('C5',2.0)]:
+    n = note.Note(pitch_name)
+    n.duration.quarterLength = dur
+    part.append(n)
+
+# Acorde
+c = chord.Chord(['C4', 'E4', 'G4'])
+c.duration.quarterLength = 2.0
+part.append(c)
+
+score.append(part)
+
+# Analisis armonico con music21
+analysis.discrete.Ambitus()
+from music21 import roman
+# Identificar funcion armonica
+c_chord = chord.Chord(['C4', 'E4', 'G4'])
+key_c = key.Key('C')
+rn = roman.romanNumeralFromChord(c_chord, key_c)
+print(f"Funcion armonica: {rn.figure}")  # I
+
+# Exportar como MusicXML (abre en MuseScore/Finale)
+score.write('musicxml', fp='output.xml')
+# Exportar como MIDI
+score.write('midi', fp='output.mid')
+print("Partitura exportada a output.xml y output.mid")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Cargar un archivo MIDI con music21 y extraer todas las alturas unicas usadas en la pieza</li>
+      <li>Analizar una progresion de acordes y obtener los numerales romanos de cada acorde en Do Mayor</li>
+      <li>Generar una pieza de 8 compases de 4/4 con music21 y exportar como MusicXML valido</li>
+      <li>Computar el ambito (rango de alturas) y la densidad de notas por compas de una partitura</li>
+      <li>Aplicar una transposicion de 5ª ascendente a toda una partitura y verificar el resultado</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q7 · Feynman Quiz — music21 vs mido</h4>
+    <p class="quiz-q">¿Cuando usarias music21 en lugar de mido para trabajar con archivos MIDI? ¿Que capacidades adicionales ofrece music21?</p>
+    <details><summary>Ver respuesta</summary><p>mido es una libreria de bajo nivel que trabaja con el formato MIDI raw: mensajes de bytes (note_on, note_off, CC), ticks como unidad de tiempo, y sin concepto de compas, armadura, notacion musical ni analisis. music21 trabaja a nivel musical abstracto: notas con altura y duracion en cuartos de negra, acordes con identidad armonica, compases con funcion metrica, y un motor de analisis que puede identificar tonalidades, numerales romanos, contrapunto, etc. Usarias music21 cuando necesitas: (1) analisis armonico o contrapuntistico del material; (2) exportar partitura legible en MuseScore/Finale (MusicXML); (3) manipulacion musical de alto nivel (transponer, invertir, retrogradar una melodia); (4) extraer caracteristicas para machine learning musical. Usarias mido cuando solo necesitas leer/escribir datos MIDI con minima sobrecarga y control fino del tiempo en ticks.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← M6</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · DSP</div>
+    <div class="module-title">Sintesis &amp; DSP</div>
+    <div class="module-sub">Sintesis aditiva, sustractiva, FM y procesamiento de señal con numpy/scipy/pyo</div>
+  </div>
+
+  <div class="card">
+    <h3>Sintesis Aditiva, FM y Filtros</h3>
+    <pre>import numpy as np; import soundfile as sf
+
+SR = 44100
+
+# Sintesis aditiva: suma de armonicos (serie 1/n)
+def additive_synth(freq, dur, n_harmonics=8, amp=0.5):
+    t = np.linspace(0, dur, int(SR*dur), endpoint=False)
+    signal = np.zeros_like(t)
+    for n in range(1, n_harmonics + 1):
+        signal += (1.0/n) * np.sin(2*np.pi*freq*n*t)
+    return amp * signal / np.max(np.abs(signal))
+
+# Sintesis FM
+def fm_synth(carrier_freq, mod_ratio, mod_index, dur, amp=0.5):
+    t = np.linspace(0, dur, int(SR*dur), endpoint=False)
+    mod_freq = carrier_freq * mod_ratio
+    modulator = mod_index * np.sin(2*np.pi*mod_freq*t)
+    carrier   = amp * np.sin(2*np.pi*carrier_freq*t + modulator)
+    return carrier
+
+# Filtro paso bajo con scipy
+from scipy.signal import butter, filtfilt
+
+def lowpass_filter(signal, cutoff_hz, sr=44100, order=4):
+    nyq = sr / 2
+    Wn = cutoff_hz / nyq
+    b, a = butter(order, Wn, btype='low')
+    return filtfilt(b, a, signal)
+
+# Generar y exportar
+note_additive = additive_synth(261.63, 2.0)  # Do4, 2 segundos
+note_fm = fm_synth(440, mod_ratio=2.0, mod_index=3.0, dur=2.0)  # La4 FM
+note_filtered = lowpass_filter(note_fm, cutoff_hz=2000)
+
+import numpy as np
+scale_audio = np.concatenate([note_additive, note_fm, note_filtered])
+sf.write("synthesis_demo.wav", scale_audio, SR)
+print("Demos de sintesis guardados: synthesis_demo.wav")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Implementar sintesis sustractiva: onda cuadrada → filtro paso bajo resonante (Q=5) → ADSR</li>
+      <li>Crear un oscilador FM con mod_ratio=1.5 y barrer mod_index de 0 a 10: exportar 11 timbres</li>
+      <li>Implementar un compresor basico: calcular RMS en ventanas de 512 samples y aplicar ganancia dinamica</li>
+      <li>Generar granular synthesis: tomar un WAV, extraer granos de 50ms y reordenarlos aleatoriamente</li>
+      <li>Comparar espectro de onda cuadrada ideal vs onda cuadrada con bandlimiting (PolyBLEP)</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q8 · Feynman Quiz — Sintesis FM</h4>
+    <p class="quiz-q">¿Como funciona la sintesis FM y que parametros determinan el timbre resultante? ¿Por que un mod_index alto genera timbre mas brillante?</p>
+    <details><summary>Ver respuesta</summary><p>La sintesis FM (Frecuency Modulation) usa un oscilador modulador para variar la frecuencia instantanea del oscilador portador: output = sin(2π·f_c·t + I·sin(2π·f_m·t)). Los parametros clave son: carrier_freq (f_c) determina la frecuencia percibida; mod_ratio (f_m/f_c) determina la relacion armonica de los parciales generados (ratios enteros = timbre armonico, ratios irracionales = timbre inarmonico/metalico); mod_index (I) determina la amplitud de la modulacion y directamente el numero y amplitud de los parciales laterales (sidebands) generados. Un mod_index alto genera mas sidebands con mayor amplitud segun los coeficientes de Bessel Jₙ(I): cuanto mayor es I, mayor es n para el que Jₙ(I) es significativo, resultando en un espectro mas rico y brillante con energia distribuida a frecuencias altas. Con I=0 se obtiene un seno puro; con I=3 ya hay sidebands hasta el 6° orden con amplitud audible.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← M7</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Live Coding</div>
+    <div class="module-title">FoxDot Live Coding</div>
+    <div class="module-sub">Live coding musical con Python y SuperCollider backend: patterns, effects, clock sync</div>
+  </div>
+
+  <div class="card">
+    <h3>FoxDot: Python como Instrumento Musical</h3>
+    <pre>from foxdot import *
+
+# Definir instrumentos y patrones
+# FoxDot usa la notacion de grados de escala (0=tonica, 1=segunda, etc.)
+d1 >> play("x-o-", sample=0, amp=1)    # patron de bateria
+b1 >> bass([0,0,7,0], oct=4, dur=1)    # bajo
+s1 >> saw([0,2,4,7], dur=0.5, oct=5)   # melodia con onda sierra
+
+# Efectos
+s1 >> saw([0,2,4,7], dur=0.5).hpf(400).reverb(0.3)
+
+# Clock y sincronizacion
+Clock.bpm = 120
+Clock.midi_nudge = 0.0  # offset en ms para sincronizar con DAW
+
+# Parametros como Patterns
+s1 >> saw(P[0,2,4,7,9], dur=P[0.5,0.5,1,0.25], amp=linvar([0.5,1.0],4))
+
+# Funciones de transformacion
+s1 >> saw([0,2,4,7]).every(4, "reverse")   # invertir cada 4 ciclos
+s1 >> saw([0,2,4,7]).every(8, "stutter",3) # stutter cada 8 ciclos
+
+# Parar instrumentos
+# d1.stop(); b1.stop(); s1.stop(); Clock.clear()</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Crear un patron de 4/4 con d1 (kick en tiempos 1 y 3, snare en 2 y 4)</li>
+      <li>Implementar una progresion de acordes Am-F-C-G con cambio cada 4 compases</li>
+      <li>Usar linvar() para crear un crescendo de 8 compases (amp de 0.3 a 1.0)</li>
+      <li>Sincronizar FoxDot con Ableton Live usando el Clock MIDI</li>
+      <li>Crear un efecto de "build-up": incrementar BPM de 90 a 140 en 32 compases</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q9 · Feynman Quiz — Live Coding como Practica Musical</h4>
+    <p class="quiz-q">¿En que se diferencia el live coding (FoxDot, TidalCycles) de la produccion musical tradicional con DAW? ¿Que limitaciones y que ventajas tiene para performance en vivo?</p>
+    <details><summary>Ver respuesta</summary><p>El live coding usa el codigo fuente como partitura en tiempo real: el interprete escribe y ejecuta codigo mientras la musica suena, con el codigo visible para el publico (code-as-score). Ventajas: maxima flexibilidad compositiva en tiempo real (cualquier parametro es modificable instantaneamente con una linea de codigo), generacion algoritmica nativa (loops, condicionales, aleatoriedad son herramientas musicales), reproducibilidad (el codigo ES la partitura). Limitaciones: curva de aprendizaje alta (errores de sintaxis interrumpen la performance), latencia cognitiva (pensar en codigo bajo presion de performance), dificultad para tocar "por el oido" (cada cambio requiere formulacion explicita), y dependencia de estabilidad del software (crashes). El live coding es ideal para musica electronica experimental, improv algoritmico, y escenas de performance visual-codigo como TOPLAP. Para produccion pop/jazz donde se necesita feedback inmediato y fluidez interpretativa, el DAW sigue siendo mas eficiente.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← M8</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · TidalCycles</div>
+    <div class="module-title">TidalCycles</div>
+    <div class="module-sub">Mini-notation ciclica, pattern combinators y comunicacion con SuperDirt</div>
+  </div>
+
+  <div class="card">
+    <h3>Mini-Notation de TidalCycles</h3>
+    <pre>-- TidalCycles usa Haskell con mini-notation para patrones ciclicos
+-- (se usa desde Python via OSC o desde GHCi)
+
+-- Patron basico: cada ciclo tiene estos eventos
+d1 $ sound "bd sn bd sn"  -- kick-snare-kick-snare
+
+-- Sub-divisiones con []
+d1 $ sound "bd [sn sn] bd sn"  -- subdivide un beat en 2
+
+-- Alternancia con <> y seleccion con {}
+d1 $ sound "<bd sn cp>" |+| n "0 1 2"  -- alterna cada ciclo
+
+-- Modificadores de patron
+d1 $ fast 2 $ sound "bd sn"     -- doble velocidad
+d1 $ slow 2 $ sound "bd sn"     -- mitad de velocidad
+d1 $ rev $ sound "bd sn cp"     -- invertir patron
+d1 $ every 4 (fast 2) $ sound "bd sn cp"  -- cada 4 ciclos
+
+-- Capas (stacks)
+d1 $ stack [
+    sound "bd . bd",
+    sound "~ sn ~ sn",
+    sound "hh*8"
+]
+
+-- Desde Python via OSC:
+from pythonosc.udp_client import SimpleUDPClient
+tidal = SimpleUDPClient("127.0.0.1", 6010)  # puerto de TidalCycles
+tidal.send_message("/code", ["d1 $ sound \"bd sn bd sn\""])</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Crear un patron de 4/4 con bd/sn/hh en TidalCycles y añadir un efecto de reverb</li>
+      <li>Usar every 4 (rev) para invertir el patron cada 4 ciclos</li>
+      <li>Combinar dos patrones independientes en stack y sincronizarlos</li>
+      <li>Enviar mensajes OSC a TidalCycles desde Python para cambiar el patron cada 8 ciclos</li>
+      <li>Comparar sonoridad de "bd*4" vs "bd bd bd bd" vs "bd [bd bd] bd"</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q10 · Feynman Quiz — FoxDot vs TidalCycles</h4>
+    <p class="quiz-q">¿Cual es la diferencia principal entre FoxDot y TidalCycles para live coding musical? ¿Que paradigma de tiempo usa cada uno?</p>
+    <details><summary>Ver respuesta</summary><p>FoxDot es Python puro con backend SuperCollider, usando un modelo de tiempo basado en el Clock de Python: cada Player (d1, s1, b1) es un objeto que recibe patrones como listas o Patterns de Python y genera eventos en el servidor SuperCollider en momentos futuros calculados por el scheduler. TidalCycles usa Haskell con una mini-notation propia para definir patrones ciclicos: el tiempo se conceptualiza como ciclos continuos (un "cycle" es la unidad base) y los patrones son funciones del tiempo que mapean posiciones en el ciclo a eventos, permitiendo operaciones funcionales (fast, slow, rev, every) que transforman el tiempo matematicamente antes de generar eventos. La diferencia conceptual clave: FoxDot piensa en "esta nota en este momento futuro", TidalCycles piensa en "esta funcion del tiempo para siempre". TidalCycles facilita composicion polirritmica compleja con mini-notation concisa; FoxDot es mas natural para programadores Python que quieren usar su lenguaje habitual.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← M9</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Redes Neuronales</div>
+    <div class="module-title">Redes Neuronales para Composicion</div>
+    <div class="module-sub">LSTM para generacion de melodias, VAE para interpolacion musical, temperatura de muestreo</div>
+  </div>
+
+  <div class="card">
+    <h3>LSTM para Generacion de Melodias</h3>
+    <pre>import numpy as np
+
+# Arquitectura LSTM basica para prediccion de notas
+# (usando numpy para mostrar el concepto sin TF/PyTorch)
+
+class SimpleLSTM:
+    """LSTM simplificado para demostracion conceptual."""
+    def __init__(self, vocab_size, hidden_size):
+        self.vocab_size = vocab_size
+        self.hidden_size = hidden_size
+        # En implementacion real: pesos entrenados con Adam, backprop
+        self.W_ih = np.random.randn(4*hidden_size, vocab_size) * 0.01
+        self.W_hh = np.random.randn(4*hidden_size, hidden_size) * 0.01
+        self.b = np.zeros(4*hidden_size)
+
+    def forward(self, x_onehot, h, c):
+        # Puertas LSTM: forget, input, gate, output
+        gates = self.W_ih @ x_onehot + self.W_hh @ h + self.b
+        f, i, g, o = np.split(gates, 4)
+        f = 1/(1+np.exp(-f)); i = 1/(1+np.exp(-i))
+        g = np.tanh(g);       o = 1/(1+np.exp(-o))
+        c_new = f * c + i * g
+        h_new = o * np.tanh(c_new)
+        return h_new, c_new
+
+def sample_with_temperature(logits, temperature=1.0):
+    """Temperatura: <1 = mas conservador, >1 = mas aleatorio"""
+    logits = logits / temperature
+    probs = np.exp(logits - np.max(logits))
+    probs /= probs.sum()
+    return np.random.choice(len(probs), p=probs)
+
+# En la practica con TensorFlow/Keras:
+# model = tf.keras.Sequential([
+#     tf.keras.layers.Embedding(vocab_size, 64),
+#     tf.keras.layers.LSTM(256, return_sequences=True),
+#     tf.keras.layers.Dense(vocab_size, activation='softmax')
+# ])</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Implementar one-hot encoding de una secuencia MIDI (pitches 0-127) para input de LSTM</li>
+      <li>Entrenar un LSTM simple (Keras) con 100 epochs sobre corpus de melodias Bach y generar 32 notas</li>
+      <li>Comparar calidad de muestreo con temperatura T=0.5, T=1.0, T=1.5: medir entropia de Shannon</li>
+      <li>Implementar beam search de ancho 5 para generacion de melodias con LSTM</li>
+      <li>Evaluar perplexity del modelo en un conjunto de validacion y usarla como metrica de calidad</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q11 · Feynman Quiz — LSTM y Temperatura</h4>
+    <p class="quiz-q">¿Como controla la temperatura de muestreo la creatividad vs coherencia de una LSTM musical? ¿Que sucede matematicamente con los logits?</p>
+    <details><summary>Ver respuesta</summary><p>La temperatura divide los logits (scores pre-softmax) de la LSTM antes de aplicar softmax para obtener probabilidades. Con T&lt;1 (ej. T=0.5): los logits se dividen por 0.5, amplificando las diferencias entre probabilidades → la distribucion se vuelve mas "peaky" y el modelo elige casi siempre la nota mas probable → generacion conservadora, predecible, tonalmente segura pero repetitiva. Con T&gt;1 (ej. T=1.5): los logits se dividen por 1.5, aplastando las diferencias entre probabilidades → la distribucion se aplana → mayor probabilidad de elegir notas sorprendentes o inesperadas → generacion mas creativa pero potencialmente incoherente o fuera de estilo. Con T=1: comportamiento por defecto del modelo. En composicion musical, T=0.8-1.2 suele dar el mejor equilibrio entre coherencia estilistica y variedad sorprendente.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← M10</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Magenta</div>
+    <div class="module-title">Magenta &amp; Google AI</div>
+    <div class="module-sub">MelodyRNN, MusicVAE, interpolacion latente y generacion condicionada con Magenta</div>
+  </div>
+
+  <div class="card">
+    <h3>MelodyRNN y MusicVAE con Magenta</h3>
+    <pre>from magenta.models.melody_rnn import melody_rnn_sequence_generator
+from magenta.models.music_vae import configs, trained_model
+from note_seq import midi_io, sequences_lib
+import note_seq
+
+# ---- MelodyRNN: continuacion de melodia ----
+bundle = melody_rnn_sequence_generator.get_bundle('lookback_rnn')
+generator = melody_rnn_sequence_generator.MelodyRnnSequenceGenerator(
+    model=melody_rnn_sequence_generator.MelodyRnnModel(bundle.generator_details),
+    details=bundle.generator_details,
+    steps_per_quarter=4,
+    bundle=bundle,
+)
+qpm = 120; num_steps = 128
+primer_sequence = note_seq.midi_file_to_note_sequence("primer.mid")
+generated = generator.generate(primer_sequence, options={
+    'generate_section': [{'start_time': primer_sequence.total_time,
+                          'end_time': primer_sequence.total_time + 60*(num_steps/4)/qpm}]
+})
+midi_io.note_sequence_to_midi_file(generated, "melodyrnn_output.mid")
+
+# ---- MusicVAE: interpolacion entre dos melodias ----
+config = configs.CONFIG_MAP['cat-mel_2bar_big']
+vae = trained_model.TrainedModel(config, batch_size=1,
+    checkpoint_dir_or_path='path/to/musicvae/checkpoint')
+melody_1 = note_seq.midi_file_to_note_sequence("melody_a.mid")
+melody_2 = note_seq.midi_file_to_note_sequence("melody_b.mid")
+# Interpolar en el espacio latente
+interpolated = vae.interpolate(melody_1, melody_2, num_steps=8)
+for i, seq in enumerate(interpolated):
+    midi_io.note_sequence_to_midi_file(seq, f"interp_{i}.mid")
+print("Interpolacion completada: 8 melodias intermedias generadas")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Usar MelodyRNN para continuar una melodia folk de 4 compases en 8 compases mas</li>
+      <li>Interpolar entre dos melodias con MusicVAE en 10 pasos y exportar todas como MIDI</li>
+      <li>Comparar la entropia de Shannon de melodias generadas con T=0.5 vs T=1.2 en MelodyRNN</li>
+      <li>Usar GrooveRNN para generar variaciones de un patron de bateria y comparar con el original</li>
+      <li>Evaluar perplexity del modelo MelodyRNN en un corpus de validacion de 50 melodias</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q12 · Feynman Quiz — MusicVAE vs MelodyRNN</h4>
+    <p class="quiz-q">¿Cual es la diferencia principal entre MusicVAE y MelodyRNN de Magenta? ¿Que ventaja ofrece la interpolacion latente de MusicVAE?</p>
+    <details><summary>Ver respuesta</summary><p>MelodyRNN es un modelo autoregresivo (LSTM) entrenado para predecir la siguiente nota dado el contexto previo; genera secuencias de izquierda a derecha y es bueno para continuacion y completado. El modelo solo puede generar "hacia adelante" a partir de un inicio. MusicVAE es un Variational Autoencoder que aprende un espacio latente continuo de melodias completas: el encoder mapea una melodia a un punto en el espacio latente Z (vector de ~256 dimensiones), y el decoder mapea cualquier punto Z a una melodia. La ventaja de la interpolacion latente es que permite navegar suavemente entre dos melodias: tomando dos puntos Z1 y Z2 en el espacio latente y generando puntos intermedios Z1 + t*(Z2-Z1) para t∈[0,1], obtenemos melodias que combinan caracteristicas de ambas de forma gradual y musicalmente coherente. Esto no es posible con MelodyRNN, que no tiene nocion de "melodia global" sino de "siguiente nota probable".</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← M11</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · DAW</div>
+    <div class="module-title">Integracion con DAW</div>
+    <div class="module-sub">Puerto MIDI virtual, OSC a Ableton Live, Control Change y sincronizacion de tempo</div>
+  </div>
+
+  <div class="card">
+    <h3>Puerto MIDI Virtual: Python → DAW</h3>
+    <pre>#!/usr/bin/env python3
+"""Puerto MIDI virtual → DAW en tiempo real."""
+import time
+
+try:
+    import rtmidi
+    midiout = rtmidi.MidiOut()
+    midiout.open_virtual_port("Python_DAW_Bridge")
+    print("Puerto virtual 'Python_DAW_Bridge' creado.")
+
+    def enviar_acorde(notas, velocidad=80, canal=0):
+        for nota in notas:
+            midiout.send_message([0x90|canal, nota, velocidad])
+
+    def silenciar_acorde(notas, canal=0):
+        for nota in notas:
+            midiout.send_message([0x80|canal, nota, 0])
+
+    acordes = {"Am":[57,60,64], "F":[53,57,60], "C":[48,52,55], "G":[55,59,62]}
+    secuencia = ["Am","F","C","G"] * 2
+    tempo_bpm = 120; dur = 60.0/tempo_bpm
+
+    # CC de automatizacion
+    midiout.send_message([0xB0, 7, 100])   # CC7 volumen
+    midiout.send_message([0xB0, 10, 64])   # CC10 pan centro
+
+    for nombre in secuencia:
+        notas = acordes[nombre]
+        enviar_acorde(notas)
+        print(f"  {nombre} notas={notas}")
+        time.sleep(dur * 2)
+        silenciar_acorde(notas)
+
+    midiout.close_port()
+except ImportError:
+    print("pip install python-rtmidi")
+    print("Alternativa: import mido; port = mido.open_output('Mi Puerto', virtual=True)")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Crear un puerto MIDI virtual en macOS (via IAC Driver) o Linux (via ALSA) con python-rtmidi</li>
+      <li>Enviar CC7 (volumen 0→127 en 10 pasos) y CC10 (pan 0→127→0) midiendo tiempo de cada mensaje</li>
+      <li>Usar AbletonOSC para cambiar el tempo de Ableton Live: enviar 100, 120 y 140 BPM</li>
+      <li>Sincronizar generacion algoritmica: Python genera una nota por beat (120 BPM → 0.5s)</li>
+      <li>Pipeline completo: generador Markov → progresion de acordes → MIDI virtual → Ableton → grabar 8 compases</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q13 · Feynman Quiz — Latencia MIDI Virtual</h4>
+    <p class="quiz-q">¿Por que la latencia de un puerto MIDI virtual en Python puede ser mayor que la de hardware MIDI DIN-5? ¿Como la minimizas para produccion profesional?</p>
+    <details><summary>Ver respuesta</summary><p>Un puerto MIDI virtual pasa por varias capas de software: (1) la libreria Python (rtmidi/mido) que llama al driver del SO; (2) el driver del SO (IAC en macOS, ALSA/JACK en Linux) que enruta el mensaje; (3) el buffer del DAW receptor que introduce su propio buffer de latencia. El hardware MIDI DIN-5 tiene latencia determinista de ~1ms (31.25kbps, 1 byte = 320µs). El software introduce jitter variable (1-20ms tipico). Para minimizarla: (1) usar rtmidi directamente (evitar capas intermedias como python-osc); (2) medir y compensar el offset con timestamps de perf_counter(); (3) usar JACK en Linux con prioridad RT para el proceso Python; (4) evitar operaciones bloqueantes (I/O, sleep) en el thread MIDI; (5) en macOS, habilitar el IAC Driver en modo "low latency" en Audio MIDI Setup; (6) enviar mensajes con anticipacion calculada para que lleguen exactamente en el beat correcto.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← M12</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">HERO — Partitura Autonoma</div>
+    <div class="module-sub">Proyecto final: sistema composicional completo multi-algoritmo con exportacion y performance</div>
+  </div>
+
+  <div class="card">
+    <h3>Descripcion del Proyecto</h3>
+    <p>Construir un sistema Python que genere una pieza musical completa combinando al menos 3 paradigmas algoritmicos estudiados en el MOOC. El sistema debe generar estructura macroformal (secciones A-B-A'), producir material tematico con al menos 2 algoritmos, aplicar transformaciones evolutivas o de IA, y exportar como MIDI y MusicXML.</p>
+    <pre>partitura_autonoma/
++-- main.py                   # Orquestador principal
++-- generators/
+|   +-- markov_melody.py      # Generador melodico Markov
+|   +-- lsystem_rhythm.py     # Ritmos via L-System
+|   +-- chaos_dynamics.py     # Parametros expresivos caoticos
+|   +-- ga_harmony.py         # Progressiones armonicas GA
++-- transformers/
+|   +-- musical_transforms.py # Inversion, retrogrado, transposicion
+|   +-- neural_variation.py   # Variacion con LSTM/Magenta
++-- exporters/
+|   +-- midi_export.py
+|   +-- musicxml_export.py
+|   +-- osc_live.py
++-- config.yaml               # Parametros de la pieza</pre>
+  </div>
+
+  <div class="card">
+    <h3>Rubrica de Evaluacion (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Criterio</th><th>Puntos</th><th>Descripcion</th></tr>
+        <tr><td>Multi-paradigma (≥3)</td><td>20</td><td>Al menos 3 algoritmos distintos integrados coherentemente</td></tr>
+        <tr><td>Estructura formal</td><td>15</td><td>Forma reconocible con secciones diferenciadas (A-B-A' o equivalente)</td></tr>
+        <tr><td>Calidad melodica</td><td>15</td><td>Melodias con coherencia interválica y fraseo</td></tr>
+        <tr><td>Armonia funcional</td><td>10</td><td>Progressiones con logica tonal o modal clara</td></tr>
+        <tr><td>Exportacion MIDI</td><td>10</td><td>Archivo MIDI reproducible y bien formado</td></tr>
+        <tr><td>Exportacion MusicXML</td><td>10</td><td>Partitura legible en MuseScore/Finale</td></tr>
+        <tr><td>Modo live/OSC</td><td>10</td><td>Performance en vivo funcional con FoxDot o via OSC</td></tr>
+        <tr><td>Codigo limpio</td><td>5</td><td>Arquitectura modular, comentada, ejecutable</td></tr>
+        <tr><td>config.yaml</td><td>3</td><td>Parametros externalizados y documentados</td></tr>
+        <tr><td>Demo/presentacion</td><td>2</td><td>Grabacion de audio y video de la performance</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman — Explica sin notas</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Markov Orden 1 vs 2</h4>
+      <p class="quiz-q">¿Por que una cadena de Markov de orden 2 suena mas "musical" que una de orden 1? Explica con el concepto de memoria y coherencia frastica.</p>
+      <details><summary>Ver respuesta</summary><p>Una cadena de Markov de orden 1 solo recuerda la nota anterior para decidir la siguiente, produciendo saltos intervalicos aleatorios con poca coherencia frastica. El modelo captura solo la distribucion de probabilidad de notas individuales. Una cadena de orden 2 recuerda los 2 ultimos eventos, capturando patrones de movimiento (ascendente/descendente) y tendencias que el oido percibe como intencion melodica. Preserva micro-frases y gestos caracteristicos del corpus de entrenamiento. En terminos de informacion: el orden 2 tiene memoria condicional P(nota_n | nota_{n-1}, nota_{n-2}), capturando el contexto de los dos ultimos pasos, lo que permite modelar tensiones de leading-tone, movimientos por grado conjunto y patrones de arco melodico que el oido asocia con musica tonal.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · Fitness en Algoritmos Geneticos</h4>
+      <p class="quiz-q">¿Como funciona la funcion de fitness en un AG musical y que metricas usarias para evaluar calidad melodica? ¿Que es convergencia prematura?</p>
+      <details><summary>Ver respuesta</summary><p>La funcion de fitness evalua cuantitativamente cuan "buena" es una melodia. Metricas tipicas: (1) consonancia intervalica — penalizar intervalos disonantes en posiciones debiles; (2) coherencia tonal — recompensar notas pertenecientes a la escala elegida; (3) movimiento por grados conjuntos — favorece stepwise vs saltos grandes; (4) rango vocal razonable — penalizar secuencias fuera del rango idiomatico; (5) diversidad ritmica — recompensar variedad de duraciones. La convergencia prematura ocurre cuando la poblacion pierde diversidad genetica rapidamente porque unos pocos individuos muy aptos dominan la seleccion en pocas generaciones, resultando en que el AG queda atrapado en un optimo local. Se evita con: presion de seleccion moderada (torneo de tamaño 2-3), mutacion suficiente (5-20%), sharing/niching para mantener diversidad, y fitness multi-objetivo que penalice la similitud entre individuos de la misma poblacion.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · L-System vs Aleatoriedad</h4>
+      <p class="quiz-q">¿Que ventaja ofrecen los L-Systems sobre secuencias aleatorias para generacion ritmica? ¿Que es la auto-similaridad fractal en el contexto musical?</p>
+      <details><summary>Ver respuesta</summary><p>Los L-Systems generan estructuras auto-similares y jerarquicas mediante reglas de reescritura deterministicas, produciendo patrones ritmicos con coherencia fractal perceptible. Una secuencia aleatoria tiene distribucion uniforme pero carece de estructura interna. El L-System crea relaciones proporcionales entre niveles de escala temporal: el ritmo de la frase refleja el ritmo del motivo. La auto-similaridad fractal en musica significa que la misma proporcion ritmica que aparece a nivel de corchea/negra puede reaparecer a nivel de frase/seccion. El oido percibe esta organizacion como coherencia formal incluso sin conocer la regla, porque el sistema auditivo humano esta entrenado para detectar jerarquias temporales (silabas, palabras, frases). La aleatoriedad rompe estas expectativas a todos los niveles simultaneamente.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · Temperatura de Muestreo en LSTM</h4>
+      <p class="quiz-q">¿Como controla la temperatura de muestreo la creatividad vs coherencia de una LSTM musical? Explica matematicamente que le sucede a los logits con T=0.5 y T=1.5.</p>
+      <details><summary>Ver respuesta</summary><p>La temperatura divide los logits (scores pre-softmax) antes de aplicar softmax. Con T=0.5: logits/0.5 amplifica las diferencias → distribucion mas "peaky" → el modelo elige casi siempre la nota mas probable → generacion conservadora, predecible, tonalmente segura pero repetitiva. Con T=1.5: logits/1.5 aplasta las diferencias → distribucion mas plana → mayor probabilidad de elegir notas sorprendentes → generacion mas creativa pero potencialmente incoherente. Matematicamente: softmax(logits/T) concentra o aplana la distribucion de probabilidad. Para T→0 se obtiene seleccion greedy (siempre la nota maxima). Para T→∞ se obtiene distribucion uniforme (completamente aleatoria). En composicion musical, T=0.8-1.2 suele dar el mejor equilibrio entre coherencia estilistica y variedad sorprendente.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · MusicVAE vs MelodyRNN</h4>
+      <p class="quiz-q">¿Cual es la diferencia principal entre MusicVAE y MelodyRNN de Magenta? ¿Que ventaja creativa especifica ofrece la interpolacion en el espacio latente?</p>
+      <details><summary>Ver respuesta</summary><p>MelodyRNN es un modelo autoregresivo (LSTM) que genera notas de izquierda a derecha: P(nota_n | nota_{n-1}, nota_{n-2}, ...). Es bueno para continuacion pero no puede "ver" la forma global. MusicVAE es un Variational Autoencoder que aprende un espacio latente continuo de melodias completas: el encoder mapea una melodia a un punto en Z (vector de ~256 dimensiones), el decoder mapea cualquier Z a una melodia. La ventaja de interpolacion latente: tomando Z1 (melodia A) y Z2 (melodia B) y generando puntos intermedios Z1 + t*(Z2-Z1) para t∈[0,1], se obtienen melodias que combinan caracteristicas de ambas de forma gradual. Esto permite crear puentes musicales entre temas, morphing timerico, o explorar sistematicamente el espacio de melodias posibles. No es posible con MelodyRNN que no tiene concepto de "melodia global" sino solo de "siguiente nota probable".</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← M13</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_python_composicion_algoritmica_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Briefing & Stack'},
+    {id:'m1',  label:'M1 · Python Audio Basics'},
+    {id:'m2',  label:'M2 · MIDI & OSC'},
+    {id:'m3',  label:'M3 · Sistemas Caoticos'},
+    {id:'m4',  label:'M4 · Cadenas de Markov'},
+    {id:'m5',  label:'M5 · L-Systems'},
+    {id:'m6',  label:'M6 · Algoritmos Geneticos'},
+    {id:'m7',  label:'M7 · Music21 & Analisis'},
+    {id:'m8',  label:'M8 · Sintesis & DSP'},
+    {id:'m9',  label:'M9 · FoxDot Live Coding'},
+    {id:'m10', label:'M10 · TidalCycles'},
+    {id:'m11', label:'M11 · Redes Neuronales'},
+    {id:'m12', label:'M12 · Magenta & Google AI'},
+    {id:'m13', label:'M13 · Integracion con DAW'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

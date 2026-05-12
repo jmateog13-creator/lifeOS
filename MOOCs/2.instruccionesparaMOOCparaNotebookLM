@@ -1,0 +1,20 @@
+"Lee y ejecuta las instrucciones de comohacerunMOOC.txt. Tu misión es generar el MOOC INTERACTIVO AAA completo para la asignatura: [NOMBRE DE LA ASIGNATURA].
+
+REQUISITOS TÉCNICOS DEL ENTREGABLE:
+
+Genera un único archivo HTML autónomo con CSS (Dark Mode/Modern UI) y JavaScript integrados.
+
+Implementa un Sistema de Navegación Dinámica (Tabs o Sidebar) para que pueda saltar entre módulos sin refrescar la página.
+
+Incluye Progress Tracking real mediante LocalStorage para que mi avance como multipotencial se guarde en mi navegador.
+
+Los bloques de código deben tener Sintaxis Highlighting y botón de copia.
+
+ORDEN DE GENERACIÓN:
+
+Debido a la extensión técnica que requiero (Nivel Teleco/Sonólogo), si el código excede el límite de un solo mensaje, detente al finalizar el Módulo actual y dime: 'Estructura lista hasta el Módulo X. ¿Continuamos con el siguiente?'. Yo te daré el paso para que sigas pegando el código dentro del mismo archivo lógico.
+
+TEORÍA TÉCNICA DE BASE (PROCESAR CON PARETO 80/20):
+[Pega aquí TODA la teoría que sacaste de NotebookLM]
+
+¡Comienza generando el esqueleto HTML, los estilos CSS, el motor JS y el contenido íntegro del Módulo 1!"

@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zero to Hero: Diseño de PCB con KiCad v3</title>
+<style>
+:root {
+  --bg:#0b0f17; --surface:#111827; --surface2:#1e293b;
+  --accent:#06b6d4; --accent2:#22d3ee; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#1e293b;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'JetBrains Mono','Fira Code',monospace; --font-sans:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+pre{background:#050810;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono);color:#a5f3fc}
+code{font-family:var(--font-mono);font-size:12.5px;background:#0a0e1a;padding:2px 6px;border-radius:4px;color:var(--accent2)}
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+.formula{background:rgba(6,182,212,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(0,0,0,.15);border-radius:6px;line-height:1.6}
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:12px 0}
+.tool-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
+.tool-card .name{font-weight:700;font-size:.9rem;color:var(--accent2);margin-bottom:4px}
+.tool-card .desc{font-size:.78rem;color:var(--muted);line-height:1.5}
+.drill-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.drill-list li{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px 10px 32px;font-size:.87rem;color:var(--muted);position:relative}
+.drill-list li::before{content:"•";position:absolute;left:14px;top:10px;color:var(--accent)}
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>PCB Design KiCad</h2>
+    <p>Zero to Hero · 15 modulos</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introduccion</div>
+    <div class="module-title">Ecosistema KiCad y Fundamentos PCB</div>
+    <div class="module-sub">Del esquema electrico a la placa fabricada. El 80% del rendimiento EMC se decide en la arquitectura.</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 160" width="100%" font-family="system-ui,sans-serif" font-size="13">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#06b6d4"/></marker>
+      </defs>
+      <rect x="10" y="50" width="130" height="60" rx="8" fill="#111827" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="75" y="76" text-anchor="middle" fill="#06b6d4" font-weight="600">Eeschema</text>
+      <text x="75" y="93" text-anchor="middle" fill="#94a3b8" font-size="11">Schematic + ERC</text>
+      <line x1="140" y1="80" x2="175" y2="80" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="177" y="50" width="130" height="60" rx="8" fill="#111827" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="242" y="76" text-anchor="middle" fill="#a855f7" font-weight="600">Netlist</text>
+      <text x="242" y="93" text-anchor="middle" fill="#94a3b8" font-size="11">Power Flags + Nets</text>
+      <line x1="307" y1="80" x2="342" y2="80" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="344" y="50" width="130" height="60" rx="8" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+      <text x="409" y="76" text-anchor="middle" fill="#10b981" font-weight="600">Pcbnew</text>
+      <text x="409" y="93" text-anchor="middle" fill="#94a3b8" font-size="11">Layout + DRC + Route</text>
+      <line x1="474" y1="80" x2="509" y2="80" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="511" y="50" width="130" height="60" rx="8" fill="#111827" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="576" y="76" text-anchor="middle" fill="#f59e0b" font-weight="600">Gerbers</text>
+      <text x="576" y="93" text-anchor="middle" fill="#94a3b8" font-size="11">RS-274X + Excellon</text>
+      <line x1="641" y1="80" x2="676" y2="80" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="678" y="50" width="130" height="60" rx="8" fill="#111827" stroke="#ef4444" stroke-width="1.5"/>
+      <text x="743" y="76" text-anchor="middle" fill="#ef4444" font-weight="600">JLCPCB Fab</text>
+      <text x="743" y="93" text-anchor="middle" fill="#94a3b8" font-size="11">BOM + CPL + PCBA</text>
+      <text x="75" y="140" text-anchor="middle" fill="#64748b" font-size="10">Semantica</text>
+      <text x="242" y="140" text-anchor="middle" fill="#64748b" font-size="10">Conectividad</text>
+      <text x="409" y="140" text-anchor="middle" fill="#64748b" font-size="10">Fisico</text>
+      <text x="576" y="140" text-anchor="middle" fill="#64748b" font-size="10">Manufactura</text>
+      <text x="743" y="140" text-anchor="middle" fill="#64748b" font-size="10">Ensamblado</text>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">4.5 mil</div><div class="metric-label">Ancho min. 1oz Cu</div></div>
+    <div class="metric"><div class="metric-val">4 mil</div><div class="metric-label">Espaciado minimo</div></div>
+    <div class="metric"><div class="metric-val">14 mil</div><div class="metric-label">Via minima</div></div>
+    <div class="metric"><div class="metric-val">3W</div><div class="metric-label">Regla crosstalk</div></div>
+    <div class="metric"><div class="metric-val">4.5 FR-4</div><div class="metric-label">Constante dielectrica</div></div>
+    <div class="metric"><div class="metric-val">0.1 µF</div><div class="metric-label">Desacoplamiento Vcc</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa de Encapsulados</h3>
+    <table>
+      <tr><th>Parametro</th><th>THT</th><th>SMD 0603</th><th>SMD 0402</th></tr>
+      <tr><td>Inductancia parasita</td><td>5–15 nH</td><td>1–2 nH</td><td>&lt;0.5 nH</td></tr>
+      <tr><td>Densidad de montaje</td><td>Baja</td><td>Alta</td><td>Muy alta</td></tr>
+      <tr><td>Soldabilidad manual</td><td>Facil</td><td>Media</td><td>Dificil</td></tr>
+      <tr><td>Costo Pick &amp; Place</td><td>Manual</td><td>SMT robot</td><td>SMT robot</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Caja de Herramientas M0</h3>
+    <div class="tool-grid">
+      <div class="tool-card"><div class="name">KiCad EDA v9.x</div><div class="desc">Suite OSS completa: Eeschema + Pcbnew + GerbView. Motor de ruteo 1 nm interno con Interactive Router (Shove/Walkaround).</div></div>
+      <div class="tool-card"><div class="name">kicad-jlcpcb-tools</div><div class="desc">Plugin Python/C++. Auto-compila Gerbers, CPL y BOM. Incluye Rotation Manager para offset axial de footprints.</div></div>
+      <div class="tool-card"><div class="name">FreeRouting</div><div class="desc">Trazado algoritmico externo. Util en alta densidad logica; no recomendado en lineas de audio analogico.</div></div>
+      <div class="tool-card"><div class="name">Gerbv / GerbView</div><div class="desc">Validacion cruzada: alineacion de soldermask, silk invadiendo pads y dimensiones Edge.Cuts pre-produccion.</div></div>
+      <div class="tool-card"><div class="name">PCBWay Plugin</div><div class="desc">Inyeccion directa de Netlists a servidores DFM de PCBWay para cotizacion inmediata.</div></div>
+      <div class="tool-card"><div class="name">KiCad Scripting Console</div><div class="desc">Python API para automatizar huellas, posiciones y netlist manipulation via pcb.GetPads().</div></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Fundamentos</div>
+    <div class="module-title">Integridad de Señal y Fundamentos de Ruido</div>
+    <div class="module-sub">80/20 arquitectonico, rutas de retorno, ground bounce, efecto Miller</div>
+  </div>
+
+  <div class="card">
+    <h3>Principio del 80/20 Arquitectonico</h3>
+    <p>El 80% del rendimiento en integridad de señal y mitigacion de ruido EMC se decide en la <strong>ubicacion y particionamiento</strong> de componentes. A bajas frecuencias la corriente de retorno sigue la ruta de menor resistencia. A altas frecuencias busca la ruta de menor inductancia: directamente debajo de la pista de señal en el plano de tierra.</p>
+    <div class="formula">V_bounce = L_parasitic × (di/dt)</div>
+    <div class="formula">f_cutoff = 1 / (2π · Ri · Cp · (1 + Av))  — Efecto Miller</div>
+  </div>
+
+  <div class="card">
+    <h3>Simulacion: Retorno de Corriente en Python</h3>
+    <pre>import numpy as np
+
+def simulate_return_path(freq_hz, trace_inductance_nH=10, plane_resistance_mohm=5):
+    L = trace_inductance_nH * 1e-9
+    R = plane_resistance_mohm * 1e-3
+    omega = 2 * np.pi * freq_hz
+    Z_L = omega * L
+    Z_R = R
+    frac_inductive = Z_L / (Z_L + Z_R)
+    return frac_inductive
+
+freqs = np.logspace(3, 9, 500)  # 1kHz - 1GHz
+fracs = [simulate_return_path(f) for f in freqs]
+# A 1MHz la corriente ya prefiere el camino inductivo (bajo la pista)
+
+def miller_fc(R_source_ohm, C_parasitic_fF, Av):
+    Cp = C_parasitic_fF * 1e-15
+    return 1 / (2 * np.pi * R_source_ohm * Cp * (1 + Av))
+
+print(f"fc sin Miller (Av=1): {miller_fc(1e6, 1, 1)/1e3:.1f} kHz")
+print(f"fc con Miller (Av=100): {miller_fc(1e6, 1, 100)/1e3:.2f} kHz")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Calcula la frecuencia de corte Miller para R_source=1MΩ, Cp=2pF, Av=50</li>
+      <li>¿Por que los capacitores de desacoplamiento deben estar a ≤0.1 pulgadas del pin Vcc del IC?</li>
+      <li>Explica la diferencia entre crosstalk capacitivo e inductivo con un ejemplo de ruteo</li>
+      <li>¿Que genera un "ground slot" bajo una pista de señal digital de 100 MHz?</li>
+      <li>Define Ground Bounce y describe dos tecnicas de mitigacion en PCB</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q1 · Feynman Quiz — Retorno de Corriente</h4>
+    <p class="quiz-q">A altas frecuencias, la corriente de retorno sigue la ruta de menor inductancia (directamente bajo la pista de señal). ¿Por que un slot en el plano GND bajo una pista de 100 MHz es tan dañino?</p>
+    <details><summary>Ver respuesta</summary><p>A altas frecuencias Z=jωL domina sobre R. El camino de menor inductancia es el que minimiza el area del bucle magnetico: directamente bajo la pista al otro lado del dielectrico. Un slot obliga al retorno a rodearlo, aumentando enormemente el area del bucle → mayor L → mayor radiacion EMI y aumento del V_bounce = L·di/dt. El slot convierte la pista en una antena efectiva.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← M0</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Esquematica</div>
+    <div class="module-title">Esquematizacion Semantica en Eeschema</div>
+    <div class="module-sub">Netlist como contrato electrico, Power Flags, jerarquia, anotacion</div>
+  </div>
+
+  <div class="card">
+    <h3>El Netlist como Contrato Electrico</h3>
+    <p>Eeschema no es un dibujo tecnico: es la <strong>definicion formal del netlist</strong>. Cada conexion representa un nodo electrico. El ERC verifica que todos los nodos tengan al menos una fuente de alimentacion y que los pines no queden flotantes.</p>
+    <p>Si omites los <code>PWR_FLAG</code> en los nets de alimentacion (VCC, GND), el ERC reporta errores de "Pin no conectado a ningun driver" porque los simbolos de tierra solo son referencias visuales, no drivers electricos. El <code>PWR_FLAG</code> declara explicitamente que ese net esta energizado.</p>
+  </div>
+
+  <div class="card">
+    <h3>Pre-check ERC en Python</h3>
+    <pre>#!/usr/bin/env python3
+"""Pre-check ERC: verifica Power Flags y nets flotantes."""
+
+class Net:
+    def __init__(self, name): self.name = name
+
+components = {
+    'U1': {'value': 'INA128', 'footprint': 'Package_DIP:DIP-8_W7.62mm'},
+    'R1': {'value': '1k',    'footprint': 'Resistor_SMD:R_0603_1608Metric'},
+    'C1': {'value': '100n',  'footprint': 'Capacitor_SMD:C_0603_1608Metric'},
+}
+
+nets = {'VCC': Net('+15V'), 'VEE': Net('-15V'), 'GND': Net('GND'),
+        'IN_P': Net('AIN+'), 'IN_N': Net('AIN-'), 'OUT': Net('VOUT')}
+
+power_flags_required = ['VCC', 'VEE', 'GND']
+for net_name in power_flags_required:
+    print(f"[INFO] PWR_FLAG requerido en net: {nets[net_name].name}")
+
+for name, net in nets.items():
+    connected = name in ['VCC', 'VEE', 'GND', 'IN_P', 'IN_N', 'OUT']
+    status = "OK Conectado" if connected else "FLOTANTE - anadir PWR_FLAG"
+    print(f"Net {name} ({net.name}): {status}")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>¿Que sucede si olvidas el PWR_FLAG en el net VCC? Describe el error ERC exacto</li>
+      <li>Explica la diferencia entre un pin de tipo "Input", "Output" y "BiDir" en Eeschema</li>
+      <li>¿Cuando usarias una hoja jerarquica vs un bloque de bus global?</li>
+      <li>Define "net tie" y cuando se usa en diseños de audio de alta fidelidad</li>
+      <li>¿Por que es importante que los designadores sean unicos en todo el schematic?</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q2 · Feynman Quiz — PWR_FLAG</h4>
+    <p class="quiz-q">¿Por que es obligatorio añadir PWR_FLAG en nets de alimentacion como VCC y GND en KiCad?</p>
+    <details><summary>Ver respuesta</summary><p>Los simbolos de tierra (GND, VCC) son referencias visuales en el esquema pero no son "drivers electricos" desde el punto de vista del ERC. El ERC necesita saber que cada net de alimentacion tiene una fuente activa. Sin PWR_FLAG, el motor ERC reporta "Pin not driven" en todos los pines conectados a ese net porque no detecta ningun elemento que suministre energia al nodo. El PWR_FLAG es un simbolo especial que declara explicitamente "este net esta energizado por una fuente externa".</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← M1</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Tierra</div>
+    <div class="module-title">Star Grounding y Gestion de Rutas de Retorno</div>
+    <div class="module-sub">Star point, daisy-chain vs star, plano GND vs star grounding</div>
+  </div>
+
+  <div class="card">
+    <h3>Star Grounding en Audio de Alta Ganancia</h3>
+    <p>Todos los retornos convergen fisicamente en un unico "punto de estrella" ubicado en la fuente de poder o en el capacitor de filtrado principal. Esto elimina las caidas de tension I·R de caminos compartidos.</p>
+    <div class="formula">V_error = I_stage_n × R_shared_path → V_noise = V_error × Av_total</div>
+  </div>
+
+  <div class="card">
+    <h3>Simulacion: Star Point vs Daisy Chain</h3>
+    <pre>import numpy as np
+
+def simulate_grounding(topology='star', n_stages=4, stage_current_mA=10,
+                        trace_resistance_mohm_per_mm=1.5, trace_length_mm=20):
+    R_trace = trace_resistance_mohm_per_mm * trace_length_mm * 1e-3  # Ohms
+    if topology == 'daisy':
+        v_errors = []
+        for i in range(n_stages):
+            I_accumulated = stage_current_mA * (n_stages - 1 - i) * 1e-3
+            v_err = I_accumulated * R_trace * i
+            v_errors.append(v_err * 1000)  # mV
+        print(f"[Daisy] Maximo error: {max(v_errors):.3f} mV")
+    elif topology == 'star':
+        v_errors = [stage_current_mA * 1e-3 * R_trace * 1000 for _ in range(n_stages)]
+        print(f"[Star]  Maximo error: {max(v_errors):.3f} mV")
+
+simulate_grounding('daisy', n_stages=4)
+simulate_grounding('star', n_stages=4)
+Av_total = 40
+max_daisy_mV = 4 * 10 * 1.5e-3 * 20 * 1e-3 * 1000 * 3
+print(f"Ruido amplificado daisy = {max_daisy_mV * Av_total:.2f} mV @ salida")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Dibuja el esquema de Star Grounding para un sistema de 3 stages. ¿Donde esta el star point?</li>
+      <li>Calcula V_error para una cadena daisy de 3 stages con I=15mA y R_trace=3mΩ por segment</li>
+      <li>¿Por que el star point debe estar en el capacitor de filtrado y no en el conector de salida?</li>
+      <li>¿Cuando un plano de GND continuo es MEJOR que star grounding? Da dos casos concretos</li>
+      <li>Define "ground plane slot" y explica su impacto en EMI para señales digitales de 50 MHz</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q3 · Feynman Quiz — Star Grounding</h4>
+    <p class="quiz-q">En Star Grounding, ¿por que se elimina el ruido de tierra inter-stage que si aparece en una topologia daisy-chain?</p>
+    <details><summary>Ver respuesta</summary><p>En daisy-chain, la corriente del ultimo stage fluye por la resistencia de traza de TODOS los stages anteriores antes de llegar al GND comun, generando V_error = I_ultimo × (R1+R2+R3). Este voltaje de error queda en el nodo de tierra de cada stage y la ganancia total lo amplifica: un error de 1mV con Av=40 se convierte en 40mV de ruido a la salida. En star grounding, cada stage tiene su propio retorno directo al punto estrella: V_error = I_n × R_n exclusivamente. Los errores de tierra de otros stages no afectan al tuyo.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← M2</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Parasitos</div>
+    <div class="module-title">Red RLC Parasita: Capacitancia e Inductancia</div>
+    <div class="module-sub">Capacitancia parasita, inductancia en encapsulados, resonancia LC, efecto Miller</div>
+  </div>
+
+  <div class="card">
+    <h3>Capacitancia Parasita y Filtro Paso Bajo Involuntario</h3>
+    <p>Todo dielectrico FR-4 adyacente a pistas de alta impedancia crea un filtro paso bajo involuntario. Para una pastilla de guitarra pasiva (R_source ≈ 1 MΩ), incluso 2 pF de capacitancia parasita de la PCB produce:</p>
+    <div class="formula">f_c = 1 / (2π · R_source · C_parasitic) = 1 / (2π · 10⁶ · 2×10⁻¹²) ≈ 79.6 kHz</div>
+    <p>Los terminales insertables (THT) imponen <strong>5–15 nH</strong> de inductancia parasita por lead, frente a <strong>&lt;1–2 nH</strong> en SMD. La solucion es el desacoplamiento localizado: 0.1 µF a ≤0.1 pulgadas del pin Vcc del IC.</p>
+    <div class="formula">V_spike = L_parasitic × (ΔI / Δt) → minimizar L ubicando Cdec adyacente al IC</div>
+  </div>
+
+  <div class="card">
+    <h3>Modelado RLC en Python</h3>
+    <pre>import numpy as np
+
+def rlc_impedance(freq_hz, R, L_nH, C_pF):
+    omega = 2 * np.pi * freq_hz
+    L = L_nH * 1e-9; C = C_pF * 1e-12
+    Z_total = R + 1j*omega*L + (1/(1j*omega*C) if C>0 else 0)
+    return np.abs(Z_total)
+
+def miller_bw_reduction(R_in_ohm, C_parasitic_pF, Av):
+    C_miller = C_parasitic_pF * 1e-12 * (1 + Av)
+    f_minus3dB = 1 / (2 * np.pi * R_in_ohm * C_miller)
+    return f_minus3dB
+
+# Comparar SMD vs THT
+freqs = np.logspace(3, 9, 1000)
+Z_smd = [rlc_impedance(f, 0.05, 1, 2) for f in freqs]   # SMD: L=1nH
+Z_tht = [rlc_impedance(f, 0.1, 10, 3) for f in freqs]   # THT: L=10nH
+
+# Efecto Miller: Av=50, R_source=1MOhm, C_parasita=2pF
+fc = miller_bw_reduction(1e6, 2, 50)
+print(f"f_c con Av=50 y Cp=2pF: {fc/1e3:.1f} kHz")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Un IC digital conmuta 200mA en 2ns. Con L_trace=5nH, ¿cual es el spike de voltaje?</li>
+      <li>Calcula f_resonancia para L=10nH (traza) en serie con C=100nF (decoupling)</li>
+      <li>¿Por que un capacitor electrolitico de 100µF NO puede reemplazar a un ceramico de 0.1µF para desacoplamiento de alta frecuencia?</li>
+      <li>Explica el concepto de "self-resonant frequency" (SRF) de un capacitor y su importancia</li>
+      <li>¿Que es el ESR de un capacitor y como afecta al desacoplamiento?</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q4 · Feynman Quiz — Desacoplamiento</h4>
+    <p class="quiz-q">¿Por que los capacitores de desacoplamiento deben estar a ≤0.1 pulgadas del pin Vcc del IC? ¿Que sucede si estan a 5mm de distancia?</p>
+    <details><summary>Ver respuesta</summary><p>El par "traza + capacitor" forma un filtro LC. La inductancia de una traza de 5mm es aprox. 5nH. A 100MHz: Z_L = ωL = 2π × 10⁸ × 5×10⁻⁹ ≈ 3.14Ω. Esta impedancia inductiva domina sobre la impedancia capacitiva del 0.1µF (Z_C ≈ 0.016Ω a 100MHz). El capacitor ya no puede suministrar la corriente instantanea que el IC necesita porque la inductancia de la traza frena el flujo. Soluciones: capacitor lo mas cerca posible del pin de alimentacion, y usar vias directas (sin traza larga) al plano de GND.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← M3</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Impedancia</div>
+    <div class="module-title">Impedancia Microstrip y Regla 3W</div>
+    <div class="module-sub">Ecuacion microstrip, regla 3W crosstalk, regla 20H, cruces ortogonales</div>
+  </div>
+
+  <div class="card">
+    <h3>Ecuacion de Impedancia Microstrip</h3>
+    <div class="formula">Z₀ = (87 / √(Eᵣ + 1.41)) × ln(5.98h / (0.8w + t))</div>
+    <p>Donde Eᵣ ≈ 4.5 para FR-4, h = altura del dielectrico (mils), w = ancho de pista (mils), t = grosor del cobre (mils). Para 50Ω con h=62mil, t=1.37mil: w ≈ 110 mil (2.8mm).</p>
+    <div class="formula">Separacion minima ≥ 3 × W_pista (edge-to-edge) → Regla 3W</div>
+    <div class="formula">Retraccion plano de potencia = 20 × h desde borde (Regla 20H)</div>
+  </div>
+
+  <div class="card">
+    <h3>Calculadora Microstrip en Python</h3>
+    <pre>import numpy as np
+from scipy.optimize import brentq
+
+def microstrip_impedance(w_mil, h_mil, t_mil, Er=4.5):
+    return (87 / np.sqrt(Er + 1.41)) * np.log(5.98 * h_mil / (0.8 * w_mil + t_mil))
+
+def find_width_for_impedance(Z_target, h_mil=62, t_mil=1.37, Er=4.5):
+    f = lambda w: microstrip_impedance(w, h_mil, t_mil, Er) - Z_target
+    return brentq(f, 0.1, 500)
+
+def crosstalk_coupling(separation_mil, width_mil, h_mil):
+    edge_to_edge = separation_mil - width_mil
+    return 1 / (1 + (edge_to_edge / h_mil) ** 2)
+
+for Z_target in [50, 75, 100]:
+    w = find_width_for_impedance(Z_target)
+    print(f"Z₀ = {Z_target}Ω → w = {w:.1f} mil ({w*0.0254:.2f} mm)")
+
+w_signal = 10  # mil
+print(f"\nRegla 3W: separacion minima = {3*w_signal} mil ({3*w_signal*0.0254:.2f} mm)")
+for sep in [10, 20, 30, 40]:
+    c = crosstalk_coupling(sep, w_signal, 62)
+    ok = "OK" if sep >= 3*w_signal else "VIOLA 3W"
+    print(f"  sep={sep}mil: acoplamiento={c:.3f} → {ok}")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Calcula Z₀ para w=110mil, h=62mil, t=1.37mil, Er=4.5 usando la ecuacion microstrip</li>
+      <li>¿A que frecuencia importa el control de impedancia para una pista de 5cm de longitud?</li>
+      <li>La regla 3W aplica entre pistas del mismo net? ¿Por que o por que no?</li>
+      <li>¿Cual es el proposito fisico de los Teardrops en las transiciones Pista-Pad?</li>
+      <li>Define "reflexion de señal" y cuando ocurre en una PCB digital</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q5 · Feynman Quiz — Regla 3W</h4>
+    <p class="quiz-q">La Regla 3W establece que la separacion entre pistas paralelas debe ser ≥3W (tres veces el ancho de la pista edge-to-edge). ¿Que fenomeno fisico mitiga exactamente, y por que el campo electrico no se "detiene" en el borde de la pista?</p>
+    <details><summary>Ver respuesta</summary><p>La regla 3W mitiga el crosstalk capacitivo entre pistas paralelas. El campo electrico de una pista no termina en su borde: se extiende en el dielectrico circundante siguiendo las lineas de campo de un conductor en un medio. Cuanto mas cerca este otra pista, mayor fraccion de ese campo electrico se acopla a ella, induciendo una tension parasita proporcional a la capacitancia mutua entre las pistas. Manteniendo separacion ≥3W, el acoplamiento cae por debajo del umbral critico (aprox. -40dB relativo). La regla 3W es una heuristica empirica derivada de simulaciones de campo; la separacion exacta optima depende del stackup y la frecuencia.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← M4</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · DRC</div>
+    <div class="module-title">Design Rules Check (DRC) y Board Setup</div>
+    <div class="module-sub">Parametros DRC para 1oz Cu, thermal relief, soldermask, filtro de huellas</div>
+  </div>
+
+  <div class="card">
+    <h3>Parametros DRC para 1oz de Cobre</h3>
+    <table>
+      <tr><th>Parametro</th><th>Valor Minimo</th><th>Motivo</th></tr>
+      <tr><td>Ancho minimo de pista</td><td>4.5 mil (0.114mm)</td><td>Limite de grabado quimico</td></tr>
+      <tr><td>Espaciado minimo</td><td>4 mil (0.10mm)</td><td>Resolucion de soldermask</td></tr>
+      <tr><td>Via minima (drill)</td><td>14 mil (0.36mm)</td><td>Limite mecanico de broca</td></tr>
+      <tr><td>Anillo anular de via</td><td>4 mil (0.10mm) minimo</td><td>Fiabilidad de conexion PTH</td></tr>
+      <tr><td>Solder Mask Bridge</td><td>6 mil minimo entre pads</td><td>Evitar cortos por tension superficial</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Verificacion DRC con Python API</h3>
+    <pre>#!/usr/bin/env python3
+"""Verifica parametros DRC usando KiCad Python API (pcbnew)."""
+
+try:
+    import pcbnew
+    board = pcbnew.LoadBoard("mi_proyecto.kicad_pcb")
+    ds = board.GetDesignSettings()
+    track_min  = pcbnew.ToMM(ds.m_TrackMinWidth)
+    clearance  = pcbnew.ToMM(ds.m_MinClearance)
+    via_min    = pcbnew.ToMM(ds.m_ViasMinSize)
+
+    JLCPCB = {'track':0.127, 'clearance':0.127, 'via':0.3}
+    for name, val, minv in [("Ancho pista", track_min, JLCPCB['track']),
+                             ("Espaciado",   clearance,  JLCPCB['clearance']),
+                             ("Via minima",  via_min,    JLCPCB['via'])]:
+        ok = val >= minv
+        print(f"{'OK' if ok else 'FAIL'} {name}: {val:.3f}mm")
+except ImportError:
+    print("Ejecutar desde la Scripting Console de KiCad Pcbnew.")
+    print("Valores recomendados (JLCPCB, 1oz Cu):")
+    print("  Ancho min. pista: 0.127 mm (5 mil)")
+    print("  Espaciado min.:   0.127 mm (5 mil)")
+    print("  Via min. drill:   0.3 mm (12 mil)")
+    print("  Anillo anular:    0.15 mm (6 mil)")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>¿Por que 4.5 mil es el ancho minimo de pista para 1oz de cobre? ¿Que ocurre si se viola?</li>
+      <li>Explica la diferencia entre "clearance" y "creepage" en PCBs de alta tension</li>
+      <li>¿Cuando deshabilitar el Thermal Relief en un pad? Da un ejemplo concreto</li>
+      <li>Define V-Scoring y cual es la separacion minima de pistas al borde de corte</li>
+      <li>¿Que es el "annular ring" de una via y por que afecta la fiabilidad mecanica?</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q6 · Feynman Quiz — Thermal Relief</h4>
+    <p class="quiz-q">¿Cual es la funcion principal del Thermal Relief en un pad conectado a un plano de cobre? ¿Cuando conviene desactivarlo?</p>
+    <details><summary>Ver respuesta</summary><p>El Thermal Relief son interrupciones metalicas alrededor de un pad pasante. Su funcion es impedir que el gran plano de cobre disipe el calor del soldador demasiado rapido, lo que causaria que la soldadura solidifique antes de fundir correctamente ("junta fria"). El plano actua como disipador termico: sin thermal relief, el calor se pierde hacia el cobre y el estaño no moja bien el pad. Conviene desactivarlo en zonas de alta densidad de corriente (MOSFET, inductores de Clase-D) donde se necesita la menor resistencia termica posible entre el pad y el plano de cobre que sirve de disipador termico.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← M5</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Huellas</div>
+    <div class="module-title">Huellas SMD/THT y Gestion de Componentes</div>
+    <div class="module-sub">Mixed Assembly, keepout zones, codigos LCSC, JST connectors</div>
+  </div>
+
+  <div class="card">
+    <h3>Filosofia de Mixed Assembly</h3>
+    <p>En diseños de bajo volumen, la estrategia <strong>Mixed Assembly</strong> delega a la robotica SMT (JLCPCB) el ensamblado de los componentes pasivos SMD de alto volumen (capacitores 0402, resistencias 0603) dejando al operario humano solo la soldadura de conectores mecanicos y componentes THT de gran tamaño.</p>
+    <p>Para PCBA JLCPCB, cada componente debe tener un codigo LCSC (ej. <code>C123456</code>) en el campo de propiedades del simbolo de Eeschema. Este codigo enlaza directamente con el inventario de JLCPCB para cotizacion automatica.</p>
+  </div>
+
+  <div class="card">
+    <h3>Auditoria BOM con Python</h3>
+    <pre>#!/usr/bin/env python3
+"""Audita el BOM verificando codigos LCSC."""
+import csv
+
+def audit_bom(bom_file):
+    issues = []
+    components = []
+    with open(bom_file, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            ref = row.get('Reference', '')
+            value = row.get('Value', '')
+            lcsc = row.get('LCSC', row.get('lcsc', ''))
+            components.append({'ref': ref, 'value': value, 'lcsc': lcsc})
+            if not lcsc or lcsc.strip() == '':
+                issues.append(f"[WARN] {ref} ({value}): Sin codigo LCSC")
+            elif not lcsc.startswith('C'):
+                issues.append(f"[WARN] {ref}: LCSC '{lcsc}' formato inusual")
+    print(f"Total componentes: {len(components)}, Issues: {len(issues)}")
+    for issue in issues:
+        print(issue)
+    if not issues:
+        print("Todos los componentes tienen codigo LCSC valido")
+
+# Datos de ejemplo
+example_data = [
+    {'ref': 'R1', 'value': '10k',   'lcsc': 'C17414'},
+    {'ref': 'C1', 'value': '100n',  'lcsc': 'C14663'},
+    {'ref': 'U1', 'value': 'TL072', 'lcsc': ''},
+]
+for c in example_data:
+    status = "OK" if c['lcsc'] else "Falta LCSC"
+    print(f"{status} {c['ref']:4s} ({c['value']:8s}) LCSC={c['lcsc'] or 'N/A'}")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>¿Cual es la diferencia entre un courtyard y una keepout zone en KiCad?</li>
+      <li>Explica por que el codigo LCSC es critico para cotizacion automatica en JLCPCB</li>
+      <li>¿Que ventajas tiene JST XH sobre terminales de tornillo para señales de audio?</li>
+      <li>Define "Solder Mask Web" y su importancia en ICs TQFP durante el proceso de reflow</li>
+      <li>¿Cuando preferirías un encapsulado QFN sobre TQFP y cuales son las implicaciones de DFM?</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q7 · Feynman Quiz — Mixed Assembly</h4>
+    <p class="quiz-q">En Mixed Assembly para JLCPCB, ¿que tipo de componentes se dejan para ensamblado manual humano y por que? ¿Que ventaja economica ofrece esta estrategia?</p>
+    <details><summary>Ver respuesta</summary><p>Los componentes que se dejan para ensamblado manual son los mecanicamente grandes o incompatibles con el proceso SMT automatizado: conectores de chasis (jacks 6.35mm, USB), potenciometros (Alpha 9mm), transformadores toroidales, switches de pedal, y cualquier componente THT de gran tamaño. Estos componentes requieren soldadura de orificio pasante que el proceso SMT no puede manejar. La ventaja economica es doble: (1) el precio PCBA automatizado de JLCPCB es muy bajo para pasivos SMD (centavos por componente), mientras que ensamblar cada conector a mano es barato en tiempo humano para bajos volumenes; (2) los componentes no incluidos en el BOM de PCBA no pagan el costo de setup de la maquina pick-and-place.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← M6</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · Layout</div>
+    <div class="module-title">Layout Fisico en Pcbnew</div>
+    <div class="module-sub">Flujo de layout, dimensiones de pista, ruteo 45°, Edge.Cuts</div>
+  </div>
+
+  <div class="card">
+    <h3>Flujo de Layout Fisico</h3>
+    <p>El flujo de Pcbnew sigue un orden estricto: (1) definir limites mecanicos en <code>Edge.Cuts</code>, (2) ubicar interfaz I/O y electromecanica, (3) ubicar ICs criticos (ADC/DAC, MCU) cerca de sus señales mas sensibles, (4) rutear dominios segregados analogico-digital, (5) añadir planos de cobre y vias de stitching.</p>
+    <p>Para audio de bajo nivel: pistas de señal en <strong>10–20 mil</strong>. Para potencia y retornos de tierra: <strong>&gt;50 mil</strong>. Las esquinas a 90° en pistas de alta frecuencia concentran carga electrica y crean discontinuidades de impedancia — rutear a <strong>45°</strong>.</p>
+  </div>
+
+  <div class="card">
+    <h3>Automatizacion de Placement con Python API</h3>
+    <pre>#!/usr/bin/env python3
+"""Coloca capacitores de desacoplamiento adyacentes a un IC."""
+try:
+    import pcbnew
+
+    def auto_place_decoupling(board, ic_ref, cap_refs, offset_mm=(1.5, 0)):
+        ic = None
+        for fp in board.GetFootprints():
+            if fp.GetReference() == ic_ref:
+                ic = fp; break
+        if not ic:
+            print(f"IC {ic_ref} no encontrado"); return
+        ic_pos = ic.GetPosition()
+        ic_x = pcbnew.ToMM(ic_pos.x); ic_y = pcbnew.ToMM(ic_pos.y)
+        for i, cap_ref in enumerate(cap_refs):
+            for fp in board.GetFootprints():
+                if fp.GetReference() == cap_ref:
+                    new_x = pcbnew.FromMM(ic_x + offset_mm[0])
+                    new_y = pcbnew.FromMM(ic_y + offset_mm[1] + i * 2.0)
+                    fp.SetPosition(pcbnew.VECTOR2I(new_x, new_y))
+                    print(f"  {cap_ref} → ({ic_x+offset_mm[0]:.2f}, {ic_y+i*2:.2f}) mm")
+        board.Save(board.GetFileName())
+
+    board = pcbnew.GetBoard()
+    auto_place_decoupling(board, 'U1', ['C1', 'C2'], offset_mm=(1.5, 0))
+except ImportError:
+    print("Ejecutar desde la Scripting Console de KiCad Pcbnew")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>¿Por que los ICs de conversion ADC/DAC deben ubicarse en el limite entre dominios analogico y digital?</li>
+      <li>¿Cual es el impacto de una esquina a 90° en una pista de 1 GHz? ¿Y en una de 10 kHz?</li>
+      <li>Explica el proceso de "Update PCB from Schematic" y que datos transfiere</li>
+      <li>¿Que es el "Interactive Router" de KiCad y cuando usar modo Shove vs Walkaround?</li>
+      <li>Define "Ratsnest" y su funcion en el proceso de layout</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q8 · Feynman Quiz — Ancho de Pista</h4>
+    <p class="quiz-q">¿Que ancho de pista es apropiado para señales de audio de bajo nivel? ¿Por que usar 10–20 mil y no 4 mil (el minimo de manufactura)?</p>
+    <details><summary>Ver respuesta</summary><p>Las señales de audio de bajo nivel (pre-amplificador, captacion de pastilla) requieren pistas de 10–20 mil por varias razones: (1) resistencia de traza: a mayor anchura, menor R_trace y menor caida de tension que el receptor de alta impedancia veria como ruido; (2) capacidad de corriente: aunque las corrientes son pequeñas, un ancho mayor proporciona margen de seguridad termico; (3) fiabilidad mecanica: pistas muy delgadas son mas vulnerables a fracturas por ciclaje termico en pedales de efectos que reciben impactos; (4) manufacturabilidad: pistas de 4 mil estan en el limite del proceso y tienen mayor tasa de defecto. El minimo de manufactura 4.5 mil existe para potencia o señales digitales de alta densidad donde el area de PCB es limitante.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← M7</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Mixed-Signal</div>
+    <div class="module-title">Ruteo Analogico-Digital Segregado</div>
+    <div class="module-sub">Particionamiento AGND/DGND, puente bajo el ADC/DAC, cruces ortogonales, guard rings</div>
+  </div>
+
+  <div class="card">
+    <h3>Particionamiento de Dominios</h3>
+    <p>Los dominios analogico (AGND) y digital (DGND) deben mantenerse fisicamente segregados. La regla fundamental: los planos AGND y DGND deben conectarse en un <strong>unico punto</strong>, exactamente debajo del encapsulado del IC conversor (ADC/DAC). Cualquier otro puente crearia un camino alternativo de corriente que formaria un bucle inductivo → antena para el ruido digital.</p>
+    <p>Cuando las pistas de señal analogica y digital deben cruzarse inevitablemente, se hace de forma <strong>ortogonal (90°) en capas adyacentes</strong>. Esto minimiza el area de solapamiento magnetico (inductancia mutua) al maximo posible.</p>
+  </div>
+
+  <div class="card">
+    <h3>Simulacion de Acoplamiento AGND-DGND</h3>
+    <pre>import numpy as np
+
+def simulate_coupling(agnd_dgnd_bridges, freq_hz, trace_distance_mm=5):
+    L_per_bridge = 2e-9 * trace_distance_mm
+    omega = 2 * np.pi * freq_hz
+    Z_bridges_total = (1j * omega * L_per_bridge) / agnd_dgnd_bridges
+    digital_noise_mA = 50
+    V_noise = abs(Z_bridges_total) * digital_noise_mA * 1e-3
+    return V_noise * 1e6  # µV
+
+# Efecto del numero de puentes a 1MHz
+for n_bridges in [1, 2, 5, 10]:
+    noise = simulate_coupling(n_bridges, 1e6)
+    print(f"{n_bridges} puente(s): {noise:.1f} µV acoplados")
+
+# Efecto de la posicion del puente
+for dist_mm in [0.5, 2, 5, 10, 20]:
+    noise = simulate_coupling(1, 1e6, dist_mm)
+    print(f"Distancia al ADC={dist_mm:5.1f}mm: ruido rel.={noise:.1f} µV")
+
+print("Regla de oro: UN SOLO puente, directamente bajo el ADC/DAC")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>¿Por que el puente AGND-DGND debe estar especificamente bajo el ADC/DAC?</li>
+      <li>Explica el concepto de "ground slot" intencional vs accidental en una PCB mixed-signal</li>
+      <li>¿Cuando usar un "guard ring" y como se conecta en el esquema?</li>
+      <li>¿Es correcto usar un plano de GND continuo en un ADC de 16-bit? Argumenta con fisica</li>
+      <li>Define "diafonía inducida magneticamente" vs "capacitiva" y da una solucion para cada una</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q9 · Feynman Quiz — Puente AGND-DGND</h4>
+    <p class="quiz-q">En una PCB mixed-signal, ¿cuantos puentes AGND-DGND deben existir y exactamente donde? ¿Que sucede si añades un segundo puente en otra ubicacion?</p>
+    <details><summary>Ver respuesta</summary><p>Debe existir un UNICO puente, directamente bajo el encapsulado del conversor ADC/DAC. Este punto garantiza que AGND y DGND estan al mismo potencial exactamente donde el conversor necesita la transicion. Si añades un segundo puente en otro punto, creas un bucle cerrado de corriente entre los dos puentes: la corriente de conmutacion digital puede circular por este bucle, que actua como espira inductiva de area proporcional a la distancia entre los dos puentes. Cuanto mas lejos esten los puentes, mayor area del bucle y mayor inductancia → mayor tension de ruido acoplada al plano AGND → ruido digital en la cadena analogica.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← M8</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Planos</div>
+    <div class="module-title">Teardrops, Planos de Cobre y Vias de Stitching</div>
+    <div class="module-sub">Teardrops parametricos, copper pours, stitching vias, regla 55</div>
+  </div>
+
+  <div class="card">
+    <h3>Teardrops, Planos y Stitching</h3>
+    <p>Los teardrops distribuyen la concentracion de esfuerzo mecanico en la transicion Pista-Pad, reduciendo la tasa de fractura en ciclaje termico y vibraciones mecanicas (critico en pedales de efectos que reciben pisotones).</p>
+    <p>Las vias de stitching interconectan planos de GND en diferentes capas a intervalos regulares, creando una "jaula de Faraday" y eliminando la resonancia entre planos (cavity resonance).</p>
+    <div class="formula">Espaciado stitching vias ≤ λ/20 = c / (20 × f_max × √Eᵣ)</div>
+  </div>
+
+  <div class="card">
+    <h3>Script de Generacion de Stitching Vias</h3>
+    <pre>#!/usr/bin/env python3
+"""Calcula espaciado de stitching vias y las añade via Python API."""
+import math
+
+# Calculo manual de espaciado
+for f_mhz in [10, 50, 100, 500]:
+    c = 3e8; Er = 4.5; f = f_mhz * 1e6
+    lam = c / (f * math.sqrt(Er))
+    spacing = (lam / 20) * 1000  # mm
+    print(f"  f={f_mhz:4d} MHz → espaciado ≤ {spacing:.1f} mm")
+
+try:
+    import pcbnew, math
+
+    def add_stitching_vias(board, f_max_mhz=100, Er=4.5,
+                           via_drill_mm=0.3, via_size_mm=0.6):
+        f_max = f_max_mhz * 1e6
+        lambda_eff = 3e8 / (f_max * math.sqrt(Er))
+        spacing_mm = (lambda_eff / 20) * 1000
+        print(f"f_max={f_max_mhz}MHz → espaciado={spacing_mm:.1f}mm")
+        # Usar pcbnew.PCB_VIA para añadir vias al board
+        # (requiere GetBoard() desde la Scripting Console)
+
+    board = pcbnew.GetBoard()
+    add_stitching_vias(board, f_max_mhz=100)
+except ImportError:
+    print("Ejecutar desde Scripting Console de KiCad")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>Calcula el espaciado de stitching vias para f_max=500MHz, Er=4.5</li>
+      <li>¿Cual es la diferencia entre una via de stitching y una via de señal?</li>
+      <li>¿Por que los teardrops son especialmente importantes en pedales de efectos que reciben golpes mecanicos?</li>
+      <li>Explica la "cavity resonance" entre planos paralelos y como las stitching vias la eliminan</li>
+      <li>¿Cuando un plano de cobre solido es peor que uno con thermal relief? Da el caso concreto</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q10 · Feynman Quiz — Stitching Vias</h4>
+    <p class="quiz-q">¿Cual es la funcion principal de las vias de stitching en una PCB multicapa, y por que el espaciado maximo esta dado por λ/20?</p>
+    <details><summary>Ver respuesta</summary><p>Las vias de stitching interconectan planos de GND en capas adyacentes a intervalos regulares. Su funcion principal es: (1) eliminar la cavity resonance — dos planos conductores paralelos actuan como una cavidad resonante de microondas que amplifica EMI a frecuencias donde su dimension es multiple de λ/2; las stitching vias cortocircuitan estas resonancias; (2) proporcionar caminos de retorno de baja inductancia entre capas para señales de alta frecuencia; (3) crear una "jaula de Faraday" efectiva alrededor de señales criticas. El criterio λ/20 viene de la teoria de antenas: para que una discontinuidad sea electricamente "pequeña" (no resuene ni radie), su dimension maxima debe ser menor a λ/20 a la frecuencia de operacion maxima.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← M9</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Gerbers</div>
+    <div class="module-title">Exportacion de Gerbers (RS-274X)</div>
+    <div class="module-sub">Formato RS-274X, capas requeridas, parametros criticos de exportacion, Excellon</div>
+  </div>
+
+  <div class="card">
+    <h3>Capas Gerber Requeridas (Extensiones Protel)</h3>
+    <table>
+      <tr><th>Capa</th><th>Extension Protel</th><th>Contenido</th></tr>
+      <tr><td>Copper Top</td><td>.GTL</td><td>Pistas y pads capa superior</td></tr>
+      <tr><td>Copper Bottom</td><td>.GBL</td><td>Pistas y pads capa inferior</td></tr>
+      <tr><td>Soldermask Top</td><td>.GTS</td><td>Mascara de soldadura superior</td></tr>
+      <tr><td>Soldermask Bottom</td><td>.GBS</td><td>Mascara de soldadura inferior</td></tr>
+      <tr><td>Silkscreen Top</td><td>.GTO</td><td>Serigrafia superior</td></tr>
+      <tr><td>Edge.Cuts</td><td>.GKO / .GM1</td><td>Contorno de corte</td></tr>
+      <tr><td>Drill File</td><td>.DRL / .XLN</td><td>Posiciones de taladros (Excellon)</td></tr>
+    </table>
+    <p>Usar coordenadas <strong>Absolute</strong>. Activar extensiones estilo <strong>Protel</strong>. Resolucion RS-274X con precision 4.6 mm = 1 nanometro de resolucion.</p>
+  </div>
+
+  <div class="card">
+    <h3>Exportacion Automatica con Python API</h3>
+    <pre>#!/usr/bin/env python3
+"""Exporta Gerbers en formato JLCPCB automaticamente."""
+try:
+    import pcbnew, os
+
+    def export_gerbers_jlcpcb(board_file, output_dir=None):
+        board = pcbnew.LoadBoard(board_file)
+        if output_dir is None:
+            output_dir = os.path.join(os.path.dirname(board_file), "gerbers")
+        os.makedirs(output_dir, exist_ok=True)
+        pctl = pcbnew.PLOT_CONTROLLER(board)
+        popt = pctl.GetPlotOptions()
+        popt.SetOutputDirectory(output_dir)
+        popt.SetFormat(pcbnew.PLOT_FORMAT_GERBER)
+        popt.SetGerberPrecision(6)
+        popt.SetSubtractMaskFromSilk(True)
+
+        layers = [(pcbnew.F_Cu, "F_Cu"), (pcbnew.B_Cu, "B_Cu"),
+                  (pcbnew.F_Mask, "F_Mask"), (pcbnew.B_Mask, "B_Mask"),
+                  (pcbnew.F_Silkscreen, "F_Silkscreen"),
+                  (pcbnew.Edge_Cuts, "Edge_Cuts")]
+        for layer_id, layer_name in layers:
+            pctl.SetLayer(layer_id)
+            pctl.OpenPlotfile(layer_name, pcbnew.PLOT_FORMAT_GERBER, layer_name)
+            pctl.PlotLayer(); pctl.ClosePlot()
+            print(f"  OK {layer_name}")
+
+        drill_writer = pcbnew.EXCELLON_WRITER(board)
+        drill_writer.CreateDrillandMapFilesSet(output_dir, True, False)
+        print(f"OK Gerbers exportados a: {output_dir}")
+except ImportError:
+    print("Exportacion manual: File → Fabrication Outputs → Gerbers (.gbr)")
+    print("Configurar: Absolute coordinates, Protel extensions, RS-274X")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>¿Por que "Suppress leading zeros" en el archivo Excellon mejora la compatibilidad con CAM?</li>
+      <li>¿Cual es la diferencia entre PTH (Plated Through Hole) y NPTH (Non-Plated)?</li>
+      <li>¿Que es el archivo de "paste layer" (.GTP) y cuando es necesario?</li>
+      <li>Explica la diferencia entre coordenadas Absolute y relativas en el contexto de Gerbers</li>
+      <li>¿Como verificas que la soldermask tiene el clearance correcto sobre los pads?</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q11 · Feynman Quiz — Extensiones Protel</h4>
+    <p class="quiz-q">¿Por que debes activar extensiones "estilo Protel" (.GTL, .GBL, etc.) en lugar de los nombres genericos de KiCad al exportar Gerbers para JLCPCB?</p>
+    <details><summary>Ver respuesta</summary><p>Los sistemas CAM (Computer-Aided Manufacturing) de las fabricantes de PCB como JLCPCB usan las extensiones de archivo para identificar automaticamente que capa representa cada Gerber: .GTL = Copper Top, .GBL = Copper Bottom, .GTS = Solder Mask Top, etc. Si usas extensiones genericas (F_Cu.gbr, B_Cu.gbr), el sistema CAM puede no reconocerlas automaticamente, requiriendo asignacion manual por parte de un operario. Esto introduce latencia, costo adicional, y riesgo de error humano (ej. confundir la capa de soldermask con la de cobre). Las extensiones Protel son el estandar de facto de la industria porque todos los sistemas CAM las reconocen sin configuracion adicional.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← M10</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · BOM/CPL</div>
+    <div class="module-title">BOM y CPL para JLCPCB PCBA Automatizado</div>
+    <div class="module-sub">Bill of Materials, Component Placement List, Rotation Manager, codigos LCSC</div>
+  </div>
+
+  <div class="card">
+    <h3>BOM y CPL para PCBA</h3>
+    <p>El BOM para PCBA automatizado en JLCPCB debe contener en formato CSV: <strong>Designador, Huella, Valor y Codigo LCSC</strong>. El CPL contiene para cada componente SMD: Designador, capa (Top/Bottom), coordenada X, coordenada Y y angulo de rotacion θ.</p>
+    <p>El origen 0° de KiCad no coincide con el angulo 0° de las maquinas de JLCPCB. El plugin <code>kicad-jlcpcb-tools</code> incluye un <strong>Rotation Manager</strong> con una base de datos <code>cpl_rotations_db.csv</code> que mapea los offsets axiales de cada footprint (+90°, -90°, 180°).</p>
+  </div>
+
+  <div class="card">
+    <h3>Generador BOM y CPL en Python</h3>
+    <pre>#!/usr/bin/env python3
+"""Genera BOM y CPL en formato JLCPCB."""
+import csv, re
+
+def generate_jlcpcb_bom(components, output_file="bom_jlcpcb.csv"):
+    groups = {}
+    for comp in components:
+        key = comp.get('lcsc', comp['value'])
+        if key not in groups:
+            groups[key] = {'refs': [], 'value': comp['value'],
+                           'footprint': comp['footprint'], 'lcsc': comp.get('lcsc', '')}
+        groups[key]['refs'].append(comp['ref'])
+    with open(output_file, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Comment', 'Designator', 'Footprint', 'LCSC Part#'])
+        for key, group in groups.items():
+            refs = ','.join(sorted(group['refs']))
+            fp = group['footprint'].split(':')[-1]
+            writer.writerow([group['value'], refs, fp, group['lcsc']])
+    print(f"BOM generado: {output_file} ({len(groups)} lineas unicas)")
+
+# Ejemplo
+components = [
+    {'ref': 'R1', 'value': '10k',   'footprint': 'R_0603', 'lcsc': 'C17414'},
+    {'ref': 'R2', 'value': '10k',   'footprint': 'R_0603', 'lcsc': 'C17414'},
+    {'ref': 'C1', 'value': '100n',  'footprint': 'C_0603', 'lcsc': 'C14663'},
+    {'ref': 'U1', 'value': 'TL072', 'footprint': 'SOIC-8', 'lcsc': 'C6961'},
+]
+generate_jlcpcb_bom(components)</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>¿Por que el angulo 0° de KiCad no coincide con el de las maquinas pick-and-place de JLCPCB?</li>
+      <li>¿Que es el "centroide" de un componente y como se calcula en el contexto del CPL?</li>
+      <li>¿Cuando es preferible usar componentes "Extended Library" vs "Basic" en JLCPCB?</li>
+      <li>Explica por que agrupar componentes identicos en el BOM reduce el costo de PCBA</li>
+      <li>¿Que informacion adicional debe incluirse en el BOM para un diseño medico o de seguridad?</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q12 · Feynman Quiz — Rotation Manager</h4>
+    <p class="quiz-q">¿Por que es necesario el Rotation Manager para exportar el CPL a JLCPCB? ¿Que problema fisico concreto resuelve?</p>
+    <details><summary>Ver respuesta</summary><p>El Rotation Manager corrige el desajuste entre el sistema de coordenadas de KiCad y el de las maquinas pick-and-place de JLCPCB. KiCad define 0° con una orientacion de referencia especifica para cada footprint (generalmente basada en como fue creado en la libreria). Las maquinas pick-and-place de JLCPCB tienen su propio convenio de 0°, generalmente basado en la orientacion del componente cuando esta en la cinta de alimentacion. Sin la correccion, un SOIC-8 que KiCad tiene a 0° podria colocarse rotado 90° o 180° por la maquina, conectando el pin 1 en la posicion equivocada. El Rotation Manager aplica un offset especifico por tipo de footprint (ej. +90° para SOT-23, -90° para TO-252) basado en una base de datos empirica de diferencias entre convenios.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← M11</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · DFM</div>
+    <div class="module-title">DFM, Panelizacion y V-Scoring</div>
+    <div class="module-sub">Design For Manufacturability, panelizacion, V-Scoring vs Mousebites, reglas 3W/20H/55</div>
+  </div>
+
+  <div class="card">
+    <h3>Design For Manufacturability (DFM)</h3>
+    <p>El DFM asegura que el diseño puede fabricarse y ensamblarse de forma economica y confiable. Los errores DFM mas comunes: pads SMD sin apertura de pasta (paste layer), serigrafia sobre pads, pistas demasiado cercanas al borde de corte, y vias sin conexion termica en zonas de alta corriente.</p>
+    <p>Metodos de separacion en panelizacion: <strong>V-Scoring/V-Cut</strong> — muesca en V fresada en ambas caras, separacion minima de pistas al borde ≥0.4mm, rapido pero genera bordes rugosos. <strong>Tab Routing (Mousebites)</strong> — puentes de PCB con series de agujeros pequeños, bordes mas limpios, mayor costo de fresado.</p>
+  </div>
+
+  <div class="card">
+    <h3>Verificacion DFM Automatizada</h3>
+    <pre>#!/usr/bin/env python3
+"""Verificacion DFM automatizada para exportacion a fab."""
+try:
+    import pcbnew
+
+    def dfm_check(board_file):
+        board = pcbnew.LoadBoard(board_file)
+        issues = []
+        edge_box = board.GetBoardEdgesBoundingBox()
+        EDGE_MARGIN_MM = 0.3  # 12 mil minimo
+
+        for fp in board.GetFootprints():
+            pos = fp.GetPosition()
+            x_mm = pcbnew.ToMM(pos.x)
+            edge_x_min = pcbnew.ToMM(edge_box.GetLeft())
+            if x_mm - edge_x_min < EDGE_MARGIN_MM:
+                issues.append(f"[BORDE] {fp.GetReference()} demasiado cerca al borde")
+
+        for track in board.GetTracks():
+            if track.GetClass() == "PCB_VIA":
+                via_size = pcbnew.ToMM(track.GetWidth())
+                if via_size < 0.3:
+                    issues.append(f"Via demasiado pequeña: {via_size:.3f}mm < 0.3mm")
+
+        print(f"Problemas criticos: {len(issues)}")
+        for issue in issues:
+            print(f"  FAIL {issue}")
+        if not issues:
+            print("  OK Sin problemas DFM detectados")
+        return len(issues) == 0
+except ImportError:
+    checklist = [
+        "Distancia minima pistas a borde: >=0.3mm (12 mil)",
+        "Serigrafia NO invade pads de cobre",
+        "Soldermask bridge >=0.15mm entre pads TQFP",
+        "Vias >=0.3mm drill con anillo anular >=0.15mm",
+        "Edge.Cuts es contorno cerrado",
+        "V-Score: pistas a >=0.4mm del borde de corte",
+    ]
+    for c in checklist:
+        print(f"  [ ] {c}")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>¿Cual es la ventaja de Tab Routing (Mousebites) sobre V-Scoring en terminos de calidad de borde?</li>
+      <li>¿Por que se añaden fiducials en los paneles de produccion SMT?</li>
+      <li>Aplica la regla 20H: si la separacion entre planos es 1.6mm, ¿cuanto debe retractarse el plano de potencia?</li>
+      <li>¿Cuando un thermal relief solido (sin interrupciones) puede causar problemas de soldadura manual?</li>
+      <li>Explica el concepto de "Design for Assembly" (DFA) en el contexto de electronica de audio boutique</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q13 · Feynman Quiz — V-Scoring</h4>
+    <p class="quiz-q">En V-Scoring, ¿cual es la separacion minima de pistas al borde de corte y por que? ¿Que pasaria si una pista estuviera a solo 0.1mm del V-score?</p>
+    <details><summary>Ver respuesta</summary><p>La separacion minima es ≥0.4mm. El V-score es una muesca en V fresada hasta aprox. 1/3 del espesor del FR-4 en cada cara. Cuando el operario separa los PCBs doblando el panel, la fractura no es perfectamente controlada: el borde real de ruptura puede variar ±0.3mm respecto a la linea de corte ideal. Si una pista esta a 0.1mm del V-score, la probabilidad de que la fractura dannee o corte la pista durante la separacion es muy alta. Con la pista dannada, la PCB seria un defecto que requiere reproceso o desperdicio. Los 0.4mm proporcionan el margen de seguridad suficiente para absorber la variabilidad mecanica del proceso de ruptura.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← M12</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto Final — PCB de Audio Mixed-Signal Completa</div>
+    <div class="module-sub">Proyecto integrador: diseña y fabrica una PCB de audio mixed-signal aplicando todos los conceptos del MOOC</div>
+  </div>
+
+  <div class="card">
+    <h3>Rubrica de Evaluacion (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>Esquema y ERC</td><td>0 errores ERC, PWR_FLAGS correctos, jerarquia si aplica, anotacion completa</td><td>20</td></tr>
+        <tr><td>Layout y DRC</td><td>0 errores DRC, reglas 3W/20H, teardrops, particionamiento AGND/DGND con unico puente bajo ADC</td><td>25</td></tr>
+        <tr><td>Star Grounding y Desacoplamiento</td><td>Star point documentado, Cdec ≤0.1" de cada IC, analisis de impedancia de retorno</td><td>20</td></tr>
+        <tr><td>Exportacion y DFM</td><td>Gerbers RS-274X correctos, BOM con LCSC, CPL con rotaciones verificadas, sin errores DFM</td><td>20</td></tr>
+        <tr><td>Analisis de Integridad de Señal</td><td>Calculo de impedancia microstrip, analisis de crosstalk en al menos un net critico</td><td>10</td></tr>
+        <tr><td>Documentacion</td><td>README con decisiones de diseño, justificacion de topologia de tierra</td><td>5</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman — Explica sin notas</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Retorno de Corriente</h4>
+      <p class="quiz-q">¿Por que la ruta de retorno de corriente a altas frecuencias sigue la trayectoria directamente debajo de la pista de señal, y que sucede si hay un slot en el plano GND?</p>
+      <details><summary>Ver respuesta</summary><p>A altas frecuencias la impedancia Z=R+jωL esta dominada por jωL. El circuito cierra la corriente de retorno por el camino de menor L, que es el que minimiza el area del bucle magnetico. El area minima se logra cuando el retorno corre exactamente bajo la señal al otro lado del dielectrico. Un slot obliga al retorno a rodear el obstaculo, aumentando el area del bucle y con ella la inductancia y la radiacion EMI. El slot convierte la pista en una antena efectiva cuya eficiencia de radiacion es proporcional al area del bucle al cuadrado.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · Star Grounding vs Daisy-Chain</h4>
+      <p class="quiz-q">¿Que problema fisico especifico resuelve el Star Grounding comparado con la topologia daisy-chain en un amplificador de audio de 40dB de ganancia?</p>
+      <details><summary>Ver respuesta</summary><p>En daisy-chain, si tienes 4 stages en cadena con R_traza entre cada uno, la corriente del stage 4 fluye por R4, R3, R2 y R1 antes de llegar a GND. Esto genera V_error = I4 × (R1+R2+R3+R4). Con Av_total=100 (40dB), un error de 1mV se convierte en 100mV de ruido a la salida. En star grounding, cada stage tiene su propio retorno directo al punto estrella, por lo que la corriente de cada stage solo ve su propia R_traza: V_error = I_n × R_n. Los errores de los demas stages no afectan al tuyo. El star point debe ubicarse en el capacitor de filtrado mas cercano a la fuente de alimentacion regulada.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · Desacoplamiento y Distancia</h4>
+      <p class="quiz-q">¿Por que colocar el capacitor de desacoplamiento a 5mm del pin Vcc de un IC digital reduce su efectividad dramaticamente? Calcula la impedancia inductiva a 100MHz para L=5nH.</p>
+      <details><summary>Ver respuesta</summary><p>La inductancia de una traza de 5mm es aproximadamente 5nH. A 100MHz: Z_L = ωL = 2π × 10⁸ × 5×10⁻⁹ ≈ 3.14Ω. Esta impedancia inductiva domina sobre la impedancia capacitiva del 0.1µF (Z_C = 1/(ωC) = 1/(2π × 10⁸ × 10⁻⁷) ≈ 0.016Ω a 100MHz). El capacitor ya no puede suministrar la corriente instantanea que el IC necesita porque la inductancia de la traza frena el flujo de corriente. El spike de voltaje V = L × di/dt no se amortigua. Solucion: minimize la inductancia del loop poniendo el capacitor lo mas cerca posible del pin de alimentacion y usando vias directas al plano GND.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · Efecto Miller en PCB de Audio</h4>
+      <p class="quiz-q">¿Por que el Efecto Miller puede destruir el ancho de banda de un amplificador de instrumento conectado a una pastilla de guitarra pasiva? Calcula f_c para R_source=1MΩ, C_parasita=2pF, Av=50.</p>
+      <details><summary>Ver respuesta</summary><p>La pastilla de guitarra pasiva tiene R_source ≈ 1MΩ. La PCB tiene C_parasitic = 2pF entre la pista de entrada y el plano de GND. Con Av=50: C_miller = 2pF × (1+50) = 102pF. f_c = 1/(2π × 1×10⁶ × 102×10⁻¹²) ≈ 1.56kHz. La pista de la PCB filtra los agudos de la guitarra por encima de 1.56kHz, eliminando todo el brillo y presencia del instrumento. Soluciones: minimizar la capacitancia parasita (evitar plano de GND bajo la pista de entrada de alta impedancia), reducir la longitud de la pista de alta impedancia a &lt;10mm, y usar un buffer unity-gain primero para bajar la impedancia antes del amplificador.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · Gerbers y Extensiones Protel</h4>
+      <p class="quiz-q">Al exportar Gerbers para JLCPCB, ¿por que debes activar extensiones "estilo Protel" (.GTL, .GBL) y que riesgo concreto introduces si no lo haces?</p>
+      <details><summary>Ver respuesta</summary><p>Los sistemas CAM de las fabricantes de PCB reconocen automaticamente las extensiones Protel para identificar que capa es cada Gerber: .GTL = Copper Top, .GBL = Copper Bottom, .GTS = Solder Mask Top, .GBS = Solder Mask Bottom, .GTO = Silkscreen Top, .GKO = Edge.Cuts. Sin ellas, el operario de CAM debe asignar manualmente cada archivo a su capa correspondiente. El riesgo concreto: si confunde .GTS (soldermask top) con .GTL (copper top), fabricara una PCB donde la soldermask y el cobre de la capa superior estan intercambiados. Todos los pads y pistas quedarian cubiertos de resina epoxy y los agujeros de la soldermask quedarian llenos de cobre, resultando en una PCB completamente inutilizable.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← M13</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_pcb_design_kicad_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Ecosistema KiCad'},
+    {id:'m1',  label:'M1 · Integridad de Señal'},
+    {id:'m2',  label:'M2 · Eeschema y Netlist'},
+    {id:'m3',  label:'M3 · Star Grounding'},
+    {id:'m4',  label:'M4 · Red RLC Parasita'},
+    {id:'m5',  label:'M5 · Microstrip y 3W'},
+    {id:'m6',  label:'M6 · DRC y Board Setup'},
+    {id:'m7',  label:'M7 · Huellas SMD/THT'},
+    {id:'m8',  label:'M8 · Layout Pcbnew'},
+    {id:'m9',  label:'M9 · Ruteo Analogico-Digital'},
+    {id:'m10', label:'M10 · Teardrops y Planos'},
+    {id:'m11', label:'M11 · Exportacion Gerbers'},
+    {id:'m12', label:'M12 · BOM y CPL JLCPCB'},
+    {id:'m13', label:'M13 · DFM y Panelizacion'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

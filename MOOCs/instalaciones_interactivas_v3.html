@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instalaciones Interactivas Max & TouchDesigner v3</title>
+<style>
+:root {
+  --bg:#0b0f17; --surface:#111827; --surface2:#1e293b;
+  --accent:#06b6d4; --accent2:#22d3ee; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#1e293b;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'Fira Code',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#0d1117;padding:2px 6px;border-radius:4px}
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+.formula{background:rgba(6,182,212,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(6,182,212,.07);border-radius:6px;line-height:1.6}
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+.hl-green{color:var(--green)} .hl-red{color:var(--red)} .hl-blue{color:var(--blue)} .hl-amber{color:var(--warn)} .hl-cyan{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>Instalaciones Interactivas</h2>
+    <p>Max & TouchDesigner · v3</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introducción</div>
+    <div class="module-title">Historia & Stack — Instalaciones Interactivas</div>
+    <div class="module-sub">Del video synthesis analógico a TouchDesigner y el ecosistema actual</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 700 200" width="100%" style="max-width:700px;" font-family="Inter,sans-serif" font-size="11">
+      <line x1="40" y1="100" x2="660" y2="100" stroke="#1e293b" stroke-width="2"/>
+      <circle cx="80" cy="100" r="6" fill="#06b6d4"/>
+      <text x="80" y="120" text-anchor="middle" fill="#64748b" font-size="10">1960s</text>
+      <text x="80" y="133" text-anchor="middle" fill="#94a3b8" font-size="9">Paik / Viola</text>
+      <text x="80" y="145" text-anchor="middle" fill="#94a3b8" font-size="9">Video synth</text>
+      <circle cx="210" cy="100" r="6" fill="#a855f7"/>
+      <text x="210" y="80" text-anchor="middle" fill="#64748b" font-size="10">1980s</text>
+      <text x="210" y="67" text-anchor="middle" fill="#94a3b8" font-size="9">Laserdisc</text>
+      <text x="210" y="55" text-anchor="middle" fill="#94a3b8" font-size="9">Interactive</text>
+      <circle cx="340" cy="100" r="6" fill="#10b981"/>
+      <text x="340" y="120" text-anchor="middle" fill="#64748b" font-size="10">1995</text>
+      <text x="340" y="133" text-anchor="middle" fill="#94a3b8" font-size="9">Max/MSP+Jitter</text>
+      <circle cx="470" cy="100" r="6" fill="#06b6d4"/>
+      <text x="470" y="80" text-anchor="middle" fill="#64748b" font-size="10">2010</text>
+      <text x="470" y="67" text-anchor="middle" fill="#94a3b8" font-size="9">TouchDesigner</text>
+      <text x="470" y="55" text-anchor="middle" fill="#94a3b8" font-size="9">Resolume</text>
+      <circle cx="600" cy="100" r="6" fill="#f59e0b"/>
+      <text x="600" y="120" text-anchor="middle" fill="#64748b" font-size="10">2020s</text>
+      <text x="600" y="133" text-anchor="middle" fill="#94a3b8" font-size="9">Notch · Smode</text>
+      <text x="600" y="145" text-anchor="middle" fill="#94a3b8" font-size="9">Unreal + CV</text>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">15</div><div class="metric-label">Módulos</div></div>
+    <div class="metric"><div class="metric-val">TD</div><div class="metric-label">TouchDesigner (core)</div></div>
+    <div class="metric"><div class="metric-val">GLSL</div><div class="metric-label">Shaders GPU</div></div>
+    <div class="metric"><div class="metric-val">DMX</div><div class="metric-label">Control iluminación</div></div>
+    <div class="metric"><div class="metric-val">OSC</div><div class="metric-label">Show control</div></div>
+    <div class="metric"><div class="metric-val">60fps</div><div class="metric-label">Target render rate</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa de plataformas</h3>
+    <table>
+      <tr><th>Plataforma</th><th>Paradigma</th><th>Fortalezas</th><th>Precio</th></tr>
+      <tr><td>TouchDesigner</td><td>Node-based + Python</td><td>GPU, shaders, CHOP/TOP/SOP/DAT</td><td>Free / $600</td></tr>
+      <tr><td>Max/MSP + Jitter</td><td>Patchbay visual</td><td>Audio+video integrado, gen~</td><td>$10/mes</td></tr>
+      <tr><td>Resolume Arena</td><td>VJ/performance</td><td>Performance en vivo, efectos rápidos</td><td>€699</td></tr>
+      <tr><td>Notch</td><td>Node-based</td><td>Photorealistic real-time, live events</td><td>Suscripción</td></tr>
+      <tr><td>Unreal Engine</td><td>Game engine</td><td>Fotorrealismo, LED walls</td><td>Free (royalties)</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Fundamentos</div>
+    <div class="module-title">TouchDesigner Fundamentos</div>
+    <div class="module-sub">Operadores, familias (TOP/CHOP/SOP/DAT/COMP), network y flujo de datos</div>
+  </div>
+
+  <div class="card">
+    <h3>Las 5 familias de operadores</h3>
+    <table>
+      <tr><th>Familia</th><th>Siglas</th><th>Tipo de datos</th><th>Ejemplos</th></tr>
+      <tr><td>Texture</td><td>TOP</td><td>Imágenes/video (GPU)</td><td>Movie File In, Constant, Blur, Composite</td></tr>
+      <tr><td>Channel</td><td>CHOP</td><td>Canales numéricos</td><td>LFO, Audio In, Kinect, OSC In, Math</td></tr>
+      <tr><td>Surface</td><td>SOP</td><td>Geometría 3D</td><td>Box, Grid, Point Cloud, Merge</td></tr>
+      <tr><td>Data</td><td>DAT</td><td>Texto / Tablas</td><td>Text, Table, Python Script, OSC In</td></tr>
+      <tr><td>Component</td><td>COMP</td><td>Contenedores UI</td><td>Panel, Geo, Camera, Light, Base</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Flujo de datos y cooking en TD</h3>
+    <pre>// TouchDesigner usa un modelo de "cooking":
+// - Cada operador se evalúa cuando su input cambia
+// - El sistema es lazy: solo recalcula lo necesario
+// - Todos los TOPs corren en GPU (paralelos)
+// - Los CHOPs corren en CPU a la frecuencia del proyecto (60fps)
+
+// Estructura básica de red TD:
+// [Webcam TOP] → [Threshold TOP] → [Blur TOP] → [Out TOP]
+//                      ↓
+// [CHOP to TOP] ← [Audio Analyze CHOP] ← [Audio Device In CHOP]
+
+// Referencia de parámetros via expressions:
+// op('lfo1')['chan1']     → valor del canal 'chan1' del LFO
+// absTime.seconds        → tiempo absoluto
+// absTime.frame          → frame actual</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q1 · Familias de Operadores</h4>
+    <p class="quiz-q">Explica la diferencia entre TOP y CHOP en TouchDesigner y da un ejemplo de cuándo usarías cada uno en una instalación interactiva.</p>
+    <details><summary>Ver respuesta</summary><p>TOP (Texture Operator) procesa imágenes y video en la GPU — todo lo visual. CHOP (Channel Operator) procesa canales de datos numéricos en el tiempo — audio, sensores, animación, control. Ejemplo: la webcam entra como TOP (imagen), el audio del micrófono entra como CHOP (valores de amplitud). Para cruzar familias se usan operadores de conversión (CHOP to TOP, SOP to TOP). En una instalación: los joints del Kinect llegan como CHOP, y para usarlos en un shader GLSL se convierten a TOP o se pasan como uniforms.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Visual</div>
+    <div class="module-title">TD Visual Programming</div>
+    <div class="module-sub">TOPs: compositing, efectos, feedback loops y generación procedural</div>
+  </div>
+
+  <div class="card">
+    <h3>TOPs de generación procedural</h3>
+    <table>
+      <tr><th>TOP</th><th>Descripción</th><th>Uso típico</th></tr>
+      <tr><td>Noise TOP</td><td>Perlin/Simplex noise en GPU</td><td>Texturas orgánicas, displace maps</td></tr>
+      <tr><td>GLSL TOP</td><td>Shader personalizado GLSL</td><td>Efectos custom de alta complejidad</td></tr>
+      <tr><td>Ramp TOP</td><td>Gradiente lineal/radial</td><td>Fondos, máscaras, displace</td></tr>
+      <tr><td>Feedback TOP</td><td>Frame anterior como textura</td><td>Trails, persistencia, video synth</td></tr>
+      <tr><td>Text TOP</td><td>Render de texto tipográfico</td><td>Subtítulos, datos en pantalla</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Compositing y feedback loops</h3>
+    <pre>// Composite TOP: modos de compositing
+// Over → A sobre B (usa alpha de A)
+// Add → A + B (suma de colores)
+// Multiply → A × B
+// Screen → 1-(1-A)(1-B)
+
+// Feedback + Displace = efecto fluido:
+// [Feedback] → [Displace (noise como mapa)] → [Composite con source]
+//                                                     ↓
+//                                               [Feedback input]
+
+// Feedback loop básico:
+// [Noise TOP] → [Composite TOP] → [Out TOP]
+//     ↑               |
+// [Feedback TOP] ←────┘
+// Transform TOP (Scale 1.002, Rotate 0.1°) en el loop</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q2 · Feedback Loops</h4>
+    <p class="quiz-q">¿Cómo funciona el feedback visual en TouchDesigner y qué efectos genera? Describe el papel del Feedback TOP y el Transform TOP dentro del loop.</p>
+    <details><summary>Ver respuesta</summary><p>El Feedback TOP introduce un delay de 1 frame, permitiendo que la imagen actual se mezcle con la frame anterior. Con un blend factor menor a 1, los trails se desvanecen gradualmente creando persistencia retiniana artificial. Si añadimos un Transform TOP dentro del loop (escala 1.002, rotación 0.1°), cada frame se expande y rota ligeramente — generando zoom infinito o espirales. Es el fundamento del video synthesis analógico de Paik ahora replicado en GPU. El factor alpha del Composite TOP controla la duración de los trails: 0.80=desvanece rápido, 0.99=persiste muchos frames.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Scripting</div>
+    <div class="module-title">TD Python Scripting</div>
+    <div class="module-sub">API Python de TouchDesigner: operadores, automatización, callbacks y OSC</div>
+  </div>
+
+  <div class="card">
+    <h3>API Python de TouchDesigner</h3>
+    <pre># Acceder y modificar parámetros
+op('lfo1').par.freq = 2.5          # setear frecuencia del LFO
+val = op('kinect1')['joint_x']     # leer valor CHOP
+op('const1').par.colorr = 0.5      # setear color rojo
+
+# CHOP Execute DAT: se ejecuta cuando el CHOP cambia
+def onValueChange(channel, sampleIndex, val, prev):
+    if channel.name == 'rms':
+        if val > 0.7:
+            op('trigger_event').par.trigger.pulse()
+
+# OSC In DAT callback:
+def onReceiveOSC(dat, rowIndex, message, bytes, timeStamp,
+                 address, args, peer):
+    if address == '/source/period':
+        op('noise1').par.period = max(0.05, float(args[0]))
+    elif address == '/audio/beat':
+        op('beat_chop').par.trigger.pulse()</pre>
+  </div>
+
+  <div class="card">
+    <h3>Sistema de escenas con Python</h3>
+    <pre># Sistema de presets/escenas via Python
+PRESETS = [
+    {'noise_period': 0.5, 'blur': 10, 'color': (0.1, 0.5, 1.0)},
+    {'noise_period': 0.1, 'blur': 2,  'color': (1.0, 0.2, 0.5)},
+    {'noise_period': 2.0, 'blur': 20, 'color': (0.2, 1.0, 0.3)},
+]
+
+def apply_preset(idx):
+    p = PRESETS[idx % len(PRESETS)]
+    op('noise1').par.period = p['noise_period']
+    op('blur1').par.size = p['blur']
+    op('const1').par.colorr, op('const1').par.colorg, op('const1').par.colorb = p['color']
+
+# Watchdog: detectar inactividad y cambiar de escena
+def check_activity():
+    if absTime.seconds - last_interaction > 30:
+        apply_preset((current_preset + 1) % len(PRESETS))</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q3 · Callbacks y OSC</h4>
+    <p class="quiz-q">¿Cuándo usarías un CHOP Execute DAT versus un OSC In DAT en TouchDesigner? Describe el flujo de datos en cada caso.</p>
+    <details><summary>Ver respuesta</summary><p>El CHOP Execute DAT se conecta a un CHOP específico y ejecuta callbacks cada vez que el valor de un canal cambia (onValueChange, onOffToOn, etc.) — ideal para reaccionar a valores internos de TD: LFO cruzando un umbral, audio superando RMS, Kinect activando una zona. El OSC In DAT escucha en un puerto UDP y ejecuta onReceiveOSC por cada mensaje externo — ideal para recibir control desde dispositivos externos (iPad/TouchOSC, Max/MSP, SuperCollider). En una instalación típica: el Kinect llega como CHOP Execute (evento interno), y el controlador del técnico llega como OSC In DAT (evento externo).</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · GPU</div>
+    <div class="module-title">GLSL Fundamentos</div>
+    <div class="module-sub">Shaders de fragment en GLSL: pipeline GPU, variables built-in, texturas y UV</div>
+  </div>
+
+  <div class="card">
+    <h3>Fragment shader mínimo en GLSL TOP de TD</h3>
+    <pre>// Variables automáticas disponibles:
+//   vUV.st        → coordenadas UV del pixel (0.0 a 1.0)
+//   TDTime.x      → tiempo de TD en segundos
+//   sTD2DInputs[0] → primera textura de input
+
+out vec4 fragColor;
+
+void main() {
+    vec2 uv = vUV.st;
+    vec2 p = uv * 2.0 - 1.0;   // centrar: [-1,-1] a [1,1]
+
+    float dist = length(p);
+    float circle = smoothstep(0.5, 0.45, dist);
+
+    fragColor = TDOutputSwizzle(vec4(circle, 0.2, 0.8, 1.0));
+}
+
+// Plasma (suma de senos):
+// v += sin(uv.x * 10.0 + TDTime.x);
+// v += sin(uv.y * 10.0 + TDTime.x * 0.7);
+// v += sin(length(uv - 0.5) * 20.0 - TDTime.x * 2.0);
+// fragColor = TDOutputSwizzle(vec4(sin(v*PI), sin(v*PI+2.09), sin(v*PI+4.18), 1.0));</pre>
+  </div>
+
+  <div class="card">
+    <h3>Uniforms: parámetros desde TD</h3>
+    <pre>// Definir uniforms en el GLSL TOP → pestaña "Vectors 1"
+uniform float uIntensity;  // float controlable desde TD
+uniform vec2  uCenter;     // posición del cursor/mano
+uniform float uTime;       // conectar a absTime.seconds
+
+// En TD Python: conectar RMS a uniform:
+// uIntensity → expression: op('audio_analyze1')['rms'] * 5.0
+// uCenter.x  → expression: op('cursor_x')['value0']
+// uCenter.y  → expression: op('cursor_y')['value0']</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q4 · Pipeline GPU</h4>
+    <p class="quiz-q">Explica qué hace el fragment shader en el pipeline GPU y por qué GLSL permite efectos que serían imposibles (o muy costosos) con TOPs nativos de TouchDesigner.</p>
+    <details><summary>Ver respuesta</summary><p>El fragment shader se ejecuta en paralelo para cada píxel de la textura de salida en la GPU. Mientras los TOPs nativos de TD son operaciones fijas (blur, noise, composite), un GLSL fragment shader puede implementar cualquier función matemática arbitraria por píxel: ray marching de SDFs, fractales, plasma, campos de distancia, simulaciones físicas. La GPU ejecuta miles de hilos simultáneos (un shader por píxel), permitiendo calcular un shader 1920×1080 = ~2M píxeles en paralelo. Los TOPs nativos tienen coste fijo bien optimizado pero funcionalidad fija; el GLSL TOP es infinitamente flexible a costa de mayor complejidad de programación.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Avanzado</div>
+    <div class="module-title">GLSL Avanzado — Ray Marching y SDFs</div>
+    <div class="module-sub">Signed Distance Functions, ray marching, noise 3D y efectos avanzados</div>
+  </div>
+
+  <div class="card">
+    <h3>SDFs y operaciones booleanas</h3>
+    <pre>// SDFs: d > 0 exterior, d < 0 interior, d = 0 superficie
+float sdSphere(vec3 p, float r) { return length(p) - r; }
+
+float sdBox(vec3 p, vec3 b) {
+    vec3 q = abs(p) - b;
+    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
+float sdTorus(vec3 p, vec2 t) {
+    vec2 q = vec2(length(p.xz) - t.x, p.y);
+    return length(q) - t.y;
+}
+
+// Blend suave (smooth union):
+float smin(float a, float b, float k) {
+    float h = clamp(0.5 + 0.5*(b-a)/k, 0.0, 1.0);
+    return mix(b, a, h) - k*h*(1.0-h);
+}
+
+float opUnion(float d1, float d2) { return min(d1, d2); }
+float opSubtract(float d1, float d2) { return max(-d1, d2); }</pre>
+  </div>
+
+  <div class="card">
+    <h3>Ray Marching completo con iluminación</h3>
+    <pre>out vec4 fragColor;
+uniform float uTime;
+
+float map(vec3 p) {
+    return smin(sdSphere(p, 0.5), sdTorus(p - vec3(0,0.6,0), vec2(0.4,0.15)), 0.2);
+}
+
+vec3 calcNormal(vec3 p) {
+    vec2 e = vec2(0.001, 0.0);
+    return normalize(vec3(
+        map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx)));
+}
+
+void main() {
+    vec2 uv = (vUV.st * 2.0 - 1.0);
+    uv.x *= uTD2DInfos[0].res.z / uTD2DInfos[0].res.w;
+    vec3 ro = vec3(0.0, 0.5, 2.5);
+    vec3 rd = normalize(vec3(uv, -1.5));
+    float a = uTime * 0.5;
+    mat2 rot = mat2(cos(a),-sin(a),sin(a),cos(a));
+    ro.xz = rot*ro.xz; rd.xz = rot*rd.xz;
+    float t = 0.0; vec3 col = vec3(0.05);
+    for (int i = 0; i < 64; i++) {
+        vec3 p = ro + rd*t; float d = map(p);
+        if (d < 0.001) {
+            vec3 n = calcNormal(p); vec3 light = normalize(vec3(1.0,2.0,1.0));
+            float diff = max(dot(n,light), 0.0);
+            col = vec3(0.1, 0.6, 0.9)*diff + 0.1; break;
+        }
+        t += d; if (t > 20.0) break;
+    }
+    fragColor = TDOutputSwizzle(vec4(col, 1.0));
+}</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q5 · Ray Marching</h4>
+    <p class="quiz-q">¿Cómo funciona el ray marching y por qué la SDF garantiza que el rayo nunca colisiona prematuramente con la geometría? Explica el concepto de "sphere tracing".</p>
+    <details><summary>Ver respuesta</summary><p>El ray marching lanza un rayo desde la cámara y avanza iterativamente. En cada punto p del rayo, consulta la SDF: d = map(p). La SDF retorna la distancia al objeto más cercano en cualquier dirección. El rayo avanza exactamente esa distancia d (safe step) — lo que garantiza que nunca atraviesa un objeto prematuramente, ya que por definición ningún objeto está a menos de d unidades en ninguna dirección. Esto se llama sphere tracing porque es como hacer avanzar una esfera de radio d. Cuando d &lt; epsilon (ej. 0.001), se considera intersección. La ventaja sobre ray casting con mallas es que toda la geometría se describe matemáticamente sin triángulos, permitiendo formas arbitrarias, blending suave (smin) y fractales.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Sensores</div>
+    <div class="module-title">Kinect Azure</div>
+    <div class="module-sub">Profundidad ToF, body tracking de 32 joints, point cloud e interacción gestual en TD</div>
+  </div>
+
+  <div class="card">
+    <h3>Sensores disponibles en Kinect Azure</h3>
+    <table>
+      <tr><th>Sensor</th><th>Resolución</th><th>Uso en TD</th></tr>
+      <tr><td>RGB Camera</td><td>1920×1080 @ 30fps</td><td>Movie File In TOP (via SDK)</td></tr>
+      <tr><td>Depth (ToF)</td><td>512×512 / 1024×1024</td><td>Mapa de profundidad como TOP</td></tr>
+      <tr><td>Body Tracking</td><td>32 joints por cuerpo</td><td>Kinect CHOP (posiciones 3D)</td></tr>
+      <tr><td>Point Cloud</td><td>512K puntos</td><td>SOP de nube de puntos</td></tr>
+      <tr><td>IR Camera</td><td>512×512</td><td>Silhouette sin luz visible</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Body tracking en TouchDesigner</h3>
+    <pre># Los joints de Kinect Azure llegan via Kinect Azure CHOP
+# Canales: skeleton_0_hand_r_pos_x/y/z, skeleton_0_head_pos_x/y/z...
+
+kinect = op('kinectazure1')
+hand_x = kinect['skeleton_0_hand_r_pos_x'].eval()
+hand_y = kinect['skeleton_0_hand_r_pos_y'].eval()
+hand_z = kinect['skeleton_0_hand_r_pos_z'].eval()
+
+# Mapear posición mano a parámetros visuales
+op('noise1').par.tx = hand_x * 0.5      # mano X → translate noise
+op('noise1').par.period = abs(hand_y) * 2.0 + 0.1  # mano Y → period
+
+# Detección de gesto "mano arriba":
+# if hand_r_y > shoulder_r_y + 0.15: durante ≥10 frames → evento
+# Silhouette: Depth TOP → Threshold TOP → máscara binaria
+# Point cloud: Kinect Azure SOP → Render TOP → Out TOP</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q6 · Kinect y Gestual</h4>
+    <p class="quiz-q">¿Qué es el body tracking del Kinect Azure y cómo se mapean los joints a parámetros visuales en TouchDesigner? Describe el pipeline completo de dato de sensor a efecto visual.</p>
+    <details><summary>Ver respuesta</summary><p>El body tracking del Kinect Azure usa el SDK de Microsoft (DNN) para identificar hasta 32 joints del esqueleto humano (cabeza, hombros, manos, rodillas, etc.) en coordenadas 3D del mundo real (metros). En TouchDesigner, el Kinect Azure CHOP expone todos estos joints como canales numéricos. El pipeline es: Kinect Azure (USB 3.0) → Kinect Azure CHOP (joints como canales) → Script CHOP o CHOP Execute DAT (Python: leer y normalizar valores) → Constant CHOP (almacenar) → expresión en parámetro del TOP destino. Ejemplo: hand_r_x (-1.0 a +1.0 metros) → Translate X del Noise TOP. La latencia total (movimiento físico → visual) es ~33ms con 30fps del Kinect más el cook de TD.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · CV</div>
+    <div class="module-title">Computer Vision</div>
+    <div class="module-sub">OpenCV y MediaPipe en Python + TD: detección de movimiento, pose, face y hand tracking</div>
+  </div>
+
+  <div class="card">
+    <h3>MediaPipe Pose en TD via Python</h3>
+    <pre>import cv2
+import mediapipe as mp
+
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(
+    static_image_mode=False,
+    model_complexity=1,
+    min_detection_confidence=0.7,
+    min_tracking_confidence=0.5
+)
+
+def process_frame():
+    top = op('webcam1')
+    img = top.numpyArray()
+    if img is None: return
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGRA2RGB)
+    results = pose.process(img_rgb)
+    if results.pose_landmarks:
+        landmarks = results.pose_landmarks.landmark
+        wrist_r = landmarks[mp_pose.PoseLandmark.RIGHT_WRIST]
+        op('wrist_x').par.value0 = wrist_r.x          # 0-1
+        op('wrist_y').par.value0 = 1 - wrist_r.y      # invertir Y
+        op('wrist_conf').par.value0 = wrist_r.visibility</pre>
+  </div>
+
+  <div class="card">
+    <h3>Detección de movimiento con OpenCV</h3>
+    <pre>def detect_motion(current_frame, prev_frame, threshold=25):
+    gray_curr = cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY)
+    gray_prev = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
+    diff = cv2.absdiff(gray_curr, gray_prev)
+    _, thresh = cv2.threshold(diff, threshold, 255, cv2.THRESH_BINARY)
+    # Calcular porcentaje de movimiento
+    motion_ratio = cv2.countNonZero(thresh) / thresh.size
+    return motion_ratio  # 0.0 = sin movimiento, 1.0 = movimiento total
+
+# Optical flow nativo en TD:
+# [Webcam TOP] → [Optical Flow TOP] → datos de movimiento como TOP</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q7 · Computer Vision</h4>
+    <p class="quiz-q">¿Cuál es la diferencia entre usar Kinect Azure y MediaPipe para body tracking en instalaciones? ¿Cuándo elegirías cada uno?</p>
+    <details><summary>Ver respuesta</summary><p>Kinect Azure usa hardware dedicado (sensor ToF infrarrojo + DNN de Microsoft) con SDK propietario: ventajas: datos 3D reales en metros, funciona en oscuridad, 32 joints con precisión alta, menor CPU. Desventajas: hardware costoso (~400€), solo Windows, necesita SDK K4A. MediaPipe usa una webcam estándar y DNN en CPU/GPU: ventajas: hardware barato (cualquier webcam), multiplataforma, fácil integración con Python en TD, también detecta manos y rostro. Desventajas: coordenadas 2D (estimación de profundidad aproximada), más sensible a la iluminación, mayor carga de CPU. Para instalaciones permanentes en museos se prefiere Kinect Azure (más robusto); para proyectos portátiles o con webcam USB existente, MediaPipe es suficiente.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · Iluminación</div>
+    <div class="module-title">DMX & Art-Net</div>
+    <div class="module-sub">Protocolo DMX512, Art-Net sobre UDP, universos y control de fixtures en TD</div>
+  </div>
+
+  <div class="card">
+    <h3>DMX512 y Art-Net</h3>
+    <table>
+      <tr><th>Propiedad</th><th>DMX512</th><th>Art-Net</th></tr>
+      <tr><td>Transporte</td><td>RS-485 serial</td><td>UDP/IP (puerto 6454)</td></tr>
+      <tr><td>Universos</td><td>1 por cable</td><td>32,768 por red</td></tr>
+      <tr><td>Canales/universo</td><td>512</td><td>512</td></tr>
+      <tr><td>Baudrate</td><td>250 kbps</td><td>Ethernet</td></tr>
+      <tr><td>Refresco</td><td>~44 Hz</td><td>~44 Hz (por diseño)</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Art-Net Out CHOP en TouchDesigner</h3>
+    <pre># Pipeline audio-reactivo → DMX en TD:
+# Audio Device In CHOP → Spectrum CHOP → Math CHOP → Filter CHOP → Art-Net Out CHOP
+
+# Art-Net Out CHOP: configurar IP del nodo y universo
+# Canales del CHOP mapeados directamente a canales DMX
+
+# Ejemplo Python: enviar valores DMX calculados
+import socket, struct
+
+def send_artdmx(ip, universe, data):
+    header = b'Art-Net\x00'
+    opcode = struct.pack('<H', 0x5000)
+    protver = struct.pack('>H', 14)
+    seq_phy = bytes([1, 0])
+    uni = struct.pack('<H', universe)
+    dmx = bytes(data[:512])
+    if len(dmx) % 2: dmx += b'\x00'
+    length = struct.pack('>H', len(dmx))
+    packet = header + opcode + protver + seq_phy + uni + length + dmx
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.sendto(packet, (ip, 6454))</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q8 · Art-Net vs DMX</h4>
+    <p class="quiz-q">¿Por qué Art-Net es preferible a DMX serial en instalaciones grandes con múltiples zonas de iluminación? ¿Qué limitaciones tiene el DMX RS-485 clásico?</p>
+    <details><summary>Ver respuesta</summary><p>DMX512 RS-485 es un bus serial que transporta exactamente 512 canales por cable físico a 250kbps. Para controlar 3 zonas independientes necesitas 3 cables DMX separados. Art-Net encapsula múltiples universos DMX en paquetes UDP sobre Ethernet estándar: una única red Cat6 puede transportar miles de universos simultáneamente. Las ventajas son: (1) infraestructura de red ya existente, (2) distancias largas con switches, (3) múltiples fuentes y controladores, (4) TD envía múltiples universos desde una sola interfaz de red. TouchDesigner puede enviar Art-Net a nodos distribuidores (ej. Artnet-DMX node) ubicados junto a cada rack de fixtures, convirtiendo de Ethernet a RS-485 localmente. La limitación de Art-Net es que UDP no garantiza entrega, pero en red local la fiabilidad es prácticamente 100%.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Proyección</div>
+    <div class="module-title">Projection Mapping</div>
+    <div class="module-sub">Calibración geométrica, warping, blending y proyección sobre superficies 3D irregulares</div>
+  </div>
+
+  <div class="card">
+    <h3>Pipeline de Projection Mapping en TD</h3>
+    <pre>// Projection Mapping en TouchDesigner
+// 1. Crear geometría 3D que represente la superficie física (SOP)
+// 2. Calibrar la cámara virtual para que coincida con el proyector real
+// 3. Renderizar los visuals "pegados" a la superficie con Render TOP
+// 4. Aplicar warping/blending con Camera Blend COMP para multi-proyector
+
+// Calibración por correspondencia de puntos:
+// - Proyectar una grilla sobre la superficie física
+// - Marcar las correspondencias en el software (TD o MadMapper)
+// - El sistema calcula la homografía/warp
+
+// Blending edge para multi-proyector:
+// [Proyector A] [Proyector B] — zona de overlap ~15% de cada proyector
+// Fade suave: Luma Key + gradiente lineal en zona de overlap
+// Corrección de gamma en la zona de blend para percepción uniforme</pre>
+  </div>
+
+  <div class="card">
+    <h3>Herramientas y flujo técnico</h3>
+    <table>
+      <tr><th>Herramienta</th><th>Uso</th><th>Ventaja</th></tr>
+      <tr><td>TD Stoner</td><td>Warping nativo en TD</td><td>Integrado, sin software extra</td></tr>
+      <tr><td>MadMapper</td><td>Mapping dedicado</td><td>UI optimizada, NDI desde TD</td></tr>
+      <tr><td>VPT 8</td><td>Open source</td><td>Gratuito, básico</td></tr>
+      <tr><td>Resolume</td><td>VJ + mapping</td><td>Performance en vivo</td></tr>
+    </table>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q9 · Projection Mapping</h4>
+    <p class="quiz-q">¿Qué es el edge blending en proyección multipantalla y por qué no basta con simplemente superponer las imágenes en la zona de overlap?</p>
+    <details><summary>Ver respuesta</summary><p>El edge blending es la técnica de atenuar gradualmente el brillo en los bordes de cada proyector en la zona de overlap entre dos proyectores adyacentes. Si simplemente se superponen las imágenes, la zona donde dos proyectores coinciden recibe doble cantidad de luz, apareciendo más brillante y con una línea visible. El edge blending aplica un gradiente: el proyector izquierdo reduce su luminosidad de 100% a 0% de derecha a izquierda en la zona de overlap; el proyector derecho hace lo contrario. El resultado es luminosidad uniforme en toda la pantalla. Adicionalmente, hay que corregir la curva gamma en la zona de blend, ya que la percepción humana de brillo es logarítmica y una reducción lineal no produce una transición visualmente suave.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Integración</div>
+    <div class="module-title">Show Control & OSC</div>
+    <div class="module-sub">Integración con audio (Max/SC/Ableton), MIDI, OSC, timeline y automatización</div>
+  </div>
+
+  <div class="card">
+    <h3>Sistema de cue list en TD con Python</h3>
+    <pre>class ShowControl:
+    def __init__(self):
+        self.cue_table = op('show_cues')  # Table DAT con cues
+        self.current_cue = 0
+
+    def go(self):
+        cue = self.cue_table[self.current_cue + 1, :]
+        cue_type = cue[1].val
+        cue_value = cue[2].val
+
+        if cue_type == 'visual':
+            op('visual_preset').par.value0 = int(cue_value)
+        elif cue_type == 'fade':
+            op('master_fade').par.duration = float(cue[3].val)
+            op('master_fade').par.gopulse.pulse()
+        elif cue_type == 'osc':
+            send_osc(cue_value, float(cue[3].val))
+        elif cue_type == 'wait':
+            run('show_control.advance()', delayFrames=int(float(cue_value)*60))
+        self.current_cue += 1
+
+show = ShowControl()
+
+# Ableton Link: sincronización BPM
+# MIDI In CHOP → BPM del host → animar parámetros visuales
+# OSC Out a Ableton via AbletonOSC para disparar clips desde TD</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q10 · Show Control</h4>
+    <p class="quiz-q">¿Cómo implementarías un sistema de show control que permita a un técnico no-técnico operar una instalación compleja con una sola tecla, mientras el sistema gestiona automáticamente la sincronización con audio?</p>
+    <details><summary>Ver respuesta</summary><p>El diseño óptimo usa: (1) Cue List en Table DAT — cada fila es un cue con tipo (visual, fade, osc, wait) y parámetros, editable en hoja de cálculo; (2) una sola tecla (espacio) dispara el siguiente cue via keyboard callback Python; (3) un Timer CHOP conectado a MIDI Clock de Ableton para que los cambios visuales se produzcan en tiempos musicales exactos (no en ms absolutos); (4) modo autónomo: si no se pulsa la tecla en N segundos, el sistema cicla automáticamente. El técnico solo ve un indicador del cue actual y un botón GO. La complejidad está oculta en el cue list. Para una instalación que funciona sin operador, se añade una cue de tipo 'wait' al final que vuelve al cue 1 (loop automático).</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Audio</div>
+    <div class="module-title">Audio Reactivo</div>
+    <div class="module-sub">FFT, análisis espectral, beat detection y visuals audio-reactivos en TD</div>
+  </div>
+
+  <div class="card">
+    <h3>Pipeline audio-reactivo en TD</h3>
+    <pre>// Pipeline completo en TouchDesigner:
+// [Audio Device In CHOP] → [Audio Spectrum CHOP (FFT)]
+//     → [Math CHOP (escalar 0-1)] → [Filter CHOP (EMA)]
+//     → [Select CHOP (bandas)] → efectos visuales
+
+// Audio Spectrum CHOP: análisis FFT nativo de TD
+// Bandas de interés para iluminación/visuales:
+// Sub-bass (20-60Hz)  → base/strobe global
+// Bass (60-250Hz)     → flashes de color, sincronía rítmica
+// Mids (500Hz-4kHz)   → color hue, posición
+// Highs (4-20kHz)     → efectos de borde, chase rápido
+
+// Mapeo logarítmico (curva gamma):
+// DMX_value = 255 × (magnitude / max_magnitude)^γ  [γ ≈ 0.4-0.6]
+
+// Beat detection: derivada de energy de banda bass
+// Si energy[t] - energy[t-1] > threshold → beat event
+// Trigger CHOP para disparar efectos sincronizados</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q11 · FFT y Audio-Reactivo</h4>
+    <p class="quiz-q">¿Por qué el mapeo de magnitudes FFT a valores de parámetros visuales debe usar una curva gamma/logarítmica en lugar de un mapeo lineal?</p>
+    <details><summary>Ver respuesta</summary><p>El oído humano percibe el sonido en escala logarítmica (decibelios). Las magnitudes FFT son lineales en amplitud: un sonido que suena "el doble de fuerte" puede tener magnitud FFT 10 veces mayor. Con mapeo lineal, los niveles bajos de audio producen valores visuales casi imperceptibles (los parámetros apenas se mueven), mientras los picos saturan el rango al instante — la instalación parece "muerta en silencio" y "saturada en música fuerte". Con curva gamma (ej. γ=0.5 = raíz cuadrada): una magnitud de 0.01 mapea a 0.1, y 0.04 mapea a 0.2 — el rango bajo tiene mucha más sensibilidad. Esto emula la respuesta logarítmica del oído y produce visuales que responden de forma natural y expresiva a toda la dinámica musical.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Robustez</div>
+    <div class="module-title">Robustez 24/7</div>
+    <div class="module-sub">Watchdog, auto-restart, gestión de memoria, monitoring y operación sin intervención</div>
+  </div>
+
+  <div class="card">
+    <h3>Sistema watchdog en TouchDesigner</h3>
+    <pre># Watchdog: detectar y recuperarse de fallos automáticamente
+
+import subprocess, os, time
+
+class TDWatchdog:
+    def __init__(self, check_interval=60):
+        self.last_ok = time.time()
+        self.check_interval = check_interval
+
+    def heartbeat(self):
+        self.last_ok = time.time()
+
+    def check(self):
+        elapsed = time.time() - self.last_ok
+        if elapsed > self.check_interval:
+            self.recover()
+
+    def recover(self):
+        # Estrategias de recuperación:
+        # 1. Reiniciar operadores problemáticos
+        op('problem_op').allowCooking = False
+        op('problem_op').allowCooking = True
+        # 2. Limpiar memoria de texturas
+        op('texture_cache').unload()
+        # 3. Si todo falla: reiniciar TD completo
+        # subprocess.Popen(['TouchDesigner', project_path])
+
+# Auto-inicio en macOS: LaunchAgent plist
+# Auto-inicio en Windows: Task Scheduler con trigger On Boot</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q12 · Robustez 24/7</h4>
+    <p class="quiz-q">¿Cuáles son las principales estrategias de robustez para una instalación que debe correr sin intervención durante 6 meses? Describe al menos 3 mecanismos distintos.</p>
+    <details><summary>Ver respuesta</summary><p>1. Watchdog software: un script Python interno (Timer CHOP callback) que monitoriza el FPS y el estado de operadores críticos cada N segundos. Si detecta anomalía (FPS &lt; 30, operator error, memoria &gt; 80%), aplica recuperación en cascada: primero reinicio de operadores, luego reinicio del proyecto TD, finalmente reinicio del sistema. 2. Auto-restart del OS: LaunchAgent en macOS (plist que relanza TD si el proceso muere) o Task Scheduler en Windows. Con healthcheck externo (cron que verifica el proceso cada minuto). 3. Gestión de memoria: limpiar cachés de texturas periódicamente (cada 24h a una hora de bajo tráfico), usar Movie File In TOP con Preload en lugar de streaming, evitar acumulación de objetos Python con del explícito. Adicionalmente: UPS (protección eléctrica), ventilación del rack, monitorización remota con Ping y alertas por email si la máquina no responde.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Red</div>
+    <div class="module-title">Instalaciones en Red</div>
+    <div class="module-sub">NDI, multi-máquina, sincronización, topología de red para instalaciones distribuidas</div>
+  </div>
+
+  <div class="card">
+    <h3>NDI: video sobre red IP</h3>
+    <pre>// NDI (Network Device Interface): video de alta calidad sobre Ethernet
+// TD nativo soporta NDI In y NDI Out sin hardware adicional
+
+// Arquitectura multi-máquina típica:
+//
+// Máquina A (generación):              Máquina B (output):
+// [Kinect → GLSL shaders]  →NDI→  [TD NDI In TOP → Warp → Proyector 1]
+//                          →NDI→  [TD NDI In TOP → Warp → Proyector 2]
+// Máquina C (audio):
+// [Max/MSP síntesis] →OSC→ Máquina A (control de visuals)
+
+// NDI vs SDI:
+// SDI: cable coaxial dedicado por señal, max ~100m, hardware costoso
+// NDI: un cable Ethernet, múltiples señales, switches estándar, baja latencia
+
+// Sincronización de frames entre máquinas:
+// Ableton Link para BPM común
+// NTP o PTP para timestamps de red
+// "Director" OSC desde máquina maestra → todas reciben cue simultáneo</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q13 · Redes Distribuidas</h4>
+    <p class="quiz-q">¿Qué es NDI y cómo facilita las instalaciones multi-máquina en comparación con soluciones basadas en SDI o capturadores de video físicos?</p>
+    <details><summary>Ver respuesta</summary><p>NDI (Network Device Interface) de NewTek es un protocolo para transmisión de video de alta calidad (hasta 4K) con baja latencia sobre redes IP estándar (GbE o 10GbE). TouchDesigner incluye soporte NDI nativo: un TD puede enviar su output como fuente NDI y cualquier otro TD en la misma red puede recibirla simplemente seleccionando el nombre de la fuente. Comparado con SDI: (1) No se necesitan cables coaxiales ni capturadores DeckLink — ahorro de ~2000€ en hardware; (2) Una red Ethernet puede transportar múltiples señales simultáneas; (3) Distancias limitadas solo por la red IP (no 100m de SDI). Desventajas: NDI consume más ancho de banda que SDI (requiere GbE por señal 1080p) y tiene latencia ligeramente mayor (2-5 frames vs &lt;1 frame SDI). Para instalaciones en el mismo edificio, NDI es la solución moderna y económica.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto Final — Instalación Interactiva</div>
+    <div class="module-sub">Diseño completo de instalación museística con sensores, GLSL, audio y robustez 24/7</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica del Proyecto HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>Interactividad real</td><td>Visitante percibe respuesta directa y significativa en &lt;100ms latencia</td><td>20</td></tr>
+        <tr><td>Calidad visual GLSL</td><td>Shaders propios (no solo nodos pre-built), ray marching o SDF implementado</td><td>25</td></tr>
+        <tr><td>Integración técnica</td><td>TD + audio (OSC a Max/SC) + sensores + iluminación DMX funcionando juntos</td><td>20</td></tr>
+        <tr><td>Projection mapping</td><td>Calibración correcta sobre superficie no-estándar, edge blend si multi-proyector</td><td>15</td></tr>
+        <tr><td>Robustez 24/7</td><td>Watchdog activo, auto-restart probado, 0 crashes en prueba de 8h</td><td>15</td></tr>
+        <tr><td>Documentación</td><td>Rider técnico, diagrama de señal, manual de operación en PDF</td><td>5</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman — Explica sin notas</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Familias TD</h4>
+      <p class="quiz-q">¿Cuál es la diferencia entre TOP, CHOP, SOP y DAT en TouchDesigner y cómo fluyen los datos entre familias?</p>
+      <details><summary>Ver respuesta</summary><p>TOP (Texture Operator) procesa imágenes y video en la GPU — todo lo visual. CHOP (Channel Operator) procesa canales de datos numéricos en el tiempo — audio, sensores, animación. SOP (Surface Operator) procesa geometría 3D — meshes, point clouds. DAT (Data Operator) procesa texto y tablas — Python scripts, JSON, CSV. Los datos solo fluyen dentro de su familia; para cruzar familias se usan operadores de conversión: CHOP to TOP convierte canales numéricos a textura para usarlos en shaders; SOP to CHOP exporta posiciones de vértices como canales; TOP to CHOP extrae estadísticas de imagen. Esta arquitectura permite que cada tipo de dato sea procesado por el hardware más adecuado (GPU para TOP, CPU para CHOP).</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · Ray Marching</h4>
+      <p class="quiz-q">¿Cómo funciona el ray marching en GLSL y por qué permite crear geometrías imposibles con mallas triangulares convencionales?</p>
+      <details><summary>Ver respuesta</summary><p>El ray marching lanza rayos desde la cámara virtual y avanza iterativamente: en cada punto consulta la SDF (Signed Distance Function) que retorna la distancia al objeto más cercano. El rayo avanza esa distancia (safe step, ya que ningún objeto está más cerca en ninguna dirección). Cuando la distancia es &lt;epsilon, se registra intersección. Las ventajas sobre mallas: (1) No hay triángulos — la geometría es una función matemática que puede ser infinitamente compleja sin coste de memoria; (2) Los blends suaves entre formas (smin) son triviales matemáticamente pero imposibles con mallas; (3) Las modificaciones de dominio (fold space, twist, repeat) crean estructuras fractales sin coste extra; (4) Los parámetros de cualquier SDF pueden ser uniforms animados en tiempo real desde TD.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · DMX y Art-Net</h4>
+      <p class="quiz-q">¿Por qué Art-Net es preferible a DMX RS-485 en instalaciones grandes y qué papel juega el nodo conversor Ethernet-DMX?</p>
+      <details><summary>Ver respuesta</summary><p>DMX RS-485 es un bus serial que transporta 512 canales por cable físico (~100m máximo) a 250kbps. Para múltiples zonas de iluminación necesitas múltiples cables desde el controlador central. Art-Net encapsula universos DMX en paquetes UDP sobre red Ethernet estándar: un cable Cat6 puede transportar miles de universos. TouchDesigner envía Art-Net desde un solo puerto de red. Los nodos conversores Ethernet-DMX (ej. ENTTEC ODE, Artnet Node) se ubican en cada rack de fixtures: reciben Art-Net por red y emiten señal DMX RS-485 localmente. Esto elimina el cableado de señal de larga distancia, permite añadir zonas sin nueva infraestructura, y hace que el controlador (TD) sea independiente del número de universos que controla.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · Robustez</h4>
+      <p class="quiz-q">Diseña la estrategia de robustez para una instalación que debe correr 6 meses sin intervención. ¿Qué fallos son los más comunes y cómo se mitigan?</p>
+      <details><summary>Ver respuesta</summary><p>Los fallos más comunes en instalaciones 24/7 son: (1) Memory leak / acumulación: mitigación con limpiar cachés de texturas cada 24h a hora de bajo tráfico y monitorizar mem usage con Python. (2) Crash de TouchDesigner: mitigación con LaunchAgent/Task Scheduler que reinicia TD si el proceso muere. (3) Bloqueo de hardware (USB, Kinect): mitigación con watchdog que detecta ausencia de datos del sensor y reinicia el driver. (4) Fallo eléctrico: UPS con autonomía de 15min. (5) Overheating: ventilación forzada del rack, monitoreo de temperatura con alerta. El watchdog interno de TD (Timer CHOP callback cada 60s) comprueba FPS, estado de sensores y conectividad OSC. Si algo falla, aplica recuperación en cascada antes de reiniciar el sistema completo.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · NDI Multi-máquina</h4>
+      <p class="quiz-q">¿Cómo sincronizarías 3 máquinas TouchDesigner en red para que ejecuten cues visuales simultáneamente al ritmo del audio sin slippage perceptible?</p>
+      <details><summary>Ver respuesta</summary><p>La arquitectura de sincronización usa tres capas: (1) BPM musical via Ableton Link — todas las máquinas comparten el mismo clock de tempo en tiempo real; los cambios visuales se programan en "beats" no en segundos, eliminando el drift entre máquinas. (2) Sincronización de frame via OSC "director" — la máquina maestra envía mensajes OSC de cue (/show/cue N) en broadcast UDP; las 3 máquinas reciben el mismo mensaje en &lt;1ms (LAN). (3) NTP para timestamps de log — no para sincronización de frame, pero permite correlacionar logs entre máquinas para diagnóstico. NDI solo transmite video, no garantiza sincronización de frame por sí solo. Para sincronización de frame pixel-perfect en arrays LED distribuidos se usa la función ArtSync de Art-Net que envía un paquete de sincronización tras todos los universos de un frame.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_instalaciones_interactivas_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Historia & Stack'},
+    {id:'m1',  label:'M1 · TD Fundamentos'},
+    {id:'m2',  label:'M2 · TD Visual Programming'},
+    {id:'m3',  label:'M3 · TD Python Scripting'},
+    {id:'m4',  label:'M4 · GLSL Fundamentos'},
+    {id:'m5',  label:'M5 · GLSL Avanzado'},
+    {id:'m6',  label:'M6 · Kinect Azure'},
+    {id:'m7',  label:'M7 · Computer Vision'},
+    {id:'m8',  label:'M8 · DMX & Art-Net'},
+    {id:'m9',  label:'M9 · Projection Mapping'},
+    {id:'m10', label:'M10 · Show Control & OSC'},
+    {id:'m11', label:'M11 · Audio Reactivo'},
+    {id:'m12', label:'M12 · Robustez 24/7'},
+    {id:'m13', label:'M13 · Instalaciones en Red'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

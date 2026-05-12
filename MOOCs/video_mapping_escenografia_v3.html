@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Mapping y Escenografía Digital v3</title>
+<style>
+:root {
+  --bg:#0f172a; --surface:#1e293b; --surface2:#334155;
+  --accent:#a855f7; --accent2:#c084fc; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#334155;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'Fira Code',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(168,85,247,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#0d1117;padding:2px 6px;border-radius:4px}
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+.formula{background:rgba(168,85,247,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(168,85,247,.07);border-radius:6px;line-height:1.6}
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2);color:#000}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>Video Mapping &amp; Escenografía</h2>
+    <p>Proyección, Homografía y Audiovisual</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introducción</div>
+    <div class="module-title">Ecosistema del Video Mapping</div>
+    <div class="module-sub">Óptica de proyección, geometría computacional y síntesis audiovisual</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg width="800" height="270" viewBox="0 0 800 270" font-family="Inter,sans-serif" font-size="11">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 Z" fill="#a855f7"/>
+        </marker>
+      </defs>
+      <rect x="10" y="80" width="110" height="60" rx="6" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="65" y="107" text-anchor="middle" fill="#a855f7" font-weight="700">Proyector</text>
+      <text x="65" y="122" text-anchor="middle" fill="#94a3b8" font-size="10">Throw Ratio R=D/W</text>
+      <text x="65" y="136" text-anchor="middle" fill="#94a3b8" font-size="10">Lumens = ftL·A/Gain</text>
+      <line x1="120" y1="110" x2="148" y2="110" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="148" y="80" width="130" height="60" rx="6" fill="#1e293b" stroke="#334155"/>
+      <text x="213" y="107" text-anchor="middle" fill="#e2e8f0" font-weight="600">Warp Engine</text>
+      <text x="213" y="122" text-anchor="middle" fill="#94a3b8" font-size="10">Homografía H 3x3</text>
+      <text x="213" y="136" text-anchor="middle" fill="#94a3b8" font-size="10">Bezier Mesh warp</text>
+      <line x1="278" y1="110" x2="306" y2="110" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="306" y="80" width="130" height="60" rx="6" fill="#1e293b" stroke="#334155"/>
+      <text x="371" y="107" text-anchor="middle" fill="#e2e8f0" font-weight="600">Edge Blending</text>
+      <text x="371" y="122" text-anchor="middle" fill="#94a3b8" font-size="10">f(x)=a(2x)^p</text>
+      <text x="371" y="136" text-anchor="middle" fill="#94a3b8" font-size="10">gamma-corregido</text>
+      <line x1="436" y1="110" x2="464" y2="110" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="464" y="70" width="120" height="80" rx="6" fill="#0d1117" stroke="#c084fc" stroke-width="1.5"/>
+      <text x="524" y="100" text-anchor="middle" fill="#c084fc" font-weight="700">Superficie</text>
+      <text x="524" y="116" text-anchor="middle" fill="#94a3b8" font-size="10">Edificio / Esfera</text>
+      <text x="524" y="131" text-anchor="middle" fill="#94a3b8" font-size="10">Irregular 3D</text>
+      <text x="524" y="146" text-anchor="middle" fill="#94a3b8" font-size="10">Multi-proyector</text>
+      <rect x="10" y="180" width="140" height="60" rx="6" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="80" y="207" text-anchor="middle" fill="#3b82f6" font-weight="700">Audio Engine</text>
+      <text x="80" y="223" text-anchor="middle" fill="#94a3b8" font-size="10">FFT reactivity</text>
+      <text x="80" y="237" text-anchor="middle" fill="#94a3b8" font-size="10">CHOPs TouchDesigner</text>
+      <line x1="150" y1="210" x2="300" y2="148" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+      <rect x="620" y="60" width="160" height="150" rx="6" fill="#1e293b" stroke="#334155"/>
+      <text x="700" y="82" text-anchor="middle" fill="#e2e8f0" font-weight="700">Software</text>
+      <text x="700" y="100" text-anchor="middle" fill="#a855f7" font-size="10">TouchDesigner</text>
+      <text x="700" y="116" text-anchor="middle" fill="#94a3b8" font-size="10">Resolume Arena</text>
+      <text x="700" y="132" text-anchor="middle" fill="#94a3b8" font-size="10">MadMapper</text>
+      <text x="700" y="148" text-anchor="middle" fill="#94a3b8" font-size="10">OpenCV DLT+RANSAC</text>
+      <text x="700" y="164" text-anchor="middle" fill="#94a3b8" font-size="10">GLSL / ISF Shaders</text>
+      <text x="700" y="180" text-anchor="middle" fill="#94a3b8" font-size="10">Syphon / Spout</text>
+      <text x="700" y="196" text-anchor="middle" fill="#94a3b8" font-size="10">vvvv / Notch</text>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">8 DOF</div><div class="metric-label">Homografía 3×3</div></div>
+    <div class="metric"><div class="metric-val">R=D/W</div><div class="metric-label">Throw Ratio</div></div>
+    <div class="metric"><div class="metric-val">RANSAC</div><div class="metric-label">Outlier robustness</div></div>
+    <div class="metric"><div class="metric-val">Bézier</div><div class="metric-label">Surface mesh warp</div></div>
+    <div class="metric"><div class="metric-val">f(x)=a(2x)^p</div><div class="metric-label">Edge blend gamma</div></div>
+    <div class="metric"><div class="metric-val">CHOPs</div><div class="metric-label">Audio→Visual TD</div></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Óptica</div>
+    <div class="module-title">Óptica de Proyección y Cálculo de Lúmenes</div>
+    <div class="module-sub">Throw Ratio, distancia, footlamberts, ganancia de pantalla</div>
+  </div>
+
+  <div class="formula">Throw Ratio: R = D / W  (adimensional)<br>
+Lúmenes = (foot-lamberts × Área_ft²) / Ganancia<br>
+1 foot-lambert = 3.426 nits = 10.764 Lux<br>
+Estándar cine digital: 16 ftL | Teatro: 4-8 ftL | Exterior: 50+ ftL</div>
+
+  <div class="card">
+    <h3>Calculador de Proyección</h3>
+    <pre>
+def calculate_projection(throw_ratio: float, image_width_m: float,
+                          desired_ftl: float = 16, screen_gain: float = 1.0) -> dict:
+    """
+    throw_ratio: R = D/W (ej: 1.5 = 1.5m de distancia por 1m de imagen)
+    desired_ftl: foot-lamberts objetivo (16 = cine, 50 = exterior noche)
+    screen_gain: blanco mate=1.0, gris=0.8, holográfico=2.5
+    """
+    distance_m      = throw_ratio * image_width_m
+    image_height_m  = image_width_m * 9 / 16           # asumiendo 16:9
+    area_m2         = image_width_m * image_height_m
+    area_ft2        = area_m2 * 10.764                  # 1m² = 10.764 ft²
+    lumens_needed   = (desired_ftl * area_ft2) / screen_gain
+
+    return {
+        "distancia_m":      round(distance_m, 2),
+        "area_m2":          round(area_m2, 2),
+        "lumens_proyector": round(lumens_needed, 0),
+        "nits":             round(desired_ftl * 3.426, 1)
+    }
+
+# Fachada 8m, throw ratio 1.5, exterior nocturno 50ftL, concreto claro gain=0.8
+params = calculate_projection(1.5, 8, 50, 0.8)
+# → distancia: 12m, lúmenes: ~38,000 ANSI lumens</pre>
+  </div>
+
+  <div class="card">
+    <h3>Tipos de Lentes</h3>
+    <table>
+      <tr><th>Tipo</th><th>Throw Ratio</th><th>Uso</th></tr>
+      <tr><td>Ultra-gran angular (UST)</td><td>0.25–0.4</td><td>Pantallas interactivas cercanas</td></tr>
+      <tr><td>Gran angular</td><td>0.5–0.9</td><td>Mapping en espacios reducidos</td></tr>
+      <tr><td>Estándar</td><td>1.0–2.0</td><td>Teatros, fachadas urbanas</td></tr>
+      <tr><td>Teleobjetivo</td><td>2.0–8.0</td><td>Grandes distancias, estadios</td></tr>
+    </table>
+    <div class="warn-box"><strong>Lens Shift óptico vs Keystone digital:</strong> El Lens Shift mueve la lente sin distorsionar la imagen. El keystone digital transforma píxeles → destroys resolución (interpolación) y produce halo gris en bordes. Siempre preferir corrección óptica.</div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← M0</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Homografía</div>
+    <div class="module-title">Homografía — Geometría Proyectiva 2D</div>
+    <div class="module-sub">Transformación 3×3, 8 DOF, DLT, RANSAC, cv2.findHomography</div>
+  </div>
+
+  <div class="formula">H: [x' y' w']ᵀ = H · [x y 1]ᵀ  →  x_proj = x'/w', y_proj = y'/w'<br>
+DLT: cada par de puntos aporta 2 ecuaciones → sistema Ah=0 → SVD<br>
+RANSAC: itera subsets mínimos (4 pts), cuenta inliers con umbral</div>
+
+  <div class="card">
+    <h3>DLT — Direct Linear Transform</h3>
+    <pre>
+import numpy as np
+
+def compute_homography_dlt(src_pts: np.ndarray, dst_pts: np.ndarray) -> np.ndarray:
+    """
+    DLT mínimo: 4 correspondencias de puntos (N >= 4).
+    src_pts, dst_pts: [N, 2] float
+    """
+    N = len(src_pts)
+    A = []
+    for (x, y), (xp, yp) in zip(src_pts, dst_pts):
+        A.append([-x, -y, -1,  0,  0,  0, x*xp, y*xp, xp])
+        A.append([ 0,  0,  0, -x, -y, -1, x*yp, y*yp, yp])
+    A = np.array(A)
+
+    _, _, Vt = np.linalg.svd(A)
+    H = Vt[-1].reshape(3, 3)
+    H /= H[2, 2]
+    return H
+
+def apply_homography(H: np.ndarray, pts: np.ndarray) -> np.ndarray:
+    pts_h = np.hstack([pts, np.ones((len(pts), 1))])
+    pts_t = (H @ pts_h.T).T
+    return pts_t[:, :2] / pts_t[:, 2:3]</pre>
+  </div>
+
+  <div class="card">
+    <h3>RANSAC con OpenCV</h3>
+    <pre>
+import cv2
+import numpy as np
+
+def robust_homography(src_pts: np.ndarray, dst_pts: np.ndarray,
+                       threshold: float = 5.0) -> tuple:
+    """
+    RANSAC elimina correspondencias outlier (detectadas incorrectamente).
+    threshold: distancia máxima en píxeles para ser inlier
+    """
+    src = src_pts.reshape(-1,1,2).astype(np.float32)
+    dst = dst_pts.reshape(-1,1,2).astype(np.float32)
+
+    H, mask = cv2.findHomography(src, dst, cv2.RANSAC, threshold)
+    inliers = mask.ravel().astype(bool)
+    print(f"Inliers: {inliers.sum()}/{len(src_pts)}")
+    return H, inliers
+
+def warp_frame(frame: np.ndarray, H: np.ndarray, output_size: tuple) -> np.ndarray:
+    # cv2.warpPerspective usa Intel IPP / AVX-512 internamente
+    return cv2.warpPerspective(frame, H, output_size, flags=cv2.INTER_LINEAR)</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← M1</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Warping</div>
+    <div class="module-title">Superficies Bézier y Warping de Malla</div>
+    <div class="module-sub">Bézier tensorial, puntos de control, GLSL mesh deformation</div>
+  </div>
+
+  <div class="formula">P(u,v) = ΣᵢΣⱼ B(m,i,u) · B(n,j,v) · Pᵢⱼ<br>
+B(n,k,t) = C(n,k) · tᵏ · (1−t)^{n−k}   (base de Bernstein)<br>
+Malla 4×4: 16 puntos de control, suavidad C² garantizada</div>
+
+  <div class="card">
+    <h3>Superficie Bézier Bicúbica</h3>
+    <pre>
+import numpy as np
+from scipy.special import comb
+
+def bernstein(n: int, k: int, t: float) -> float:
+    """Base de Bernstein B(n,k,t)."""
+    return comb(n, k, exact=True) * (t**k) * ((1-t)**(n-k))
+
+def bezier_surface(control_pts: np.ndarray, u: float, v: float) -> np.ndarray:
+    """
+    Evalúa superficie Bézier tensorial en (u,v) ∈ [0,1]².
+    control_pts: [m+1, n+1, 2] — grilla de puntos de control 2D
+    """
+    m, n = control_pts.shape[0]-1, control_pts.shape[1]-1
+    result = np.zeros(2)
+    for i in range(m+1):
+        for j in range(n+1):
+            result += bernstein(m,i,u) * bernstein(n,j,v) * control_pts[i,j]
+    return result
+
+def generate_bezier_mesh(control_pts: np.ndarray,
+                          resolution: int = 20) -> np.ndarray:
+    """
+    Genera malla de puntos para renderizado.
+    Retorna: [resolution, resolution, 2]
+    """
+    us = np.linspace(0, 1, resolution)
+    vs = np.linspace(0, 1, resolution)
+    mesh = np.zeros((resolution, resolution, 2))
+    for i, u in enumerate(us):
+        for j, v in enumerate(vs):
+            mesh[i, j] = bezier_surface(control_pts, u, v)
+    return mesh
+
+# Ejemplo: deformar cuadrado a forma irregular
+ctrl = np.array([
+    [[0,0], [1,0], [2,0], [3,0]],   # fila 0
+    [[0,1], [1,1.3],[2,0.8],[3,1]],  # fila 1 — puntos levantados
+    [[0,2], [1,1.8],[2,2.2],[3,2]],  # fila 2
+    [[0,3], [1,3], [2,3], [3,3]],   # fila 3
+], dtype=float)
+mesh = generate_bezier_mesh(ctrl, resolution=30)</pre>
+  </div>
+
+  <div class="card">
+    <h3>Warping en GLSL (Vertex Shader)</h3>
+    <pre>
+// vertex_warp.glsl — deformación de malla en GPU
+// Cada vértice recibe su posición UV y se desplaza según tabla de warp
+
+attribute vec2 a_position;   // posición original [0,1]²
+attribute vec2 a_texcoord;   // coordenada de textura
+uniform sampler2D u_warp_map; // textura de desplazamiento (warp LUT)
+uniform mat4 u_mvp;
+
+varying vec2 v_texcoord;
+
+void main() {
+    // Leer desplazamiento de la warp map
+    vec4 warp = texture2D(u_warp_map, a_texcoord);
+    // warp.xy: desplazamiento normalizado [-0.5, 0.5]
+    vec2 displaced = a_position + (warp.xy - 0.5) * 2.0;
+
+    gl_Position = u_mvp * vec4(displaced, 0.0, 1.0);
+    v_texcoord = a_texcoord;
+}</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← M2</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Blending</div>
+    <div class="module-title">Edge Blending — Fusión de Proyectores</div>
+    <div class="module-sub">Curva de blend no-lineal, corrección gamma, zona de overlap</div>
+  </div>
+
+  <div class="formula">f(x) = a · (2x)^p   para x ∈ [0, 0.5]<br>
+x: posición normalizada en la zona de overlap [0=borde, 0.5=centro]<br>
+p: exponente de gamma (típico: 1.8–2.5), a: factor de escala<br>
+Aplicar ANTES de gamma display para linearidad correcta</div>
+
+  <div class="card">
+    <h3>Implementación de Edge Blending</h3>
+    <pre>
+import numpy as np
+
+def edge_blend_curve(x: np.ndarray, power: float = 2.0, gain: float = 1.0) -> np.ndarray:
+    """
+    Curva de edge blending para zona de overlap.
+    x: array de valores [0, 1] — 0=borde externo, 1=interior pleno
+    power: exponente (más alto = transición más abrupta)
+
+    La curva es: f(x) = gain * (x)^power
+    Nota: la fórmula canónica es a*(2x)^p para x ∈ [0,0.5]
+    """
+    return gain * np.power(np.clip(x, 0, 1), power)
+
+def generate_blend_mask(width: int, overlap_px: int,
+                         power: float = 2.0, side: str = 'right') -> np.ndarray:
+    """
+    Genera máscara de blend para un proyector.
+    width: ancho total del proyector en píxeles
+    overlap_px: ancho de la zona de overlap
+    side: 'left' o 'right' — qué lado se desvanece
+    """
+    mask = np.ones(width, dtype=np.float32)
+
+    if side == 'right':
+        blend_region = np.linspace(1, 0, overlap_px)
+        blend_region = edge_blend_curve(blend_region, power)
+        mask[-overlap_px:] = blend_region
+    else:  # left
+        blend_region = np.linspace(0, 1, overlap_px)
+        blend_region = edge_blend_curve(blend_region, power)
+        mask[:overlap_px] = blend_region
+
+    # Aplicar corrección gamma ANTES de la pantalla
+    # (la pantalla aplica gamma display ~ 2.2)
+    # Si no se corrige: la zona de blend se ve demasiado oscura
+    display_gamma = 2.2
+    mask_linear = mask  # la máscara debe ser lineal
+    return mask_linear[:, np.newaxis]  # [width, 1] para broadcast
+
+# Ejemplo: dos proyectores de 1920px con 200px de overlap
+mask_proj1 = generate_blend_mask(1920, 200, power=2.0, side='right')
+mask_proj2 = generate_blend_mask(1920, 200, power=2.0, side='left')
+# En la zona de overlap: mask1 + mask2 debe ser ≈ 1.0 (suma de potencias)</pre>
+  </div>
+
+  <div class="card">
+    <h3>Black Level Matching</h3>
+    <p>En la zona de overlap, ambos proyectores proyectan simultáneamente. El negro de un proyector (que no es 0 nits sino ~0.005-0.05 nits) se suma al negro del otro, creando una banda más brillante que el resto. Solución: elevar el black level de los proyectores fuera del overlap para igualarlo.</p>
+    <pre>
+def black_level_match(overlap_mask: np.ndarray,
+                       projector_black_nits: float = 0.02) -> np.ndarray:
+    """
+    Añade black level en zonas de no-overlap para compensar el
+    brillo adicional de la zona de overlap (dos proyectores superpuestos).
+    """
+    # En overlap: 2 × black_nits → fuera: 1 × black_nits
+    # → fuera del overlap necesita +black_nits adicionales
+    outside_overlap = 1.0 - overlap_mask
+    black_correction = outside_overlap * projector_black_nits
+    return black_correction</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← M3</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Audio-Reactivo</div>
+    <div class="module-title">Audio-Reactividad — FFT y CHOPs en TouchDesigner</div>
+    <div class="module-sub">PSD, bandas de frecuencia, CHOP→SOP→TOP pipeline</div>
+  </div>
+
+  <div class="formula">FFT: df = f_s / L   (resolución frecuencial en Hz/bin)<br>
+PSD: S_j = |X_j|² / (ENBW · df)<br>
+Bandas: sub-bass [20-80Hz], bass [80-300Hz], mid [300-3k], hi [3k-20k]</div>
+
+  <div class="card">
+    <h3>Análisis FFT para Audio-Reactividad</h3>
+    <pre>
+import numpy as np
+from scipy.fft import rfft, rfftfreq
+
+def extract_frequency_bands(audio_chunk: np.ndarray,
+                              sample_rate: int = 44100) -> dict:
+    """
+    Extrae energía por bandas de frecuencia para video mapping reactivo.
+    audio_chunk: bloque de audio [N samples] float32 [-1,1]
+    """
+    N = len(audio_chunk)
+
+    # Ventana Hann para reducir spectral leakage
+    window = np.hanning(N)
+    X = rfft(audio_chunk * window)
+    freqs = rfftfreq(N, 1/sample_rate)
+
+    # Magnitud normalizada
+    magnitude = np.abs(X) / N * 2  # 2 por FFT de una cara
+
+    def band_energy(f_low: float, f_high: float) -> float:
+        mask = (freqs >= f_low) & (freqs < f_high)
+        return float(np.sqrt(np.mean(magnitude[mask]**2)))  # RMS de la banda
+
+    return {
+        "sub_bass":   band_energy(20, 80),     # bombos, bajos profundos
+        "bass":       band_energy(80, 300),    # línea de bajo
+        "low_mid":    band_energy(300, 1000),  # cuerpo de instrumentos
+        "mid":        band_energy(1000, 4000), # voz, melodía
+        "high":       band_energy(4000, 20000) # brillo, platillos
+    }
+
+# Uso en tiempo real con pyaudio o sounddevice:
+import sounddevice as sd
+import queue
+
+audio_queue = queue.Queue()
+
+def audio_callback(indata, frames, time, status):
+    audio_queue.put(indata[:, 0].copy())
+
+with sd.InputStream(callback=audio_callback, blocksize=2048, samplerate=44100):
+    while True:
+        chunk = audio_queue.get()
+        bands = extract_frequency_bands(chunk)
+        # → mapear bands["sub_bass"] a escala de parámetro visual</pre>
+  </div>
+
+  <div class="card">
+    <h3>TouchDesigner — Pipeline CHOPs→TOPs</h3>
+    <pre>
+# TouchDesigner: pseudocódigo del flujo nodal
+
+# 1. Audio Device In CHOP
+#    → capta audio del micrófono o interfaz (44100Hz, 512 samples/frame)
+
+# 2. Analyze CHOP (function: RMS)
+#    → extrae amplitud RMS de la señal → single value [0,1]
+
+# 3. Audio Spectrum CHOP
+#    → FFT en tiempo real → 512 bins de frecuencia como canales
+
+# 4. Math CHOP (multiply + range)
+#    → normalizar bandas a [0,1] con attack/release suavizado
+
+# 5. Lag CHOP (attack=0.01s, release=0.3s)
+#    → suavizar cambios abruptos para evitar flickering visual
+
+# 6. Script CHOP (Python) → parámetros a objetos 3D (SOPs)
+import td
+
+def onCook(scriptOp):
+    bass = op('audio_spectrum')['bass']   # valor CHOP
+    # Mapear bass a escala de geometría
+    op('sphere1').par.radx = 0.5 + bass * 2.0
+    op('sphere1').par.rady = 0.5 + bass * 2.0
+
+# 7. Geometry SOP → renderizado 3D (Render TOP)
+# 8. Composite TOP → mezclar render con video de fondo
+# 9. NDI Out TOP → enviar a Resolume/MadMapper por red</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← M4</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Shaders</div>
+    <div class="module-title">GLSL Shaders para Video Mapping</div>
+    <div class="module-sub">Fragment shaders, ISF (Interactive Shader Format), procedural visuals</div>
+  </div>
+
+  <div class="card">
+    <h3>Fragment Shader ISF para Video Mapping</h3>
+    <pre>
+/*{
+  "DESCRIPTION": "Shader reactivo a audio para video mapping",
+  "CREDIT": "lifeOS MOOC",
+  "CATEGORIES": ["Generator"],
+  "INPUTS": [
+    {"NAME": "bass_energy",   "TYPE": "float", "DEFAULT": 0.0, "MIN": 0.0, "MAX": 1.0},
+    {"NAME": "mid_energy",    "TYPE": "float", "DEFAULT": 0.0, "MIN": 0.0, "MAX": 1.0},
+    {"NAME": "high_energy",   "TYPE": "float", "DEFAULT": 0.0, "MIN": 0.0, "MAX": 1.0},
+    {"NAME": "time_speed",    "TYPE": "float", "DEFAULT": 1.0, "MIN": 0.1, "MAX": 5.0}
+  ]
+}*/
+
+void main() {
+    vec2 uv = isf_FragNormCoord;           // coordenadas normalizadas [0,1]
+    vec2 center = uv - 0.5;
+
+    float t = TIME * time_speed;
+
+    // Distancia al centro pulsante (reactiva al bass)
+    float radius = length(center);
+    float pulse = bass_energy * 0.3;
+    float wave = sin(radius * 20.0 - t * 5.0 + pulse * 10.0) * 0.5 + 0.5;
+
+    // Color reactivo a frecuencias
+    vec3 col_low  = vec3(0.6, 0.1, 0.9) * bass_energy;   // púrpura en bass
+    vec3 col_mid  = vec3(0.1, 0.8, 0.9) * mid_energy;    // cyan en mids
+    vec3 col_high = vec3(1.0, 0.9, 0.2) * high_energy;   // amarillo en highs
+
+    vec3 col = (col_low + col_mid + col_high) * wave;
+
+    // Vignette
+    float vignette = 1.0 - smoothstep(0.4, 0.8, radius);
+    gl_FragColor = vec4(col * vignette, 1.0);
+}</pre>
+  </div>
+
+  <div class="card">
+    <h3>Compartir Texturas — Syphon (Mac) / Spout (Win)</h3>
+    <pre>
+# Python → Syphon → TouchDesigner / Resolume (macOS)
+import syphon
+import numpy as np
+
+class VideoMappingServer:
+    def __init__(self, name: str = "MyMapper"):
+        self.server = syphon.SyphonServer(name)
+
+    def send_frame(self, frame_rgb: np.ndarray):
+        """
+        Envía frame a cualquier app compatible con Syphon.
+        frame_rgb: [H, W, 3] uint8
+        """
+        # Syphon espera el frame como textura OpenGL
+        self.server.publish_frame_pixels(
+            frame_rgb,
+            width=frame_rgb.shape[1],
+            height=frame_rgb.shape[0]
+        )
+
+# En TouchDesigner: Syphon Spout In TOP → recibe el frame
+# En Resolume: Source > Syphon > seleccionar "MyMapper"
+# Latencia: &lt;1ms (shared GPU texture, sin copia de datos)</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← M5</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Calibración</div>
+    <div class="module-title">Calibración Automática con Computer Vision</div>
+    <div class="module-sub">Detección de corners, calibración de cámara, proyector-cámara loop</div>
+  </div>
+
+  <div class="card">
+    <h3>Proyector-Cámara Loop para Calibración</h3>
+    <pre>
+import cv2
+import numpy as np
+
+class ProjectorCalibrator:
+    """
+    Calibración automática usando structured light:
+    1. Proyector emite patrones (checkerboard / Gray code)
+    2. Cámara captura los patrones en la superficie
+    3. Se establece la correspondencia proyector-pixel → superficie-pixel
+    """
+
+    def __init__(self, projector_resolution=(1920, 1080)):
+        self.proj_w, self.proj_h = projector_resolution
+        self.camera = cv2.VideoCapture(0)
+
+    def project_and_capture_checkerboard(self, pattern_size=(9,6)):
+        """
+        Proyecta un checkerboard y lo captura con la cámara.
+        """
+        # Crear checkerboard en espacio del proyector
+        sq_size = 80  # píxeles por cuadrado
+        cb = np.zeros((self.proj_h, self.proj_w), dtype=np.uint8)
+        for row in range(pattern_size[1]):
+            for col in range(pattern_size[0]):
+                if (row + col) % 2 == 0:
+                    y1, y2 = row*sq_size, (row+1)*sq_size
+                    x1, x2 = col*sq_size, (col+1)*sq_size
+                    cb[y1:y2, x1:x2] = 255
+
+        # AQUI: enviar cb al proyector (via Syphon/NDI/ventana fullscreen)
+        # ...
+
+        # Capturar con cámara (después de tiempo de estabilización)
+        cv2.waitKey(500)
+        ret, captured = self.camera.read()
+        gray = cv2.cvtColor(captured, cv2.COLOR_BGR2GRAY)
+
+        # Detectar corners en la imagen capturada
+        found, corners_camera = cv2.findChessboardCorners(gray, pattern_size)
+        # corners_camera: coordenadas en espacio de la cámara
+
+        # Corners conocidos en espacio del proyector
+        corners_proj = np.array([
+            [col*sq_size + sq_size//2, row*sq_size + sq_size//2]
+            for row in range(pattern_size[1])
+            for col in range(pattern_size[0])
+        ], dtype=np.float32)
+
+        if found:
+            H, mask = cv2.findHomography(corners_camera, corners_proj, cv2.RANSAC)
+            return H
+        return None</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← M6</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · 3D Mapping</div>
+    <div class="module-title">Video Mapping 3D — Superficies No Planas</div>
+    <div class="module-sub">Proyección sobre geometría 3D, depth cameras, point clouds</div>
+  </div>
+
+  <div class="card">
+    <h3>Pipeline de Mapping 3D</h3>
+    <pre>
+import numpy as np
+import open3d as o3d
+
+class Surface3DMapper:
+    """
+    Video mapping sobre superficies 3D usando cámara de profundidad.
+    Flujo: RGBD → Point Cloud → Mesh → UV unwrap → Warp texture
+    """
+
+    def __init__(self):
+        self.pipeline = None
+
+    def capture_rgbd(self):
+        """Captura RGBD con RealSense D435 / Azure Kinect."""
+        import pyrealsense2 as rs
+        pipeline = rs.pipeline()
+        config = rs.config()
+        config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+        config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+        pipeline.start(config)
+
+        frames = pipeline.wait_for_frames()
+        depth_frame = frames.get_depth_frame()
+        color_frame = frames.get_color_frame()
+        return np.asarray(depth_frame.get_data()), np.asarray(color_frame.get_data())
+
+    def depth_to_pointcloud(self, depth: np.ndarray,
+                             fx=615, fy=615, cx=320, cy=240) -> o3d.geometry.PointCloud:
+        """Convierte mapa de profundidad a nube de puntos."""
+        H, W = depth.shape
+        u, v = np.meshgrid(np.arange(W), np.arange(H))
+        Z = depth / 1000.0  # mm a metros
+        X = (u - cx) * Z / fx
+        Y = (v - cy) * Z / fy
+        points = np.stack([X, Y, Z], axis=-1).reshape(-1, 3)
+        valid = points[:, 2] > 0
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(points[valid])
+        return pcd
+
+    def project_texture_on_mesh(self, mesh: o3d.geometry.TriangleMesh,
+                                  projector_matrix: np.ndarray,
+                                  texture: np.ndarray) -> np.ndarray:
+        """
+        Proyecta textura sobre mesh 3D usando la matriz del proyector.
+        Retorna frame warpado para enviar al proyector.
+        """
+        vertices = np.asarray(mesh.vertices)
+        # Proyectar vértices al espacio del proyector
+        verts_h = np.hstack([vertices, np.ones((len(vertices), 1))])
+        proj_coords = (projector_matrix @ verts_h.T).T
+        proj_2d = proj_coords[:, :2] / proj_coords[:, 2:3]
+        return proj_2d</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← M7</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · MadMapper</div>
+    <div class="module-title">MadMapper y Resolume — Workflow Profesional</div>
+    <div class="module-sub">Superficie management, MIDI control, OSC, media server</div>
+  </div>
+
+  <div class="card">
+    <h3>Control OSC desde Python → MadMapper</h3>
+    <pre>
+from pythonosc import udp_client
+import time
+import numpy as np
+
+class MadMapperController:
+    """
+    Control en tiempo real de MadMapper via OSC (Open Sound Control).
+    MadMapper escucha en el puerto 8000 por defecto.
+    """
+    def __init__(self, ip: str = "127.0.0.1", port: int = 8000):
+        self.client = udp_client.SimpleUDPClient(ip, port)
+
+    def set_surface_opacity(self, surface_name: str, opacity: float):
+        """Controlar opacidad de una superficie (0.0 - 1.0)."""
+        self.client.send_message(
+            f"/surfaces/{surface_name}/opacity", opacity
+        )
+
+    def set_media_param(self, media_name: str, param: str, value: float):
+        """Controlar parámetro de media (brightness, contrast...)."""
+        self.client.send_message(
+            f"/medias/{media_name}/{param}", value
+        )
+
+    def audio_reactive_loop(self, bands: dict):
+        """Mapa de bandas de audio a parámetros de MadMapper."""
+        # Bass → opacidad de superficie principal
+        self.set_surface_opacity("facade_main", 0.5 + bands["bass"] * 0.5)
+        # Mid → brightness del clip de video
+        self.set_media_param("clip_01", "brightness", bands["mid"])
+        # High → speed del clip
+        self.set_media_param("clip_01", "speed", 0.5 + bands["high"] * 1.5)
+
+# Usar en bucle con análisis de audio en tiempo real
+ctrl = MadMapperController()
+# En cada frame de audio (~10ms):
+# bands = extract_frequency_bands(audio_chunk)
+# ctrl.audio_reactive_loop(bands)</pre>
+  </div>
+
+  <div class="card">
+    <h3>Resolume Arena — Conceptos Clave</h3>
+    <ul>
+      <li><strong>Composition:</strong> La "escena" con columnas (grupos de clips) y layers (capas)</li>
+      <li><strong>Clip:</strong> Unidad de video/generativo con sus propios efectos</li>
+      <li><strong>Output Transform:</strong> Zona de warping y edge blending por salida</li>
+      <li><strong>Slice:</strong> Región de la composición que va a un proyector específico</li>
+      <li><strong>FFGL Plugins:</strong> Shaders GLSL empaquetados como plugins (ISF compatible)</li>
+      <li><strong>BPM Sync:</strong> Clips sincronizados al tempo vía MIDI clock o Ableton Link</li>
+    </ul>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← M8</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Generativo</div>
+    <div class="module-title">Contenido Generativo para Mapping</div>
+    <div class="module-sub">Processing, vvvv, TouchDesigner SOPs, 3D realtime</div>
+  </div>
+
+  <div class="card">
+    <h3>Generativo con Python + OpenGL</h3>
+    <pre>
+import moderngl
+import numpy as np
+from pyrr import Matrix44
+
+class GenerativeMapper:
+    """Contenido procedural en tiempo real para video mapping."""
+
+    def __init__(self, width: int = 1920, height: int = 1080):
+        self.ctx = moderngl.create_standalone_context()
+        self.fbo = self.ctx.framebuffer(
+            color_attachments=[self.ctx.texture((width, height), 4)]
+        )
+        self.prog = self.ctx.program(
+            vertex_shader="""
+                #version 330
+                in vec2 in_pos;
+                out vec2 uv;
+                void main() {
+                    gl_Position = vec4(in_pos, 0.0, 1.0);
+                    uv = in_pos * 0.5 + 0.5;
+                }
+            """,
+            fragment_shader="""
+                #version 330
+                in vec2 uv;
+                out vec4 fragColor;
+                uniform float time;
+                uniform float bass;
+
+                void main() {
+                    vec2 p = uv - 0.5;
+                    float r = length(p);
+                    float angle = atan(p.y, p.x);
+                    float ripple = sin(r * 20.0 - time * 4.0 + bass * 15.0);
+                    float brightness = (ripple * 0.5 + 0.5) * (1.0 - r * 2.0);
+                    vec3 col = vec3(0.5 + 0.5*sin(angle + time),
+                                   0.3 + bass * 0.7,
+                                   0.8 - r);
+                    fragColor = vec4(col * brightness, 1.0);
+                }
+            """
+        )
+        # Quad que cubre toda la pantalla
+        vbo = self.ctx.buffer(np.array([
+            -1,-1, 1,-1, -1,1, 1,1
+        ], dtype='f4'))
+        self.vao = self.ctx.simple_vertex_array(self.prog, vbo, 'in_pos')
+
+    def render(self, time: float, bass: float) -> np.ndarray:
+        """Renderiza frame generativo y retorna como numpy array."""
+        self.fbo.use()
+        self.ctx.clear(0, 0, 0)
+        self.prog['time'].value = time
+        self.prog['bass'].value = bass
+        self.vao.render(moderngl.TRIANGLE_STRIP)
+        return np.frombuffer(self.fbo.read(), dtype=np.uint8)</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← M9</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Multi-Proyector</div>
+    <div class="module-title">Sistemas Multi-Proyector y Sincronización</div>
+    <div class="module-sub">NDI, sync timecode, VIOSO, warper hardware</div>
+  </div>
+
+  <div class="card">
+    <h3>NDI para Video en Red</h3>
+    <pre>
+# NDI (Network Device Interface) — video sobre IP en tiempo real
+# Latencia: ~1 frame (16-33ms), sin compresión visible, hasta 4K@60fps en 1Gb LAN
+
+# Enviar desde Python via NDI
+import NDIlib as ndi
+
+ndi.initialize()
+send_settings = ndi.SendCreate()
+send_settings.ndi_name = "MappingServer"
+ndi_sender = ndi.send_create(send_settings)
+
+def send_ndi_frame(frame_bgra: np.ndarray):
+    """Enviar frame BGRA a todos los receptores NDI en la red."""
+    H, W = frame_bgra.shape[:2]
+    video_frame = ndi.VideoFrameV2()
+    video_frame.data = frame_bgra
+    video_frame.FourCC = ndi.FOURCC_VIDEO_TYPE_BGRA
+    video_frame.xres = W
+    video_frame.yres = H
+    ndi.send_send_video_v2(ndi_sender, video_frame)
+
+# Recibir en Resolume / TouchDesigner: NDI In TOP (TouchDesigner)
+# o en Resolume: Source > NDI > seleccionar "MappingServer"
+
+# Timecode sincronización: usar SMPTE LTC o MTC
+# Para sincronía frame-exacta entre múltiples proyectores:
+# - PTP IEEE 1588 (igual que en audio) para base de tiempo
+# - GLSync en tarjetas Quadro / FirePro
+# - VIOSO AnyBlend: solución comercial todo-en-uno</pre>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa de Software Multi-Proyector</h3>
+    <table>
+      <tr><th>Software</th><th>Warping</th><th>Blending</th><th>3D</th><th>Precio</th></tr>
+      <tr><td>MadMapper</td><td>Bézier</td><td>Sí</td><td>Parcial</td><td>€499</td></tr>
+      <tr><td>Resolume Arena</td><td>Slice/quad</td><td>Sí</td><td>No</td><td>€999</td></tr>
+      <tr><td>TouchDesigner</td><td>Total</td><td>Sí</td><td>Sí</td><td>Free/€600</td></tr>
+      <tr><td>VIOSO AnyBlend</td><td>Automático</td><td>Automático</td><td>Sí</td><td>€2000+</td></tr>
+      <tr><td>Dataton WATCHOUT</td><td>Sí</td><td>Sí</td><td>Sí</td><td>€3000+</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← M10</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Casos</div>
+    <div class="module-title">Casos de Estudio — Proyectos de Referencia</div>
+    <div class="module-sub">Fête des Lumières, Moment Factory, Limelight, festivales</div>
+  </div>
+
+  <div class="card">
+    <h3>Proyectos de Referencia Global</h3>
+    <table>
+      <tr><th>Proyecto</th><th>Superficie</th><th>Proyectores</th><th>Software</th><th>Innovación</th></tr>
+      <tr><td>Fête des Lumières Lyon</td><td>Fachadas ciudad</td><td>4-20+</td><td>Multiple</td><td>Escala urbana, comunidad</td></tr>
+      <tr><td>Moment Factory (Disney)</td><td>Edificios icónicos</td><td>20-100</td><td>Propio</td><td>Narrativa + arquitectura</td></tr>
+      <tr><td>teamLab Planets</td><td>Suelo+paredes inmersivo</td><td>100+</td><td>Propio</td><td>Interactividad sensorial</td></tr>
+      <tr><td>Refik Anadol</td><td>Fachadas + interiores</td><td>variable</td><td>TD+custom</td><td>ML-driven generativo</td></tr>
+      <tr><td>Limelight (local)</td><td>Clubs/eventos</td><td>2-8</td><td>Resolume+TD</td><td>DJ-sync, MIDI control</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Anatomía de un Proyecto de Mapping</h3>
+    <ol>
+      <li><strong>Site Survey:</strong> Medición 3D de la superficie (LIDAR o fotogrametría)</li>
+      <li><strong>Técnica:</strong> Cálculo de throw ratio, lumens, posicionamiento proyectores</li>
+      <li><strong>Calibración:</strong> Homografía + warping + edge blending en el lugar</li>
+      <li><strong>Contenido:</strong> Creación del material audiovisual adaptado a la geometría</li>
+      <li><strong>Previs:</strong> Simulación en TouchDesigner/Blender antes del evento</li>
+      <li><strong>Show:</strong> Control en tiempo real (MIDI/OSC/timecode)</li>
+      <li><strong>Post:</strong> Grabación con cámara FOV ajustada a la superficie</li>
+    </ol>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← M11</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Narración</div>
+    <div class="module-title">Narración Espacial y Diseño de Show</div>
+    <div class="module-sub">Story beats, arquitectura como personaje, timing y ritmo visual</div>
+  </div>
+
+  <div class="card">
+    <h3>La Arquitectura como Personaje</h3>
+    <p>En video mapping de edificios, la estructura física ES el personaje principal. El contenido debe:</p>
+    <ul>
+      <li><strong>Respetar la arquitectura:</strong> Las líneas proyectadas siguen las líneas físicas del edificio, no las cruzan arbitrariamente.</li>
+      <li><strong>Revelar estructuras ocultas:</strong> El mapping puede "rayos-X" el edificio, mostrando su interior imaginario o historia.</li>
+      <li><strong>Transformación progresiva:</strong> De fachada real → fachada transformada → abstracción total → retorno. Arc narrativo.</li>
+      <li><strong>Climax sincronizado:</strong> El momento de mayor impacto visual coincide con el clímax musical.</li>
+    </ul>
+    <pre>
+# Estructura de show típica (8-12 minutos)
+show_structure = [
+    {"tiempo": "0:00-1:30", "acto": "Apertura",     "intensidad": 0.3, "descripcion": "Despertar del edificio"},
+    {"tiempo": "1:30-3:00", "acto": "Desarrollo 1", "intensidad": 0.6, "descripcion": "Primer tema visual"},
+    {"tiempo": "3:00-5:00", "acto": "Desarrollo 2", "intensidad": 0.8, "descripcion": "Complicación / conflicto"},
+    {"tiempo": "5:00-6:30", "acto": "Crisis",       "intensidad": 0.5, "descripcion": "Disrupción / silencio"},
+    {"tiempo": "6:30-9:00", "acto": "Climax",       "intensidad": 1.0, "descripcion": "Máxima transformación"},
+    {"tiempo": "9:00-11:00","acto": "Resolución",   "intensidad": 0.4, "descripcion": "Regreso / cierre"},
+    {"tiempo": "11:00-12:00","acto":"Coda",         "intensidad": 0.2, "descripcion": "Fade al estado original"},
+]</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← M12</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto Final — Mapping End-to-End</div>
+    <div class="module-sub">Desde calibración hasta show con audio-reactividad</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>Calibración</td><td>Homografía sobre superficie real, error reproy &lt;5px, RANSAC &gt;80% inliers</td><td>20</td></tr>
+        <tr><td>Edge Blending</td><td>≥2 proyectores fusionados, suma en overlap ≈1.0, sin banda visible</td><td>20</td></tr>
+        <tr><td>Audio-Reactividad</td><td>≥3 bandas mapeadas a parámetros visuales distintos, Lag CHOP aplicado</td><td>25</td></tr>
+        <tr><td>Contenido Generativo</td><td>GLSL shader propio o TD network de ≥5 nodos, sincronizado a música</td><td>20</td></tr>
+        <tr><td>Show narrativo</td><td>Performance &gt;3min con arc narrativo documentado, grabado en vídeo</td><td>15</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Throw Ratio</h4>
+      <p class="quiz-q">Un proyector con throw ratio 1.2 debe proyectar una imagen de 5m de ancho. ¿A qué distancia debes colocarlo? ¿Cuántos lúmenes necesitas si la superficie tiene ganancia 0.9 y quieres 20 foot-lamberts?</p>
+      <details><summary>Ver respuesta</summary><p>Distancia = R × W = 1.2 × 5m = <strong>6m</strong>. Área = 5 × (5 × 9/16) = 5 × 2.8125 = 14.06 m² = 151.3 ft². Lúmenes = (20 ftL × 151.3 ft²) / 0.9 = <strong>3,362 lúmenes ANSI</strong>. Un proyector de 4000 ANSI sería suficiente con margen.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · Homografía DOF</h4>
+      <p class="quiz-q">¿Por qué la homografía tiene 8 grados de libertad y no 9 (la matriz 3×3 tiene 9 elementos)?</p>
+      <details><summary>Ver respuesta</summary><p>La homografía H es una matriz proyectiva 3×3 que opera sobre coordenadas homogéneas. Cualquier escalar múltiple de H produce la misma transformación: λH·[x y 1]ᵀ y H·[x y 1]ᵀ dividen por el mismo w y dan el mismo resultado. Por convención se fija h₃₃=1 (o ||H||=1), eliminando un grado de libertad. 9 − 1 = <strong>8 DOF</strong>: 4 puntos × 2 coordenadas = 8 ecuaciones para determinar completamente H.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · Edge Blending gamma</h4>
+      <p class="quiz-q">¿Por qué la curva de edge blending f(x)=a(2x)^p se debe aplicar ANTES de la gamma de la pantalla, y qué pasaría si se aplica después?</p>
+      <details><summary>Ver respuesta</summary><p>Las pantallas/proyectores aplican una curva gamma (≈2.2) al valor de píxel: luminancia = V^2.2. Si la máscara de blend se aplica en espacio gamma (después), la transición se verá demasiado oscura porque se comprime no-linealmente. Aplicando antes (en espacio lineal), la curva f(x) se combina linealmente con la luminancia real. El overlap de dos proyectores suma sus luminancias linealmente: L₁ + L₂ = 1.0 correctamente. Si se aplicara después en espacio gamma, la suma sería (V₁+V₂)^2.2 ≠ V₁^2.2 + V₂^2.2.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · Audio FFT</h4>
+      <p class="quiz-q">¿Qué resolución frecuencial (Hz/bin) tiene una FFT de 2048 puntos a 44100Hz? ¿Cuántos bins caen en la banda de bass [80-300Hz]?</p>
+      <details><summary>Ver respuesta</summary><p>df = fs/N = 44100/2048 = <strong>21.5 Hz/bin</strong>. Bin mínimo de bass: floor(80/21.5) = bin 3. Bin máximo de bass: floor(300/21.5) = bin 13. Número de bins = 13 − 3 = <strong>10 bins</strong> en la banda [80-300Hz]. Para mejor resolución en bajas frecuencias se puede usar FFT más larga (4096, 8192) o análisis multi-resolución (CQT).</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · DLT mínimo</h4>
+      <p class="quiz-q">¿Por qué se necesitan mínimo 4 puntos para calcular una homografía con DLT? ¿Qué pasa si los 4 puntos son colineales?</p>
+      <details><summary>Ver respuesta</summary><p>Cada correspondencia de puntos aporta 2 ecuaciones al sistema Ah=0. Una homografía tiene 8 DOF (incógnitas), por lo que necesitamos 8/2 = <strong>4 puntos</strong> mínimo para un sistema determinado. Si los 4 puntos son colineales (todos en la misma recta), el sistema es <strong>degenerado</strong>: la solución SVD no determina H de forma única. Existen múltiples homografías que mapean esos 4 puntos colineales correctamente (la geometría 2D se colapsa en 1D). Por eso RANSAC y los sistemas de mapping exigen que los puntos de control cubran el área 2D y no sean colineales.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← M13</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_video_mapping_escenografia_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Ecosistema Mapping'},
+    {id:'m1',  label:'M1 · Óptica y Lúmenes'},
+    {id:'m2',  label:'M2 · Homografía DLT'},
+    {id:'m3',  label:'M3 · Bézier Warping'},
+    {id:'m4',  label:'M4 · Edge Blending'},
+    {id:'m5',  label:'M5 · Audio-Reactividad'},
+    {id:'m6',  label:'M6 · GLSL Shaders'},
+    {id:'m7',  label:'M7 · Calibración CV'},
+    {id:'m8',  label:'M8 · 3D Mapping'},
+    {id:'m9',  label:'M9 · MadMapper/Resolume'},
+    {id:'m10', label:'M10 · Contenido Generativo'},
+    {id:'m11', label:'M11 · Multi-Proyector'},
+    {id:'m12', label:'M12 · Casos de Estudio'},
+    {id:'m13', label:'M13 · Narración Espacial'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

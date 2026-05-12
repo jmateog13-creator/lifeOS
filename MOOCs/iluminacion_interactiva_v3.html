@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zero to Hero: Iluminación Interactiva Audio-Reactiva v3</title>
+<style>
+:root {
+  --bg:#0b0f17; --surface:#111827; --surface2:#1e293b;
+  --accent:#06b6d4; --accent2:#22d3ee; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#1e293b;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'Fira Code',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#0d1117;padding:2px 6px;border-radius:4px}
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+.formula{background:rgba(6,182,212,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(6,182,212,.07);border-radius:6px;line-height:1.6}
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>Iluminación Interactiva</h2>
+    <p>Audio-Reactiva · v3</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introducción</div>
+    <div class="module-title">Ecosistema: DMX512 → IP → Fixtures Interactivos</div>
+    <div class="module-sub">El 20% de la teoría que soporta el 80% de las arquitecturas de iluminación interactiva</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 840 160" width="100%" font-family="Inter,sans-serif" font-size="13">
+      <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#06b6d4"/></marker></defs>
+      <rect x="10" y="50" width="120" height="60" rx="8" fill="#111827" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="70" y="76" text-anchor="middle" fill="#06b6d4" font-weight="600">Audio/Software</text>
+      <text x="70" y="93" text-anchor="middle" fill="#94a3b8" font-size="11">FFT + EMA</text>
+      <line x1="130" y1="80" x2="165" y2="80" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="167" y="50" width="130" height="60" rx="8" fill="#111827" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="232" y="76" text-anchor="middle" fill="#a855f7" font-weight="600">Art-Net / sACN</text>
+      <text x="232" y="93" text-anchor="middle" fill="#94a3b8" font-size="11">UDP / Multicast</text>
+      <line x1="297" y1="80" x2="332" y2="80" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="334" y="50" width="130" height="60" rx="8" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+      <text x="399" y="76" text-anchor="middle" fill="#10b981" font-weight="600">Nodo Conversor</text>
+      <text x="399" y="93" text-anchor="middle" fill="#94a3b8" font-size="11">Ethernet → RS-485</text>
+      <line x1="464" y1="80" x2="499" y2="80" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="501" y="50" width="130" height="60" rx="8" fill="#111827" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="566" y="76" text-anchor="middle" fill="#f59e0b" font-weight="600">DMX512-A</text>
+      <text x="566" y="93" text-anchor="middle" fill="#94a3b8" font-size="11">512ch × 8-bit</text>
+      <line x1="631" y1="80" x2="666" y2="80" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="668" y="50" width="150" height="60" rx="8" fill="#111827" stroke="#ef4444" stroke-width="1.5"/>
+      <text x="743" y="76" text-anchor="middle" fill="#ef4444" font-weight="600">Fixtures / LEDs</text>
+      <text x="743" y="93" text-anchor="middle" fill="#94a3b8" font-size="11">RGB/RGBW + Moving</text>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">250 kbps</div><div class="metric-label">Baudrate DMX512</div></div>
+    <div class="metric"><div class="metric-val">512</div><div class="metric-label">Canales por universo</div></div>
+    <div class="metric"><div class="metric-val">44 Hz</div><div class="metric-label">Refresco DMX</div></div>
+    <div class="metric"><div class="metric-val">65,536</div><div class="metric-label">Pasos 16-bit</div></div>
+    <div class="metric"><div class="metric-val">0x5000</div><div class="metric-label">ArtDmx OpCode</div></div>
+    <div class="metric"><div class="metric-val">239.255.x.x</div><div class="metric-label">Multicast sACN</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa de protocolos</h3>
+    <table>
+      <tr><th>Protocolo</th><th>Transporte</th><th>Topología</th><th>Universos</th><th>Prioridades</th></tr>
+      <tr><td>DMX512-A</td><td>RS-485 serial</td><td>Bus lineal</td><td>1 por cable</td><td>No</td></tr>
+      <tr><td>Art-Net 4</td><td>UDP (puerto 6454)</td><td>Unicast/Broadcast</td><td>32,768</td><td>Por fuente</td></tr>
+      <tr><td>sACN (E1.31)</td><td>UDP Multicast</td><td>Multicast + IGMP</td><td>63,999</td><td>Por canal (0-200)</td></tr>
+      <tr><td>RDM (E1.20)</td><td>EIA-485 bidireccional</td><td>Bus + respuesta</td><td>1</td><td>N/A</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Protocolo</div>
+    <div class="module-title">DMX512-A y RS-485: Fundamentos Físicos</div>
+    <div class="module-sub">Señalización diferencial, trama serial, tasa de refresco y RDM bidireccional</div>
+  </div>
+
+  <div class="formula">T_frame = Break(88µs) + MAB(8µs) + 513 slots × 44µs/slot ≈ 22.6ms → ~44Hz refresco máximo</div>
+
+  <div class="card">
+    <h3>Arquitectura del protocolo DMX512</h3>
+    <p>DMX512 es un protocolo serial <strong>half-duplex asíncrono</strong> basado en RS-485 (EIA-485). Opera a <strong>250 kbps</strong> con un universo de <strong>512 canales</strong> de 8 bits. La trama comienza con un break (≥88µs), seguido de un Mark After Break (≥8µs) y luego el startcode (0x00 para DMX) más los 512 bytes de datos. RS-485 usa señalización diferencial de par trenzado — inmunidad al ruido de modo común. Requiere <strong>terminaciones de 120Ω</strong> al final del bus para evitar reflexiones.</p>
+  </div>
+
+  <div class="card">
+    <h3>Simulador de trama DMX512 en Python</h3>
+    <pre>class DMX512Frame:
+    BREAK_US = 88; MAB_US = 8; SLOT_US = 44; MAX_SLOTS = 512
+
+    def __init__(self, n_slots=512):
+        self.data = [0] * min(n_slots, self.MAX_SLOTS)
+
+    def set_rgb(self, start_ch, r, g, b):
+        self.data[start_ch-1], self.data[start_ch], self.data[start_ch+1] = r, g, b
+
+    def frame_duration_ms(self):
+        total_us = self.BREAK_US + self.MAB_US + (len(self.data)+1)*self.SLOT_US
+        return total_us / 1000
+
+    def refresh_rate_hz(self): return 1000 / self.frame_duration_ms()
+
+# Ejemplo: 3 fixtures RGB
+frame = DMX512Frame(512)
+frame.set_rgb(1, 255, 0, 0)    # Fixture 1: Rojo
+frame.set_rgb(4, 0, 255, 0)    # Fixture 2: Verde
+frame.set_rgb(7, 0, 0, 255)    # Fixture 3: Azul
+
+# 16-bit resolution (MSB+LSB para pan/tilt):
+coarse, fine = 180, 128
+pan_16bit = coarse * 256 + fine  # = 46208 de 65535 pasos
+print(f"Duración: {frame.frame_duration_ms():.2f}ms → {frame.refresh_rate_hz():.1f}Hz")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q1 · DMX512 y RS-485</h4>
+    <p class="quiz-q">¿Por qué DMX512 tiene una tasa de refresco máxima de ~44Hz y qué ocurre si se conecta el bus sin terminaciones de 120Ω?</p>
+    <details><summary>Ver respuesta</summary><p>La tasa de refresco de ~44Hz es un límite físico del protocolo serial: una trama completa con 512 slots tarda Break(88µs) + MAB(8µs) + 513 bytes × 44µs/byte ≈ 22.6ms. No puede haber más de 1000ms/22.6ms ≈ 44 tramas por segundo. No es una limitación de los fixtures sino de la velocidad del bus RS-485 a 250kbps. Sin terminaciones de 120Ω al final del bus: las señales se reflejan en los extremos del bus (impedancia no adaptada), generando "eco" de la señal que suma al original. Esto produce errores de bit, flicker aleatorio en los fixtures y, en el peor caso, comportamiento errático no relacionado con los valores enviados. Las terminaciones absorben la energía al final del bus eliminando las reflexiones.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Red</div>
+    <div class="module-title">Art-Net: Encapsulación UDP y Direccionamiento</div>
+    <div class="module-sub">Estructura ArtDmx, direccionamiento Net.Subnet.Universe y ArtSync</div>
+  </div>
+
+  <div class="formula">Dirección Art-Net: Net(7bit) . Subnet(4bit) . Universe(4bit) → 32,768 universos totales</div>
+
+  <div class="card">
+    <h3>Estructura del paquete ArtDmx</h3>
+    <table>
+      <tr><th>Campo</th><th>Bytes</th><th>Valor</th><th>Descripción</th></tr>
+      <tr><td>ID</td><td>8</td><td>"Art-Net\0"</td><td>String de identificación</td></tr>
+      <tr><td>OpCode</td><td>2</td><td>0x5000 (LE)</td><td>ArtDmx</td></tr>
+      <tr><td>ProtVer</td><td>2</td><td>0x000E</td><td>Versión 14</td></tr>
+      <tr><td>Sequence</td><td>1</td><td>0x01-0xFF</td><td>Anti-jitter ordering</td></tr>
+      <tr><td>Universe</td><td>2</td><td>Net.Sub.Uni</td><td>Dirección 15-bit</td></tr>
+      <tr><td>Length</td><td>2</td><td>2-512</td><td>Canales DMX (par)</td></tr>
+      <tr><td>Data</td><td>2-512</td><td>0x00-0xFF</td><td>Datos DMX512</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Transmisor Art-Net en Python</h3>
+    <pre>import socket, struct
+
+class ArtNetSender:
+    ARTNET_PORT = 6454
+    HEADER = b'Art-Net\x00'
+    OPCODE_DMX = 0x5000
+
+    def __init__(self, target_ip='255.255.255.255'):
+        self.target_ip = target_ip; self.sequence = 0
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+    def send(self, universe, data):
+        self.sequence = (self.sequence % 255) + 1
+        dmx = bytes(data);
+        if len(dmx) % 2: dmx += b'\x00'
+        pkt = (self.HEADER +
+               struct.pack('<H', self.OPCODE_DMX) +
+               struct.pack('>H', 14) +
+               bytes([self.sequence, 0]) +
+               struct.pack('<H', universe) +
+               struct.pack('>H', len(dmx)) + dmx)
+        self.sock.sendto(pkt, (self.target_ip, self.ARTNET_PORT))
+
+    def send_artsync(self):
+        pkt = self.HEADER + struct.pack('<H', 0x5200) + struct.pack('>H',14) + bytes(4)
+        self.sock.sendto(pkt, (self.target_ip, self.ARTNET_PORT))</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q2 · Art-Net</h4>
+    <p class="quiz-q">¿Qué identifica el OpCode 0x5000 en un paquete Art-Net y para qué sirve el ArtSync (OpCode 0x5200)?</p>
+    <details><summary>Ver respuesta</summary><p>El OpCode 0x5000 identifica un paquete ArtDmx — instruye a los nodos receptores a procesar los bytes de datos como un universo DMX512 secuenciado. Es el paquete más común: se transmite hasta 44 veces por segundo por universo. El ArtSync (OpCode 0x5200) es un paquete de sincronización sin datos DMX enviado como broadcast tras actualizar todos los universos de un frame. Su función: en arrays LED con múltiples universos (ej. un mural de 2000 LEDs = 4 universos), los 4 paquetes ArtDmx llegan en momentos ligeramente distintos. Sin ArtSync, los nodos actualizan sus fixtures al recibir cada paquete → se produce "tearing" (bandas horizontales de diferentes frames). Con ArtSync: los nodos acumulan todos los paquetes del frame y aplican todos los cambios simultáneamente al recibir el ArtSync.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Multicast</div>
+    <div class="module-title">sACN (ANSI E1.31): Multicast y Prioridades</div>
+    <div class="module-sub">UDP Multicast, IGMP Snooping, prioridades HTP y Per-Address Priority</div>
+  </div>
+
+  <div class="formula">IP Multicast sACN = 239.255.0.0 + (universe / 256).(universe % 256)<br>
+Universo 1 → 239.255.0.1 | Universo 42 → 239.255.0.42 | Universo 300 → 239.255.1.44</div>
+
+  <div class="card">
+    <h3>Sistema de prioridades sACN</h3>
+    <p>Cada paquete sACN incluye un campo de prioridad de <strong>0 a 200</strong> (default: 100). Con múltiples controladores en el mismo universo, los nodos aplican <strong>HTP (Highest Takes Precedence)</strong>: seleccionan el valor más alto por canal de entre todas las fuentes activas. <strong>Per-Address Priority</strong> (startcode 0xdd) asigna prioridades discretas por canal individual — permite que un controlador tenga prioridad sobre canales específicos (ej. pan/tilt) mientras otro controla el color.</p>
+  </div>
+
+  <div class="card">
+    <h3>IGMP Snooping: fundamento de red</h3>
+    <p>IGMP Snooping en switches de Capa 2 examina las solicitudes IGMP Join/Leave, limitando el tráfico sACN exclusivamente a los puertos que lo soliciten. Sin IGMP Snooping, todo el tráfico multicast se comporta como broadcast — en un show con 200 universos a 44Hz, llegan 8,800 paquetes/segundo a <em>cada</em> dispositivo conectado, saturando CPUs de laptops de audio, cámaras y tablets del equipo.</p>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q3 · sACN Multicast</h4>
+    <p class="quiz-q">¿Por qué sACN usa Multicast UDP en lugar de Broadcast como Art-Net? ¿Cuándo es estrictamente necesario activar IGMP Snooping?</p>
+    <details><summary>Ver respuesta</summary><p>sACN usa Multicast porque cada universo se envía a una dirección IP específica (239.255.x.x). Los nodos que necesitan ese universo envían IGMP Join a esa dirección; el switch solo reenvía el tráfico a esos puertos. Art-Net Broadcast llega a todos los dispositivos de la red sin distinción. En un show pequeño (8 universos, 10 dispositivos) la diferencia es mínima. IGMP Snooping es estrictamente necesario cuando: (a) hay más de ~20 universos activos — sin él, el multicast se convierte en broadcast de todos modos; (b) hay equipos sensibles en la misma red (consolas de audio, sistemas de video) que no deben recibir carga extra; (c) la red tiene &lt;1 Gbps entre switches. En redes pequeñas dedicadas exclusivamente a iluminación, puede omitirse, aunque siempre es mejor práctica activarlo.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Resolución</div>
+    <div class="module-title">Resolución 16-bit MSB/LSB</div>
+    <div class="module-sub">Control de alta resolución para pan/tilt: 65,536 pasos versus 256 de 8-bit</div>
+  </div>
+
+  <div class="formula">Valor 16-bit = (Coarse × 256) + Fine → 65,536 pasos<br>
+Resolución Pan 540°: 8-bit = 2.1°/paso | 16-bit = 0.008°/paso</div>
+
+  <div class="card">
+    <h3>Encoder/Decoder 16-bit DMX en Python</h3>
+    <pre>class DMX16BitController:
+    MAX_16BIT = 65535
+
+    def encode_16bit(self, value_0to1):
+        raw = int(max(0, min(value_0to1, 1.0)) * self.MAX_16BIT)
+        return raw >> 8, raw & 0xFF       # coarse, fine
+
+    def decode_16bit(self, coarse, fine):
+        return ((coarse << 8) | fine) / self.MAX_16BIT
+
+    def angle_to_dmx(self, angle_deg, total_range=540):
+        norm = (angle_deg + total_range/2) / total_range
+        return self.encode_16bit(norm)
+
+ctrl = DMX16BitController()
+
+# Demostración de resolución
+print(f"8-bit:  {540/256:.2f}°/paso")
+print(f"16-bit: {540/65536*1000:.3f} m°/paso")
+
+# Posiciones
+for angle in [-270, 0, 90, 270]:
+    c, f = ctrl.angle_to_dmx(angle)
+    print(f"{angle:+4.0f}° → Coarse={c:3d}, Fine={f:3d}")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q4 · Resolución 16-bit</h4>
+    <p class="quiz-q">¿Por qué la resolución 16-bit es perceptualmente crítica para Pan/Tilt pero generalmente no necesaria para el canal de color RGB?</p>
+    <details><summary>Ver respuesta</summary><p>Los motores de Pan/Tilt con 8-bit producen "stepping" mecánico visible: en un barrido de 540°, cada incremento de canal es 540/256 ≈ 2.1°. En fades lentos estos saltos son claramente perceptibles como movimiento escalonado. Con 16-bit: 540/65536 ≈ 0.008° por paso — imperceptible. Para color RGB, el ojo humano tiene sensibilidad de contraste de ~1/200 bajo condiciones de show: múltiples fixtures mezclando colores, distancia al público, y variaciones de intensidad enmascaran la cuantización de 256 pasos. Además, en color el mixing entre tres canales (R, G, B) suaviza efectivamente los pasos — el resultado visual interpolado tiene resolución mucho mayor que cualquier canal individual. Por eso el estándar prioriza 16-bit para movimiento y mantiene 8-bit para color en la mayoría de aplicaciones.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · FFT</div>
+    <div class="module-title">FFT para Ruteo Audio-Reactivo</div>
+    <div class="module-sub">Análisis espectral, bandas de frecuencia, mapeo logarítmico a DMX</div>
+  </div>
+
+  <div class="formula">DMX_value = 255 × (magnitude / max_magnitude)^γ    [γ ≈ 0.4-0.6 curva logarítmica]<br>
+Resolución frecuencial: Δf = fs / N = 44100 / 2048 ≈ 21.5 Hz/bin</div>
+
+  <div class="card">
+    <h3>Bandas de frecuencia para iluminación</h3>
+    <table>
+      <tr><th>Banda</th><th>Rango</th><th>Uso en iluminación</th></tr>
+      <tr><td>Sub-Bass</td><td>20–60 Hz</td><td>Intensidad base / strobe global</td></tr>
+      <tr><td>Bass/Kick</td><td>60–250 Hz</td><td>Flashes de color / sincronía rítmica</td></tr>
+      <tr><td>Mid-Bass</td><td>250–500 Hz</td><td>Cambios de posición (pan/tilt grueso)</td></tr>
+      <tr><td>Mids</td><td>500 Hz–4 kHz</td><td>Color hue / posición fina</td></tr>
+      <tr><td>Highs</td><td>4–20 kHz</td><td>Chase rápido / efectos de borde</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Analizador FFT audio-reactivo en Python</h3>
+    <pre>import numpy as np
+from scipy.fft import rfft, rfftfreq
+
+class AudioReactiveFFT:
+    BANDS = {'sub_bass':(20,60),'bass':(60,250),'mids':(500,4000),'highs':(4000,20000)}
+
+    def __init__(self, fs=44100, fft_size=2048, gamma=0.5):
+        self.fs = fs; self.fft_size = fft_size; self.gamma = gamma
+        self.freqs = rfftfreq(fft_size, 1/fs)
+        self.smoothed = {b: 0.0 for b in self.BANDS}
+
+    def process(self, audio_frame, alpha=0.3):
+        window = np.hanning(self.fft_size)
+        spectrum = np.abs(rfft(audio_frame[:self.fft_size] * window)) / (self.fft_size/2)
+        dmx = {}
+        for band, (f_low, f_high) in self.BANDS.items():
+            mask = (self.freqs >= f_low) & (self.freqs < f_high)
+            energy = float(np.mean(spectrum[mask])) if mask.any() else 0.0
+            # EMA smoothing
+            self.smoothed[band] = alpha*energy + (1-alpha)*self.smoothed[band]
+            # Gamma mapping (logarithmic perception)
+            normalized = min(self.smoothed[band] / 0.1, 1.0)
+            dmx[band] = int((normalized ** self.gamma) * 255)
+        return dmx</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q5 · FFT Audio-Reactivo</h4>
+    <p class="quiz-q">¿Por qué el mapeo de magnitudes FFT a valores DMX debe usar una curva exponencial/gamma? Explica también el trade-off entre tamaño de ventana FFT grande vs pequeño para iluminación en vivo.</p>
+    <details><summary>Ver respuesta</summary><p>El oído humano percibe en escala logarítmica (decibelios). Las magnitudes FFT son lineales: un sonido que suena "el doble de fuerte" puede tener magnitud 10 veces mayor. Con mapeo lineal: los niveles bajos producen valores DMX casi 0 (fixtures apagados en música tranquila), y los picos saturan el rango al instante — la instalación parece "muerta en silencio" y "saturada en fortissimo". La curva gamma (ej. γ=0.5 = raíz cuadrada) amplifica los niveles bajos: magnitud 0.01 mapea a valor DMX ~12, magnitud 0.04 mapea a ~51. Trade-off FFT: ventana grande (N=4096) da mejor resolución frecuencial (10.8 Hz/bin) pero menor resolución temporal (más frames por análisis → mayor latencia para detectar transientes como kicks). Ventana pequeña (N=512) responde más rápido a cambios bruscos pero mezcla más frecuencias por bin. Para sincronía rítmica (bass kick) se prefiere N=512-1024; para análisis de color/armonía, N=2048-4096.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Filtrado</div>
+    <div class="module-title">Filtro EMA y Mitigación de DMX Jitter</div>
+    <div class="module-sub">IIR paso-bajo de primer orden, priming, trampa del entero en C++</div>
+  </div>
+
+  <div class="formula">y[n] = α · x[n] + (1 − α) · y[n−1]<br>
+f_c = −ln(1 − α) × f_update / (2π)  →  α=0.15, 44Hz: f_c ≈ 1.06 Hz</div>
+
+  <div class="card">
+    <h3>EMA correcto en Python y C++</h3>
+    <pre>class EMAFilter:
+    def __init__(self, alpha=0.1):
+        self.alpha = float(alpha)  # obligatorio: float, NO int
+        self.y_prev = None; self.first_time = True
+
+    def process(self, x):
+        x = float(x)
+        if self.first_time:
+            self.y_prev = x   # PRIMING: y[0] = x[0] → elimina wind-up
+            self.first_time = False
+            return x
+        y = self.alpha * x + (1.0 - self.alpha) * self.y_prev
+        self.y_prev = y
+        return y
+
+# ───── TRAMPA DEL ENTERO EN C++ ─────
+# INCORRECTO: alpha_int = round(0.001 × 256) = 0
+# → y = (0×x + 256×y_prev)/256 = y_prev → filtro CONGELADO
+
+# CORRECTO:
+# double ema_filter(double x, double alpha, double* y_prev, bool* first) {
+#     if (*first) { *y_prev = x; *first = false; return x; }
+#     double y = alpha * x + (1.0 - alpha) * (*y_prev);
+#     *y_prev = y; return y;
+# }</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q6 · Filtro EMA</h4>
+    <p class="quiz-q">¿Qué es el "priming" en un filtro EMA, qué problema evita, y por qué la implementación con enteros puede corromper el filtro con valores de alpha pequeños?</p>
+    <details><summary>Ver respuesta</summary><p>El priming inicializa y[0] = x[0] en el primer ciclo. Sin priming, y_prev comienza en 0 y el filtro tarda muchos frames en alcanzar el valor real de la señal ("wind-up"). Si x[0]=200 y α=0.15, sin priming necesitas ~20 frames para que y alcance 200; con priming arranca instantáneamente en 200. La trampa del entero ocurre con α muy pequeño: supón α=0.001 en implementación ×256. alpha_int = round(0.001 × 256) = 0. La fórmula se convierte en y = (0×x + 256×y_prev)/256 = y_prev — el filtro deja de actualizar con la señal nueva, quedando congelado en el último valor. Con double: y = 0.001×x + 0.999×y_prev — funciona perfectamente aunque actualice despacio. Por eso el uso de punto flotante (double) es obligatorio en EMA con alpha pequeño.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · TouchDesigner</div>
+    <div class="module-title">TouchDesigner: CHOPs, TOPs y Pipeline de Datos</div>
+    <div class="module-sub">Workflow Network-to-DMX, Time Slice architecture, Math CHOP y Art-Net Out CHOP</div>
+  </div>
+
+  <div class="card">
+    <h3>Pipeline audio-reactivo completo en TD</h3>
+    <pre># Pipeline Network-to-DMX en TouchDesigner:
+# [Audio Device In CHOP] → [Spectrum CHOP (FFT)]
+#   → [Math CHOP (escalar 0-1)]
+#   → [Filter CHOP (EMA α=0.15)]
+#   → [Select CHOP (extraer bandas)]
+#   → [Art-Net Out CHOP (IP nodo + universo)]
+
+# Script CHOP: FFT + EMA + gamma mapping → canales DMX
+def onCook(scriptOp):
+    spectrum = op('spectrum1')
+    alpha = 0.15; gamma = 0.5; max_energy = 0.05
+    BANDS = {'sub_bass':(0,3),'bass':(3,12),'mids':(12,200),'highs':(200,512)}
+
+    if not hasattr(me,'ema'): me.ema={b:0.0 for b in BANDS}; me.first={b:True for b in BANDS}
+
+    scriptOp.clear()
+    for band,(s,e) in BANDS.items():
+        energy = sum(spectrum[0][i] for i in range(min(s,spectrum.numSamples),min(e,spectrum.numSamples))) / max(e-s,1)
+        if me.first[band]: me.ema[band]=energy; me.first[band]=False
+        else: me.ema[band]=alpha*energy+(1-alpha)*me.ema[band]
+        dmx = int((min(me.ema[band]/max_energy,1.0)**gamma)*255)
+        c=scriptOp.appendChan(band); c[0]=dmx/255.0</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q7 · TouchDesigner Pipeline</h4>
+    <p class="quiz-q">¿Cuál es la diferencia entre CHOP y DAT en TouchDesigner para el pipeline de iluminación, y qué es la arquitectura Time Slice?</p>
+    <details><summary>Ver respuesta</summary><p>CHOP (Channel Operator) procesa señales numéricas continuas en el tiempo: audio, valores de FFT, posiciones de sensores, canales DMX. Es la columna vertebral del pipeline de iluminación — los valores fluyen como canales numéricos desde el audio hasta los paquetes Art-Net. DAT (Data Operator) procesa texto y tablas: útil para cue lists, configuración de universos, logging y scripts Python, pero no para señales en tiempo real. La arquitectura Time Slice de TouchDesigner mide el tiempo entre cook frames del motor. Cuando el motor detecta que está detrás (cook time &gt; frame time), procesa múltiples "slices" de CHOPs en una sola pasada para ponerse al día, minimizando la latencia percibida en los fixtures y evitando la acumulación de retrasos que degradaría la sincronía rítmica.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · Theremin</div>
+    <div class="module-title">Kinect Theremin: TouchDesigner + Max/MSP</div>
+    <div class="module-sub">Sensor volumétrico, joints de manos, OSC bridge y síntesis reactiva</div>
+  </div>
+
+  <div class="card">
+    <h3>Pipeline Kinect → Theremin via OSC</h3>
+    <pre># TouchDesigner: captura y normaliza posiciones de manos
+# Kinect CHOP: canales /v2/p1/r/hand/tx (mano der X) → frecuencia
+#              /v2/p1/l/hand/ty (mano izq Y) → amplitud
+
+def send_hand_osc(kinect_chop, osc_out):
+    channels = {
+        'leftY':  ('v2p1l_hand_ty', (-1.5, 1.5)),
+        'rightX': ('v2p1r_hand_tx', (-1.0, 1.0)),
+    }
+    for name, (chan, (mn, mx)) in channels.items():
+        raw = float(kinect_chop[chan][0])
+        norm = max(0.0, min(1.0, (raw - mn) / (mx - mn)))
+        # Enviar via OSC Out CHOP o UDP directo
+        # /leftY float, /rightX float → puerto 5000
+
+# Max/MSP (pseudocódigo del patch):
+# [udpreceive 5000] → [OpenSoundControl] → [OSC-route /leftX /leftY /rightX /rightY]
+# Frecuencia: [rightX] → [scale 0. 1. 40. 2000.] → [slide 5 5] → [cycle~]
+# Amplitud:   [leftY]  → [scale 0. 1. 0. 1.]    → [line~ 5]  → [gain~]
+# [cycle~] → [gain~] → [dac~]</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q8 · Theremin Kinect</h4>
+    <p class="quiz-q">Describe el pipeline completo de datos desde el sensor Kinect hasta el sonido del theremin virtual, identificando el protocolo de comunicación entre TouchDesigner y Max/MSP.</p>
+    <details><summary>Ver respuesta</summary><p>Pipeline completo: (1) Kinect Azure detecta esqueleto y emite posiciones 3D de joints en world space (metros). (2) TouchDesigner lee el Kinect CHOP: extrae /v2/p1/r/hand/tx (posición X mano derecha) y /v2/p1/l/hand/ty (posición Y mano izquierda). (3) Math CHOP normaliza de metros (-1,1) a rango normalizado (0,1). (4) OSC Out CHOP de TD envía los valores como mensajes OSC UDP al puerto 5000 de Max/MSP (/rightX float, /leftY float). El protocolo es OSC (Open Sound Control) sobre UDP — mensajes jerárquicos tipados, sin overhead de TCP, latencia &lt;1ms en LAN. (5) Max/MSP recibe con udpreceive 5000, parsea con OSC-route, escala rightX a frecuencia (40-2000Hz) con slide para portamento suave, escala leftY a amplitud. (6) cycle~ genera la onda sinusoidal a la frecuencia calculada, gain~ controla la amplitud. La latencia total es ~40-60ms (Kinect 33ms + procesado TD + OSC + Max + audio buffer).</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · OSC</div>
+    <div class="module-title">OSC Bridge, Max/MSP Síntesis y Protocolos</div>
+    <div class="module-sub">Open Sound Control, síntesis en Max/MSP, interoperabilidad TD↔Max↔SC</div>
+  </div>
+
+  <div class="card">
+    <h3>OSC: arquitectura de mensajes</h3>
+    <pre># OSC: mensajes jerárquicos sobre UDP
+# Dirección: string tipo path Unix → /sensor/hand/right/x
+# Argumentos: tipados (float, int, string, blob)
+
+# TD → Max: posiciones de cuerpo
+# /kinect/hand/right/x  float  0.5
+# /kinect/hand/right/y  float  0.8
+# /kinect/body/detected int    1
+
+# TD → SuperCollider:
+# /synth/freq   float  440.0
+# /synth/amp    float  0.7
+# /synth/gate   int    1
+
+# Max → TD (feedback): estado de síntesis
+# /max/beat     int    1   (pulse en cada beat detectado)
+# /max/rms      float  0.4
+
+# Python en TD: enviar OSC manual
+import socket
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+def build_osc_float(address, value):
+    # OSC string padding a múltiplo de 4
+    addr = address.encode() + b'\x00'
+    while len(addr) % 4: addr += b'\x00'
+    type_tag = b',f\x00\x00'
+    import struct
+    data = struct.pack('>f', float(value))
+    return addr + type_tag + data
+
+sock.sendto(build_osc_float('/synth/freq', 440.0), ('127.0.0.1', 5001))</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q9 · OSC y Max/MSP</h4>
+    <p class="quiz-q">¿Por qué OSC es preferible a MIDI para la comunicación entre TouchDesigner y Max/MSP en instalaciones interactivas? Compara estructura de datos, latencia y flexibilidad.</p>
+    <details><summary>Ver respuesta</summary><p>MIDI: protocolo de 1983, mensajes de 1-3 bytes, valores enteros 0-127, canales fijos (noteOn, controlChange, etc.). Muy universalmente compatible con hardware. Limitaciones: valores cuantizados (128 pasos), sin flexibilidad de dirección (no puedes enviar /kinect/hand/right/x con significado semántico — tienes que mapear manualmente a CC42). OSC: diseñado para aplicaciones multimedia modernas. Ventajas: (1) Valores float de alta precisión (no cuantizados); (2) Direcciones jerárquicas con semántica (/sensor/kinect/body0/hand/right/x) — auto-documentadas; (3) Bundles: múltiples mensajes con timestamp compartido para atomicidad; (4) Velocidad: UDP sin overhead de MIDI DIN serial; (5) Multiplataforma: cualquier lenguaje puede implementarlo. La latencia de ambos en LAN es similar (&lt;1ms), pero OSC elimina las limitaciones de resolución y la necesidad de mapeo manual de funciones.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · GDTF</div>
+    <div class="module-title">GDTF: General Device Type Format</div>
+    <div class="module-sub">Perfil de fixture estándar, geometría 3D, atributos DMX y visualización</div>
+  </div>
+
+  <div class="card">
+    <h3>Estructura de un perfil GDTF</h3>
+    <pre>// GDTF (.gdtf) = archivo ZIP con:
+// description.xml  → definición XML del fixture
+// models/          → geometría 3D (3DS, GLB)
+// wheels/          → ruedas de gobo/color como imágenes
+
+// Estructura XML simplificada:
+&lt;GDTF DataVersion="1.2"&gt;
+  &lt;FixtureType Name="MyMovingHead" ShortName="MMH"
+               Manufacturer="Acme" RefFT="[UUID]"&gt;
+    &lt;AttributeDefinitions&gt;
+      &lt;Attribute Name="Pan" Pretty="Pan" PhysicalUnit="Angle"/&gt;
+      &lt;Attribute Name="Tilt" Pretty="Tilt" PhysicalUnit="Angle"/&gt;
+      &lt;Attribute Name="Dimmer" Pretty="Dimmer" PhysicalUnit="LuminousIntensity"/&gt;
+      &lt;Attribute Name="ColorRGB_R" Pretty="R" PhysicalUnit="ColorComponent"/&gt;
+    &lt;/AttributeDefinitions&gt;
+    &lt;DMXModes&gt;
+      &lt;DMXMode Name="Extended 20ch" DMXMasterValue=""&gt;
+        &lt;DMXChannel Offset="1" Highlight="255" Lowlight="0"&gt;
+          &lt;LogicalChannel Attribute="Dimmer" Snap="No" Master="Grand"&gt;
+            &lt;ChannelFunction Attribute="Dimmer" PhysicalFrom="0" PhysicalTo="100"/&gt;
+          &lt;/LogicalChannel&gt;
+        &lt;/DMXChannel&gt;
+        &lt;!-- Pan: canales 2 (coarse) + 3 (fine) para 16-bit --&gt;
+      &lt;/DMXMode&gt;
+    &lt;/DMXModes&gt;
+  &lt;/FixtureType&gt;
+&lt;/GDTF&gt;</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q10 · GDTF</h4>
+    <p class="quiz-q">¿Qué problema resuelve el formato GDTF y cómo beneficia a los diseñadores de iluminación que trabajan con múltiples plataformas de software?</p>
+    <details><summary>Ver respuesta</summary><p>GDTF (General Device Type Format) resuelve la fragmentación de perfiles de fixture: antes de GDTF, cada software de control (grandMA3, ETC Eos, Chamsys MQ) tenía su propio formato propietario de perfil. Un fabricante de fixtures tenía que crear y mantener perfiles separados para cada plataforma. GDTF (desarrollado por MA Lighting, Robe y Vectorworks) es un estándar abierto: un único archivo .gdtf contiene (1) la definición completa de atributos DMX con relaciones MSB/LSB explícitas; (2) geometría 3D para previsualización; (3) ruedas de gobos y colores; (4) metadatos del fabricante. Los beneficios: el software puede interpretar el perfil correctamente sin configuración manual; los diseñadores obtienen previsualización 3D fiel; los cambios de 8-bit a 16-bit están documentados en el perfil, no en la cabeza del técnico. GDTF Share es el repositorio online oficial donde los fabricantes publican perfiles certificados.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Redes</div>
+    <div class="module-title">Nodos Conversores y Topología de Red</div>
+    <div class="module-sub">Arquitectura de red para shows, nodos Art-Net/sACN, redundancia y failover</div>
+  </div>
+
+  <div class="card">
+    <h3>Topología de red para iluminación</h3>
+    <pre>// Arquitectura típica de show grande:
+//
+// [Consola grandMA3] ──────────────────────────────────┐
+//                                                       │ Art-Net/sACN
+// [TouchDesigner (audio-reactivo)] ────────────────────┤
+//                                                       │ GbE Switch
+//                                    ┌─────────────────┤
+//                                    │                  │
+//                               [Nodo 1]           [Nodo 2]
+//                              OCTO 8 DMX         GigaJet20Pro
+//                               Rack 1 FOH          Rack 2 Stage
+//                                  │                    │
+//                             [Fixtures 1-20]      [Fixtures 21-40]
+//                             DMX RS-485            DMX RS-485
+
+// VLAN separadas:
+// VLAN 10: Art-Net/sACN (solo tráfico DMX)
+// VLAN 20: OSC/audio control
+// VLAN 30: gestión/acceso a consolas
+// Aislamiento previene que el tráfico de video sature el DMX</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q11 · Topología de Red</h4>
+    <p class="quiz-q">¿Por qué se recomienda separar el tráfico Art-Net/sACN en una VLAN dedicada y qué ventaja aportan los nodos conversores distribuidos frente a un único nodo central?</p>
+    <details><summary>Ver respuesta</summary><p>VLAN dedicada para Art-Net/sACN: aísla el tráfico de iluminación de otros sistemas (video, audio, gestión). Sin VLAN, un burst de tráfico de video puede retardar los paquetes Art-Net causando drops o jitter en los fixtures. La VLAN garantiza QoS (Quality of Service) — el tráfico DMX recibe prioridad y ancho de banda garantizado. En switches gestionados, se configura DSCP para marcar los paquetes Art-Net con prioridad EF (Expedited Forwarding). Nodos conversores distribuidos vs. centralizado: un único nodo central requiere cableado DMX de largo recorrido desde el rack central a cada grupo de fixtures (~100m máximo por RS-485 tramo). Los nodos distribuidos (OCTO, GigaJet) se ubican en cada rack o barra de luces: reciben Art-Net por Ethernet (kilómetros sin límite) y emiten DMX RS-485 localmente (distancia corta). Ventajas: menos cable DMX, menos puntos de fallo en el cableado, capacidad de añadir zonas sin nueva infraestructura desde la consola.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · LED</div>
+    <div class="module-title">Pixel Mapping y Arrays LED 3D</div>
+    <div class="module-sub">Geometría de arrays, mapping de universos, GPU rendering y optimización</div>
+  </div>
+
+  <div class="card">
+    <h3>Pixel mapping: del universo al LED</h3>
+    <pre># Mapping de coordenadas 2D a universos DMX
+# Array LED: 100×10 = 1000 LEDs RGB = 3000 canales = 5.86 universos
+
+class LEDArray:
+    def __init__(self, width, height, start_universe=0):
+        self.w = width; self.h = height
+        self.start_uni = start_universe
+        self.data = [[0]*512 for _ in range(6)]  # 6 universos
+
+    def set_pixel(self, x, y, r, g, b):
+        """Mapea LED (x,y) a canal DMX correcto."""
+        pixel_idx = y * self.w + x           # serpentina: si y%2==1, invertir x
+        ch = pixel_idx * 3                   # 3 canales por pixel RGB
+        universe = ch // 512
+        offset = ch % 512
+        if offset + 2 < 512:
+            self.data[universe][offset] = r
+            self.data[universe][offset+1] = g
+            self.data[universe][offset+2] = b
+
+    def send_all(self, artnet_sender):
+        for i, uni_data in enumerate(self.data):
+            artnet_sender.send(self.start_uni + i, uni_data)
+        artnet_sender.send_artsync()  # sincronizar frame
+
+# TouchDesigner: GPU pixel mapping directo
+# TOP → Art-Net Out CHOP con "Pixel Map" mode
+# Cada pixel del TOP = 1 LED RGB en el array físico
+# GPU renderiza el frame y envía directo a Art-Net</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q12 · Pixel Mapping</h4>
+    <p class="quiz-q">Para un array LED de 200×20 pixels RGB, calcula cuántos universos DMX necesitas y describe cómo evitar el efecto "tearing" al actualizar los universos.</p>
+    <details><summary>Ver respuesta</summary><p>200×20 = 4,000 LEDs × 3 canales (RGB) = 12,000 canales DMX. Universos necesarios: 12,000 / 512 = 23.4 → 24 universos. Para evitar tearing: el tearing ocurre porque los 24 paquetes Art-Net llegan al nodo en momentos ligeramente distintos (~1ms de diferencia entre el primero y el último) — si el nodo aplica cada paquete al recibirlo, el array muestra diferentes frames en distintas filas. Solución: usar ArtSync de Art-Net. El controlador (TD) envía los 24 paquetes ArtDmx y luego un paquete ArtSync broadcast. Los nodos acumulan todos los paquetes del frame sin aplicarlos y aplican todos simultáneamente al recibir el ArtSync. En sACN la sincronización se logra con el paquete de sincronización (startcode 0x00 con synchronization address configurado). Adicionalmente, usar un switch de baja latencia y QoS para minimizar la diferencia de llegada entre paquetes.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Diagnóstico</div>
+    <div class="module-title">Wireshark: Diagnóstico y Análisis de Red</div>
+    <div class="module-sub">Captura de paquetes Art-Net/sACN, filtros, análisis de conflictos y debugging</div>
+  </div>
+
+  <div class="card">
+    <h3>Filtros Wireshark para iluminación</h3>
+    <pre># Filtros útiles en Wireshark para diagnóstico DMX/Art-Net/sACN:
+
+# Capturar solo Art-Net (puerto UDP 6454):
+udp.port == 6454
+
+# Filtrar por OpCode ArtDmx (0x5000 en LE = bytes 0x00 0x50):
+udp.port == 6454 && data[8:2] == 00:50
+
+# Capturar sACN (puerto 5568):
+udp.port == 5568
+
+# Detectar paquetes de un universo Art-Net específico (ej. universo 5):
+# Universe field está en bytes 14-15 (LE)
+udp.port == 6454 && data[14:2] == 05:00
+
+# Medir frecuencia de paquetes Art-Net:
+# Statistics → IO Graph → filter: udp.port==6454, unit: packets/s
+# Debe mostrar ~44 paquetes/s por universo activo
+
+# Detectar conflicto de fuentes sACN (mismo universo, distintas IPs):
+udp.port == 5568 and ip.src != 192.168.1.100
+# Si aparecen fuentes inesperadas → conflict resolution HTP</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q13 · Wireshark y Diagnóstico</h4>
+    <p class="quiz-q">Describe cómo usarías Wireshark para diagnosticar un problema donde algunos fixtures de un array LED muestran valores incorrectos intermitentemente pero el software reporta envío correcto.</p>
+    <details><summary>Ver respuesta</summary><p>Workflow de diagnóstico: (1) Capturar en el segmento de red entre el nodo Art-Net y los fixtures (o en el puerto del switch conectado al nodo). Filtro: udp.port == 6454. (2) Verificar tasa de paquetes: Statistics → IO Graph. Debe ser ~44 paquetes/s por universo. Si hay picos o valles, hay pérdida de paquetes o jitter de envío. (3) Examinar sequence number: el campo Sequence en ArtDmx debe incrementar monotónicamente. Si hay saltos (ej. ...12, 14, 15...), se perdió el paquete 13 — pérdida de red. (4) Verificar el universo de cada paquete: ¿está enviando al universo correcto? A veces un bug de configuración envía algunos paquetes al universo 0 (broadcast) en lugar del universo específico. (5) Buscar colisiones de fuente: si hay otro controlador enviando al mismo universo, los paquetes de ambas fuentes aparecen intercalados — el nodo aplica el último recibido (LTP) o HTP dependiendo del protocolo, causando valores impredecibles. (6) Medir tiempo entre paquetes: si algún paquete llega 50ms después del anterior (jitter alto), puede causar glitch visible en los fixtures.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto Final — Sistema de Iluminación Audio-Reactiva</div>
+    <div class="module-sub">Integración completa: FFT + EMA + Art-Net/sACN + GDTF + Kinect + diagnóstico</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica del Proyecto HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>Pipeline Audio-Reactivo</td><td>FFT multi-banda, EMA correcto (α configurado), mapeo logarítmico, &lt;50ms latencia</td><td>25</td></tr>
+        <tr><td>Protocolo IP (Art-Net/sACN)</td><td>Encapsulación correcta, múltiples universos, ArtSync implementado, 0 errores parsing</td><td>20</td></tr>
+        <tr><td>Control de Fixtures</td><td>16-bit Pan/Tilt, perfil GDTF creado, fixtures respondiendo correctamente</td><td>20</td></tr>
+        <tr><td>Diagnóstico de Red</td><td>Captura Wireshark documentada, análisis de conflictos sACN, resolución de prioridades</td><td>20</td></tr>
+        <tr><td>Integración Kinect/Sensor</td><td>Tracking funcional, bridge OSC operativo, instrumento interactivo demostrable</td><td>10</td></tr>
+        <tr><td>Documentación</td><td>Diagrama topología de red, tabla de asignación de universos, decisiones de diseño</td><td>5</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman — Explica sin notas</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · sACN vs Art-Net</h4>
+      <p class="quiz-q">¿Por qué sACN usa Multicast UDP en lugar de Broadcast como Art-Net? Explica el papel de IGMP Snooping en una instalación con 200 universos.</p>
+      <details><summary>Ver respuesta</summary><p>sACN mapea cada universo a una dirección Multicast específica (239.255.x.x). Los nodos que necesitan ese universo envían IGMP Join; el switch solo reenvía el tráfico a esos puertos. Art-Net Broadcast llega a todos los dispositivos sin distinción. En una instalación con 200 universos a 44Hz: Art-Net genera 200×44 = 8,800 paquetes/segundo en broadcast — llegan a todos los dispositivos de la red (laptops de audio, cámaras, tablets del equipo), consumiendo CPU innecesariamente. Con sACN + IGMP Snooping: el switch mantiene una tabla multicast→puertos y reenvía cada universo solo a los nodos que lo han solicitado. El tráfico irrelevante nunca llega a dispositivos no interesados. Sin IGMP Snooping activo en el switch, el Multicast de sACN se comporta como Broadcast de todos modos — IGMP Snooping es requisito indispensable para la eficiencia de sACN en redes grandes.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · EMA y Enteros</h4>
+      <p class="quiz-q">¿Por qué el filtro EMA puede "corromper" si se implementa con enteros en C++? Describe el priming y su importancia.</p>
+      <details><summary>Ver respuesta</summary><p>Con alpha muy pequeño (ej. α=0.001), la implementación de EMA con enteros escalados ×256 produce: alpha_int = round(0.001×256) = 0. La fórmula se convierte en y = (0×x + 256×y_prev)/256 = y_prev — el filtro deja de actualizar con la señal nueva, quedando congelado en el último valor. Con double: y = 0.001×x + 0.999×y_prev — funciona correctamente. El priming inicializa y[0] = x[0] en el primer ciclo. Sin priming: y_prev comienza en 0.0, y el filtro tarda muchos frames en alcanzar el valor real de la señal (wind-up). Si el primer valor de audio es DMX=200 y α=0.15, sin priming la salida sería ~10 después del primer frame y tardaría ~20 frames en llegar a ~180. Con priming: la salida arranca en 200 instantáneamente, sin retraso de inicialización. En instalaciones donde el sistema arranca con fixtures ya encendidos, el wind-up produce un "fade-in" no deseado en los primeros segundos.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · HTP y Prioridades sACN</h4>
+      <p class="quiz-q">Con 2 controladores sACN en el mismo universo (prioridades 200 y 100), controlador A envía CH1=200 y controlador B envía CH1=50. ¿Qué valor llega al fixture y por qué?</p>
+      <details><summary>Ver respuesta</summary><p>El valor que llega al fixture es 200 (el valor de CH1 del controlador A). HTP (Highest Takes Precedence) evalúa independientemente el valor de cada canal entre todas las fuentes activas y selecciona el mayor. La "prioridad de fuente" (0-200) en sACN determina qué fuente "gana" cuando hay conflicto, pero HTP siempre selecciona el valor más alto del canal. Si A enviara CH1=30 y B enviara CH1=200, HTP seleccionaría 200 aunque B tenga menor prioridad de fuente. Por diseño: HTP garantiza que si alguien está usando el dimmer al máximo, nadie puede "apagarlo" accidentalmente enviando 0 desde otra fuente. Para atributos como Pan/Tilt donde esto no tiene sentido (dos controladores enviando valores distintos causaría movimiento errático), se usa LTP (Latest Takes Precedence) o Per-Address Priority para asignar ownership explícito de canales específicos.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · Resolución 16-bit</h4>
+      <p class="quiz-q">¿Por qué la resolución 16-bit es perceptualmente crítica para Pan/Tilt de moving heads pero no necesariamente para el canal de color? Calcula el paso angular en ambas resoluciones para un fixture con 540° de barrido.</p>
+      <details><summary>Ver respuesta</summary><p>8-bit: 540° / 256 pasos = 2.109°/paso. Este salto es claramente visible como stepping mecánico en fades lentos — especialmente con el fixture apuntando a una pared lisa. 16-bit: 540° / 65,536 pasos = 0.008°/paso (8 millidegrees) — imperceptible al ojo humano. Para color RGB: la sensibilidad de contraste de color del ojo humano es ~1/200 bajo condiciones de show iluminado con múltiples fixtures. Con 256 pasos de rojo (8-bit), cada paso es 1/256 = 0.39% del rango — perfectamente dentro del umbral de percepción. Además, el mixing de múltiples canales R+G+B y la mezcla entre fixtures enmascara efectivamente la cuantización individual. Por eso el estándar prioriza 16-bit para movimiento (mecánico y preciso) y mantiene 8-bit para color en la mayoría de aplicaciones salvo dimmers cinematográficos de alta precisión.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · IGMP Snooping</h4>
+      <p class="quiz-q">¿Por qué IGMP Snooping es estrictamente necesario en redes sACN grandes? Describe qué ocurre en una red de 100 universos sin IGMP Snooping activado.</p>
+      <details><summary>Ver respuesta</summary><p>Sin IGMP Snooping: el switch no sabe qué puertos han solicitado qué grupos multicast. Por defecto, trata todos los paquetes multicast como broadcast de capa 2 — los replica a todos los puertos del switch. En una instalación con 100 universos a 44Hz: 100×44 = 4,400 paquetes/segundo × ~600 bytes/paquete ≈ 2.1 Mbps de tráfico multicast llega a cada dispositivo conectado al switch. Consecuencias: (1) Laptops de producción de audio y video deben procesar y descartar 4,400 paquetes/segundo innecesariamente — CPU aumenta ~3-8%, puede causar glitches en reproducción de audio; (2) Cualquier dispositivo con stack de red sensible puede verse afectado; (3) En redes con múltiples switches, el tráfico se multiplica exponencialmente. Con IGMP Snooping activo: cada nodo DMX envía IGMP Join solo para sus universos asignados. El switch construye una tabla multicast→puerto y reenvía exclusivamente a los puertos necesarios. El resto de la red no recibe el tráfico de iluminación.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_iluminacion_interactiva_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Ecosistema DMX→IP'},
+    {id:'m1',  label:'M1 · DMX512-A y RS-485'},
+    {id:'m2',  label:'M2 · Art-Net UDP'},
+    {id:'m3',  label:'M3 · sACN E1.31'},
+    {id:'m4',  label:'M4 · Resolución 16-bit'},
+    {id:'m5',  label:'M5 · FFT Audio-Reactivo'},
+    {id:'m6',  label:'M6 · Filtro EMA'},
+    {id:'m7',  label:'M7 · TouchDesigner'},
+    {id:'m8',  label:'M8 · Kinect Theremin'},
+    {id:'m9',  label:'M9 · OSC y Max/MSP'},
+    {id:'m10', label:'M10 · GDTF'},
+    {id:'m11', label:'M11 · Nodos y Red'},
+    {id:'m12', label:'M12 · Pixel Mapping LED'},
+    {id:'m13', label:'M13 · Wireshark Diagnóstico'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

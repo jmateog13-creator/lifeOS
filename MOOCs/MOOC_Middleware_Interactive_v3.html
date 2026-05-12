@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio Middleware Interactivo v3</title>
+<style>
+:root {
+  --bg:#0f172a; --surface:#1e293b; --surface2:#334155;
+  --accent:#06b6d4; --accent2:#22d3ee; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#334155;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'Fira Code',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+/* SIDEBAR */
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* MAIN */
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+/* CODE */
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#0d1117;padding:2px 6px;border-radius:4px}
+/* SVG ECOSYSTEM */
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+/* FORMULA */
+.formula{background:rgba(6,182,212,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+/* METRICS GRID */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:22px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+/* WARN BOX */
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+/* HERO */
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(6,182,212,.07);border-radius:6px;line-height:1.6}
+/* BTN */
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+/* HIGHLIGHT */
+.hl-green{color:var(--green)} .hl-red{color:var(--red)} .hl-blue{color:var(--blue)} .hl-amber{color:var(--warn)} .hl-cyan{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>Audio Middleware Interactivo</h2>
+    <p>15 módulos · Wwise, FMOD &amp; Game Audio</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Briefing</div>
+    <div class="module-title">Ecosistema del Audio Middleware</div>
+    <div class="module-sub">Wwise, FMOD, Unity, Unreal y el pipeline de audio interactivo</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg width="820" height="260" viewBox="0 0 820 260" font-family="Inter,sans-serif" font-size="12">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 Z" fill="#06b6d4"/>
+        </marker>
+      </defs>
+      <!-- Game Engine -->
+      <rect x="10" y="80" width="130" height="100" rx="8" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="75" y="118" text-anchor="middle" fill="#06b6d4" font-weight="700">Game Engine</text>
+      <text x="75" y="136" text-anchor="middle" fill="#94a3b8" font-size="10">Unity / Unreal</text>
+      <text x="75" y="152" text-anchor="middle" fill="#94a3b8" font-size="10">PostEvent()</text>
+      <text x="75" y="168" text-anchor="middle" fill="#94a3b8" font-size="10">SetRTPCValue()</text>
+      <!-- Wwise -->
+      <rect x="170" y="70" width="130" height="120" rx="8" fill="#1e293b" stroke="#22d3ee" stroke-width="1.5"/>
+      <text x="235" y="105" text-anchor="middle" fill="#22d3ee" font-weight="700">Wwise</text>
+      <text x="235" y="122" text-anchor="middle" fill="#94a3b8" font-size="10">Events / States</text>
+      <text x="235" y="138" text-anchor="middle" fill="#94a3b8" font-size="10">Switches / RTPCs</text>
+      <text x="235" y="154" text-anchor="middle" fill="#94a3b8" font-size="10">SoundBanks</text>
+      <text x="235" y="170" text-anchor="middle" fill="#94a3b8" font-size="10">Profiler</text>
+      <!-- FMOD -->
+      <rect x="330" y="70" width="130" height="120" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="395" y="105" text-anchor="middle" fill="#3b82f6" font-weight="700">FMOD Studio</text>
+      <text x="395" y="122" text-anchor="middle" fill="#94a3b8" font-size="10">Snapshots / VCAs</text>
+      <text x="395" y="138" text-anchor="middle" fill="#94a3b8" font-size="10">DSP Chain</text>
+      <text x="395" y="154" text-anchor="middle" fill="#94a3b8" font-size="10">Parametric SFX</text>
+      <text x="395" y="170" text-anchor="middle" fill="#94a3b8" font-size="10">Event Instances</text>
+      <!-- Spatial -->
+      <rect x="490" y="80" width="130" height="100" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="555" y="118" text-anchor="middle" fill="#f59e0b" font-weight="700">Steam Audio</text>
+      <text x="555" y="136" text-anchor="middle" fill="#94a3b8" font-size="10">HRTF Binaural</text>
+      <text x="555" y="152" text-anchor="middle" fill="#94a3b8" font-size="10">Occlusion Rays</text>
+      <text x="555" y="168" text-anchor="middle" fill="#94a3b8" font-size="10">Baked Reverb</text>
+      <!-- Output -->
+      <rect x="650" y="90" width="130" height="80" rx="8" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+      <text x="715" y="125" text-anchor="middle" fill="#22c55e" font-weight="700">Audio Output</text>
+      <text x="715" y="143" text-anchor="middle" fill="#94a3b8" font-size="10">Stereo / 5.1 / 7.1</text>
+      <text x="715" y="159" text-anchor="middle" fill="#94a3b8" font-size="10">Binaural VR</text>
+      <!-- Arrows -->
+      <line x1="140" y1="130" x2="170" y2="130" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="300" y1="130" x2="330" y2="130" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="460" y1="130" x2="490" y2="130" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="620" y1="130" x2="650" y2="130" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr)"/>
+      <!-- Budget bar -->
+      <rect x="10" y="210" width="800" height="38" rx="6" fill="#0d1117" stroke="#334155"/>
+      <text x="30" y="232" fill="#94a3b8" font-size="11">Budget: </text>
+      <text x="90" y="232" fill="#22c55e" font-size="11">CPU ≤ 3%</text>
+      <text x="170" y="232" fill="#94a3b8" font-size="11"> | </text>
+      <text x="185" y="232" fill="#3b82f6" font-size="11">Voices ≤ 200</text>
+      <text x="295" y="232" fill="#94a3b8" font-size="11"> | </text>
+      <text x="310" y="232" fill="#f59e0b" font-size="11">RAM ≤ 128 MB</text>
+      <text x="430" y="232" fill="#94a3b8" font-size="11"> | </text>
+      <text x="445" y="232" fill="#ef4444" font-size="11">Latency ≤ 20 ms</text>
+      <text x="570" y="232" fill="#94a3b8" font-size="11"> | </text>
+      <text x="585" y="232" fill="#a855f7" font-size="11">48 kHz / 16 bit</text>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">200</div><div class="metric-label">Max Voices simultáneas</div></div>
+    <div class="metric"><div class="metric-val">2–5%</div><div class="metric-label">CPU budget audio</div></div>
+    <div class="metric"><div class="metric-val">128 MB</div><div class="metric-label">RAM audio (consola)</div></div>
+    <div class="metric"><div class="metric-val">20 ms</div><div class="metric-label">Latencia max gameplay</div></div>
+    <div class="metric"><div class="metric-val">48 kHz</div><div class="metric-label">Sample rate estándar</div></div>
+    <div class="metric"><div class="metric-val">16 bit</div><div class="metric-label">Bit depth runtime</div></div>
+  </div>
+
+  <div class="card">
+    <h3>¿Por qué usar un middleware de audio?</h3>
+    <p>Los motores de juego ofrecen audio básico (AudioSource en Unity, AudioComponent en Unreal). Los juegos profesionales requieren <strong>variación dinámica</strong>, <strong>lógica de mezcla compleja</strong> y <strong>audio reactivo al gameplay</strong> sin modificar código. Wwise y FMOD Studio separan la lógica de audio del código del juego: el diseñador de sonido controla todo el comportamiento desde una herramienta dedicada, mientras el programador solo llama eventos por nombre.</p>
+    <ul>
+      <li><strong>Events:</strong> acciones que el engine dispara ("Play_Footstep_Wood")</li>
+      <li><strong>States:</strong> contexto global del juego (Combat, Exploration, Pause)</li>
+      <li><strong>Switches:</strong> variante por objeto (FootstepMaterial, WeaponType)</li>
+      <li><strong>RTPCs:</strong> parámetros numéricos continuos (Vehicle_Speed, Player_Health)</li>
+      <li><strong>SoundBanks:</strong> paquetes binarios de assets cargados por nivel</li>
+    </ul>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Wwise Fundamentals</div>
+    <div class="module-title">Jerarquía de Wwise — Actor-Mixer</div>
+    <div class="module-sub">Events, States, Switches, RTPCs y SoundBanks</div>
+  </div>
+
+  <div class="card">
+    <h3>Jerarquía Actor-Mixer</h3>
+    <p>Toda la lógica de audio en Wwise se organiza en una jerarquía de contenedores. El <strong>Actor-Mixer</strong> es el nodo padre que agrupa sonidos por categoría y permite herencia de propiedades (volumen, pitch, efectos).</p>
+    <table>
+      <tr><th>Contenedor</th><th>Función</th><th>Uso típico</th></tr>
+      <tr><td>Sound SFX</td><td>Sonido individual o con variaciones</td><td>Disparo, paso, impacto</td></tr>
+      <tr><td>Random Container</td><td>Selección aleatoria entre hijos</td><td>Anti-machine-gun en SFX</td></tr>
+      <tr><td>Sequence Container</td><td>Reproducción ordenada de hijos</td><td>Diálogos en secuencia</td></tr>
+      <tr><td>Switch Container</td><td>Selección por valor de Switch</td><td>Footsteps por superficie</td></tr>
+      <tr><td>Blend Container</td><td>Mezcla múltiple hijos por RTPC</td><td>Motor con carga variable</td></tr>
+      <tr><td>Actor-Mixer</td><td>Agrupador lógico sin reproducción propia</td><td>Carpetas SFX/Music/UI</td></tr>
+    </table>
+
+    <h3 style="margin-top:20px">Game Syncs — Control desde el engine</h3>
+    <pre><code>// Unity C# — Wwise API
+AkSoundEngine.PostEvent("Play_Footstep_Wood", gameObject);
+
+// RTPC: parámetro numérico continuo
+AkSoundEngine.SetRTPCValue("Vehicle_Speed", speed, gameObject);
+
+// State: contexto global del juego
+AkSoundEngine.SetState("CombatState", "Combat");
+
+// Switch: variante por objeto
+AkSoundEngine.SetSwitch("FootstepMaterial", "Stone", gameObject);</code></pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman · M1</h4>
+    <div class="quiz-q">¿Cuál es la diferencia fundamental entre un Switch y un State en Wwise?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>Los <strong>States</strong> son globales al juego: cuando cambias el State a "Combat", afecta a todos los sonidos que tengan lógica de State configurada. Los <strong>Switches</strong> son por Game Object: cada NPC puede tener su propio valor de "FootstepMaterial" = "Stone" mientras otro tiene "Wood". El programador cambia un State con SetState() (sin gameObject) y un Switch con SetSwitch() (con gameObject específico).</p>
+    </details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← M0</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Wwise Avanzado</div>
+    <div class="module-title">Interactive Music — Música Adaptativa</div>
+    <div class="module-sub">Music Segments, Entry/Exit Cues, Stingers y transiciones seamless</div>
+  </div>
+
+  <div class="card">
+    <h3>Interactive Music Hierarchy</h3>
+    <p>La música adaptativa en Wwise se construye con <strong>Music Segments</strong> que definen secciones temporales con marcadores de entrada y salida. Las transiciones entre segmentos esperan a la próxima Entry Cue para garantizar coherencia musical.</p>
+    <table>
+      <tr><th>Objeto Musical</th><th>Función</th></tr>
+      <tr><td>Music Segment</td><td>Sección de música con Entry/Exit Cues y Custom Cues</td></tr>
+      <tr><td>Music Switch Container</td><td>Selecciona segmento según valor de State/Switch</td></tr>
+      <tr><td>Music Playlist Container</td><td>Secuencia o aleatoriedad de segmentos</td></tr>
+      <tr><td>Stinger</td><td>Fragmento musical reactivo que se superpone (victoria, muerte)</td></tr>
+      <tr><td>Entry Cue</td><td>Punto de entrada legítimo para transición entrante</td></tr>
+      <tr><td>Exit Cue</td><td>Punto de salida para iniciar la transición</td></tr>
+    </table>
+
+    <pre><code>// Activar música de combate (transición en el siguiente downbeat)
+AkSoundEngine.SetState("CombatState", "Combat");
+
+// Disparar stinger de victoria
+AkSoundEngine.PostEvent("Play_Stinger_Victory", gameObject);
+
+// Parámetro de intensidad de batalla (0-100)
+AkSoundEngine.SetRTPCValue("BattleIntensity", intensity, gameObject);</code></pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman · M2</h4>
+    <div class="quiz-q">¿Por qué las Entry Cues son fundamentales para que las transiciones musicales no produzcan clics o saltos?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>Sin Entry Cues, Wwise transicionaría al segmento destino en cualquier punto de la reproducción — cortando en medio de un compás, creando discontinuidades rítmicas y armónicas. Las Entry Cues marcan puntos musicalmente coherentes (downbeat, inicio de compás, resolución armónica). Wwise espera a que el segmento actual alcance su Exit Cue, y solo entonces hace la transición al Entry Cue del segmento destino, garantizando que el corte ocurra en un punto musicalmente "legítimo".</p>
+    </details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← M1</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Spatial Audio</div>
+    <div class="module-title">Oclusión y Obstrucción en Wwise</div>
+    <div class="module-sub">Raycasting, OcclusionManager y perforación acústica</div>
+  </div>
+
+  <div class="card">
+    <h3>Oclusión vs Obstrucción</h3>
+    <table>
+      <tr><th>Concepto</th><th>Definición</th><th>Efecto en audio</th></tr>
+      <tr><td>Oclusión</td><td>El sonido pasa a través de un material sólido</td><td>Atenuación de volumen + filtro paso-bajo</td></tr>
+      <tr><td>Obstrucción</td><td>Objeto entre fuente y listener pero con camino indirecto</td><td>Atenuación parcial, preserva grave</td></tr>
+    </table>
+
+    <h3 style="margin-top:20px">OcclusionManager.cs — Implementación Unity</h3>
+    <pre><code>public class OcclusionManager : MonoBehaviour {
+    [SerializeField] private Transform listener;
+    [SerializeField] private AkGameObj[] audioSources;
+    private float updateInterval = 0.1f;
+
+    void UpdateOcclusion(AkGameObj src) {
+        Vector3 dir = src.transform.position - listener.position;
+        float dist = dir.magnitude;
+        int hits = Physics.RaycastNonAlloc(
+            listener.position, dir.normalized,
+            new RaycastHit[4], dist,
+            LayerMask.GetMask("Walls"));
+        float occlusion = Mathf.Clamp01(hits * 0.5f);
+        float obstruction = (hits == 1) ? 0.3f : 0f;
+        AkSoundEngine.SetObjectObstructionAndOcclusion(
+            src.gameObject, listener.gameObject,
+            obstruction, occlusion);
+    }
+}</code></pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman · M3</h4>
+    <div class="quiz-q">¿Cuál es la diferencia práctica entre oclusión y obstrucción, y cómo afectan al audio de forma diferente?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>La <strong>oclusión</strong> ocurre cuando el sonido tiene que atravesar un material sólido (paredes, suelo): el resultado es atenuación de volumen y filtrado paso-bajo (los graves penetran, los agudos son absorbidos). La <strong>obstrucción</strong> ocurre cuando hay un objeto en la línea de visión directa pero existe un camino indirecto (reflexiones): la atenuación es parcial y los graves se preservan mejor. En Wwise: Occlusion afecta al dry path y wet path; Obstruction afecta solo al dry path, el reverb (sonido reflejado) permanece intacto.</p>
+    </details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← M2</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Wwise Pipeline</div>
+    <div class="module-title">SoundBanks y Streaming</div>
+    <div class="module-sub">Carga/descarga de bancos, streaming de música y gestión de memoria</div>
+  </div>
+
+  <div class="card">
+    <h3>Estrategia de SoundBanks</h3>
+    <table>
+      <tr><th>SoundBank</th><th>Contenido</th><th>Política de carga</th></tr>
+      <tr><td>Init.bnk</td><td>Bootstrap del motor Wwise</td><td>Siempre cargado, nunca descargado</td></tr>
+      <tr><td>UI.bnk</td><td>Todos los SFX de interfaz</td><td>Cargado desde el inicio</td></tr>
+      <tr><td>Level_01.bnk…</td><td>SFX específicos del nivel</td><td>Cargado antes de entrar, descargado al salir</td></tr>
+      <tr><td>Music.bnk</td><td>Metadatos de música (audio en streaming)</td><td>Cargado con el nivel, audio en disco</td></tr>
+    </table>
+
+    <h3 style="margin-top:20px">BankManager.cs — Carga dinámica por nivel</h3>
+    <pre><code>public class BankManager : MonoBehaviour {
+    void Awake() { AkBankManager.LoadBank("UI"); }
+
+    public void LoadLevel(int level) {
+        AkBankManager.UnloadBank("Level_0" + (level == 1 ? 2 : 1));
+        AkBankManager.LoadBank("Level_0" + level);
+        AkBankManager.LoadBank("Music");
+    }
+}</code></pre>
+
+    <div class="warn-box">
+      <strong>Regla de oro:</strong> Los SFX cortos (&lt;2s) se precargan en RAM. La música siempre en streaming desde disco. Nunca precargar más de 80% del RAM budget asignado.
+    </div>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman · M4</h4>
+    <div class="quiz-q">¿Por qué la música se sirve siempre desde streaming y los SFX cortos desde RAM?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>La música dura minutos — precargarla en RAM consumiría decenas de MB para una sola pista. El streaming lee el audio desde disco en chunks pequeños durante la reproducción, pagando solo un buffer mínimo en RAM. Los SFX cortos (&lt;2s) deben dispararse con latencia cero: si estuvieran en disco, el I/O seek añadiría latencia impredecible (50-200ms). En RAM ya están en memoria y el motor puede iniciar la reproducción de forma inmediata en el siguiente frame de audio (1.33ms @ 48kHz/64 samples).</p>
+    </details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← M3</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Wwise Mezcla</div>
+    <div class="module-title">Jerarquía de Buses y Ducking</div>
+    <div class="module-sub">Master Bus, side-chain, VCA y mezcla dinámica</div>
+  </div>
+
+  <div class="card">
+    <h3>Arquitectura de buses recomendada</h3>
+    <pre><code>Master Audio Bus
+├── SFX Bus (limiter)
+│    ├── Weapons Bus
+│    ├── Footsteps Bus
+│    └── Environment Bus
+├── Music Bus (compressor)
+├── Dialogue Bus (EQ + limiter)
+│    └── → side-chain → Music Bus (ducking −8 dB)
+└── UI Bus (siempre audible)</code></pre>
+
+    <h3 style="margin-top:20px">Ducking via side-chain</h3>
+    <p>Cuando hay diálogo activo, el Music Bus recibe un side-chain del Dialogue Bus que lo atenúa automáticamente. El diseñador configura el attack (rápido = inmediato), release (lento = fade natural) y el ratio de reducción (–6 a –12 dB) sin que el programador intervenga.</p>
+
+    <table>
+      <tr><th>Parámetro ducking</th><th>Valor típico</th><th>Efecto</th></tr>
+      <tr><td>Attack Time</td><td>50–100 ms</td><td>Velocidad de bajada del volumen</td></tr>
+      <tr><td>Release Time</td><td>500 ms–1 s</td><td>Velocidad de recuperación al terminar diálogo</td></tr>
+      <tr><td>Reduction</td><td>–6 a –12 dB</td><td>Cuánto baja la música durante el diálogo</td></tr>
+    </table>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman · M5</h4>
+    <div class="quiz-q">¿Qué ventaja tiene el ducking via side-chain frente a bajar el volumen de música desde código?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>El side-chain es <strong>proporcional y automático</strong>: si hay mucho diálogo, más ducking; si es suave, menos. Tiene envelope (attack/release) para que no sea un click abrupto. El diseñador controla todos los parámetros en Wwise sin que el programador sepa que existe. Con código manual, el programador tendría que detectar cuándo el diálogo inicia/termina, gestionar el volumen con Lerp, y actualizar la lógica cada vez que se añade un bus nuevo. El side-chain es declarativo y no requiere ningún código adicional.</p>
+    </details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← M4</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · FMOD Studio</div>
+    <div class="module-title">FMOD Studio — Arquitectura y API</div>
+    <div class="module-sub">Snapshots, VCAs, DSP Chain y AudioManager singleton</div>
+  </div>
+
+  <div class="card">
+    <h3>Diferencias FMOD vs Wwise</h3>
+    <table>
+      <tr><th>Característica</th><th>FMOD Studio</th><th>Wwise</th></tr>
+      <tr><td>Modelo de eventos</td><td>Event Instances con ciclo de vida</td><td>PostEvent (fire-and-forget o persistente)</td></tr>
+      <tr><td>Control de mezcla</td><td>Snapshots + VCAs</td><td>States + Side-chain + RTPCs</td></tr>
+      <tr><td>Parámetros</td><td>Local y Global Parameters</td><td>RTPCs por Game Object o globales</td></tr>
+      <tr><td>DSP inline</td><td>DSP Chain editable por evento</td><td>ShareSets de efectos reutilizables</td></tr>
+      <tr><td>Precio</td><td>Gratuito hasta $200k revenue</td><td>Licencia por proyecto</td></tr>
+    </table>
+
+    <h3 style="margin-top:20px">AudioManager.cs — Singleton con pool de instancias</h3>
+    <pre><code>public class AudioManager : MonoBehaviour {
+    public static AudioManager Instance { get; private set; }
+    private Dictionary&lt;string, EventInstance&gt; loops =
+        new Dictionary&lt;string, EventInstance&gt;();
+
+    void Awake() {
+        if (Instance != null) { Destroy(gameObject); return; }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+
+    public void PlaySFX(string path, Vector3 pos) =&gt;
+        RuntimeManager.PlayOneShot(path, pos);
+
+    public void PlayLoop(string path, GameObject go) {
+        if (loops.ContainsKey(path)) return;
+        var inst = RuntimeManager.CreateInstance(path);
+        RuntimeManager.AttachInstanceToGameObject(inst, go.transform);
+        inst.start();
+        loops[path] = inst;
+    }
+
+    public void StopLoop(string path) {
+        if (!loops.TryGetValue(path, out var inst)) return;
+        inst.stop(STOP_MODE.ALLOWFADEOUT);
+        inst.release();
+        loops.Remove(path);
+    }
+
+    void OnDestroy() {
+        foreach (var inst in loops.Values) {
+            inst.stop(STOP_MODE.IMMEDIATE);
+            inst.release();
+        }
+        loops.Clear();
+    }
+}</code></pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman · M6</h4>
+    <div class="quiz-q">¿Qué es un Snapshot en FMOD y cuándo se usa en lugar de modificar parámetros individuales?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>Un <strong>Snapshot</strong> en FMOD es un preset de mezcla que, cuando se activa, sobreescribe múltiples parámetros simultáneamente: volumen de buses, efectos activos, compresión, etc. Se usa cuando necesitas cambiar el estado global del audio de una sola vez (pause menu: baja música, filtra SFX; underwater: filtra todo con paso-bajo). En lugar de actualizar 20 parámetros individualmente desde código, el programador solo activa/desactiva el Snapshot con una llamada, y el diseñador gestiona qué cambia exactamente dentro del Snapshot.</p>
+    </details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← M5</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Engine Integration</div>
+    <div class="module-title">Integración Unity — Patrones Avanzados</div>
+    <div class="module-sub">ScriptableObjects de audio, pooling de eventos y gestión de ciclo de vida</div>
+  </div>
+
+  <div class="card">
+    <h3>Patrones de integración profesional</h3>
+    <table>
+      <tr><th>Anti-patrón</th><th>Patrón correcto</th><th>Razón</th></tr>
+      <tr><td>Hardcoded strings: PostEvent("Play_Gun")</td><td>ScriptableObject AudioEvent con nombre configurable</td><td>Refactoring seguro, sin magic strings</td></tr>
+      <tr><td>FindObjectOfType&lt;AudioManager&gt;() en Start</td><td>Singleton con lazy init o Dependency Injection</td><td>Evita NullReference en escenas de prueba</td></tr>
+      <tr><td>Crear EventInstance cada frame</td><td>Pool de instancias por evento</td><td>Evita GC alloc y CPU spikes</td></tr>
+      <tr><td>AkGameObj en todos los objetos</td><td>Solo en fuentes de audio activas</td><td>Reduce overhead de tracking Wwise</td></tr>
+    </table>
+
+    <h3 style="margin-top:20px">AudioEvent ScriptableObject</h3>
+    <pre><code>[CreateAssetMenu(fileName="AudioEvent", menuName="Audio/Event")]
+public class AudioEventSO : ScriptableObject {
+    [SerializeField] private string wwiseEventName;
+    [SerializeField] private float minDistance = 1f;
+    [SerializeField] private float maxDistance = 30f;
+
+    public void Play(GameObject source) {
+        AkSoundEngine.PostEvent(wwiseEventName, source);
+    }
+
+    public void PlayAtPosition(Vector3 position) {
+        AkSoundEngine.PostEvent(wwiseEventName,
+            AkSoundEngine.GetAudioListener(), position);
+    }
+}
+
+// Uso en MonoBehaviour — sin magic strings
+[SerializeField] private AudioEventSO footstepEvent;
+void OnFootstep() =&gt; footstepEvent.Play(gameObject);</code></pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman · M7</h4>
+    <div class="quiz-q">¿Por qué se usan ScriptableObjects para referenciar eventos de audio en lugar de strings directos en el código?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>Con strings directos ("Play_Footstep_Wood"), si el diseñador de sonido renombra el evento en Wwise, el programador tiene que buscar todas las ocurrencias del string en el código. Con ScriptableObjects, el nombre del evento se configura en el Inspector del asset — cambiar el nombre en un lugar actualiza todos los objetos que referencian ese ScriptableObject. Además, los SOs permiten añadir lógica extra (atenuación mínima/máxima, validación de nombre) sin tocar MonoBehaviours. También son serializables y aparecen en el Inspector con referencias tipadas.</p>
+    </details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← M6</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · Unreal Engine</div>
+    <div class="module-title">Integración Unreal — MetaSounds y Wwise UE</div>
+    <div class="module-sub">MetaSound Source, AkAudioEvent y blueprints de audio</div>
+  </div>
+
+  <div class="card">
+    <h3>Wwise en Unreal Engine</h3>
+    <table>
+      <tr><th>Concepto UE</th><th>Equivalente Unity</th><th>Cómo usar</th></tr>
+      <tr><td>AkAudioEvent</td><td>AudioEvent ScriptableObject</td><td>Drag en Blueprint, PostEvent en C++</td></tr>
+      <tr><td>AkAmbientSound</td><td>AudioSource con AkGameObj</td><td>Actor en nivel con evento ambiental</td></tr>
+      <tr><td>AkRtpc</td><td>RTPC float parameter</td><td>SetRTPCValue desde C++ o Blueprint</td></tr>
+      <tr><td>AkSwitchValue</td><td>Switch Group value</td><td>SetSwitch en Blueprint node</td></tr>
+      <tr><td>AkStateValue</td><td>State Group value</td><td>SetState global o por objeto</td></tr>
+    </table>
+
+    <h3 style="margin-top:20px">C++ Unreal — Wwise Integration</h3>
+    <pre><code>#include "AkAudioDevice.h"
+#include "AkComponent.h"
+
+// Disparar evento desde C++
+UAkAudioDevice::Get()-&gt;PostEventAtLocation(
+    FootstepEvent, FVector(X, Y, Z), FRotator::ZeroRotator, GetWorld());
+
+// RTPC global
+UAkAudioDevice::Get()-&gt;SetRTPCValue(
+    TEXT("Vehicle_Speed"), Speed, 0, nullptr);
+
+// State desde C++
+UAkAudioDevice::Get()-&gt;SetState(
+    TEXT("CombatState"), TEXT("Combat"));</code></pre>
+
+    <h3 style="margin-top:20px">MetaSounds — Audio procedural nativo UE5</h3>
+    <p>MetaSounds es el sistema de audio procedural nativo de Unreal 5. Permite crear sonidos con lógica DSP visual (similar a Faust o Pure Data) sin plugins externos. Para juegos que no necesitan Wwise/FMOD, MetaSounds ofrece síntesis, sample playback y modulación en un editor nodal integrado.</p>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman · M8</h4>
+    <div class="quiz-q">¿Cuándo elegirías MetaSounds nativo de UE5 frente a integrar Wwise en Unreal?</div>
+    <details><summary>Ver respuesta</summary>
+    <p><strong>MetaSounds</strong> es adecuado para proyectos indie o académicos donde la lógica de audio es relativamente simple, no se requiere el Wwise Profiler, y el presupuesto no justifica la licencia. Sus ventajas: cero dependencias externas, integración perfecta con UE5, síntesis procedural. <strong>Wwise en Unreal</strong> es necesario cuando: el juego tiene lógica de audio compleja (Interactive Music, múltiples States anidados), se necesita el Wwise Profiler para diagnóstico, hay un equipo de sound designers que ya conoce Wwise Authoring Tool, o se requiere multiplatforma con optimizaciones específicas por plataforma (ADPCM en Switch, AT9 en PS5).</p>
+    </details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← M7</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Atenuación</div>
+    <div class="module-title">Curvas de Atenuación y Espacialización</div>
+    <div class="module-sub">Attenuation curves, panneo 3D y modelo perceptivo</div>
+  </div>
+
+  <div class="card">
+    <h3>Modelo de atenuación en juegos</h3>
+    <p>La caída de volumen por distancia no sigue la ley del cuadrado inverso pura (demasiado agresiva para juegos). Los diseñadores usan curvas personalizadas en forma de S:</p>
+
+    <div class="formula">V(d) = f(d) · SpatialisationGain · OcclusionFactor · BusFader</div>
+
+    <table>
+      <tr><th>Zona</th><th>Comportamiento</th><th>Rango típico</th></tr>
+      <tr><td>Near field (plateau)</td><td>Volumen máximo constante</td><td>0 → 3 m</td></tr>
+      <tr><td>Mid field (caída rápida)</td><td>Curva logarítmica pronunciada</td><td>3 → 20 m</td></tr>
+      <tr><td>Far field (fade lento)</td><td>Caída suave hasta inaudible</td><td>20 m → max dist</td></tr>
+    </table>
+
+    <h3 style="margin-top:20px">Configuración por categoría (Wwise Attenuation ShareSet)</h3>
+    <table>
+      <tr><th>Categoría</th><th>Max distance</th><th>Curva</th><th>Razón</th></tr>
+      <tr><td>Footsteps</td><td>15 m</td><td>Agresiva</td><td>Solo relevante a corta distancia</td></tr>
+      <tr><td>Explosiones</td><td>150 m</td><td>Suave</td><td>Perceptibles a gran distancia</td></tr>
+      <tr><td>Ambient loops</td><td>50 m</td><td>Linear suave</td><td>Deben llenar el espacio</td></tr>
+      <tr><td>Diálogos</td><td>20 m</td><td>Plateau amplio</td><td>Siempre inteligibles</td></tr>
+      <tr><td>UI</td><td>N/A</td><td>Sin atenuación</td><td>2D, siempre al mismo volumen</td></tr>
+    </table>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman · M9</h4>
+    <div class="quiz-q">¿Por qué la atenuación de audio en juegos no sigue la ley del cuadrado inverso exacta de la física?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>La ley del cuadrado inverso (–6 dB por duplicación de distancia) funciona en campo libre sin obstrucciones. En juegos, aplicarla directamente haría que un NPC a 4 m de distancia ya fuera inaudible en muchos casos, lo cual rompería el gameplay. Además, los juegos no simulan campo libre: hay reverb de habitación, paredes que reflejan sonido, etc. Los diseñadores usan curvas en S con un plateau cercano (volumen máximo hasta X metros), una caída más agresiva en distancia media, y una caída suave al final para que el sonido siga siendo localizable. La curva específica depende de la mecánica: footsteps muy agresivos (solo relevantes cerca), explosiones muy suaves (percibidas a 150 m).</p>
+    </details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← M8</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Audio Procedural</div>
+    <div class="module-title">Síntesis Procedural — OnAudioFilterRead</div>
+    <div class="module-sub">Modal synthesis, impactos físicos y síntesis por modos de resonancia</div>
+  </div>
+
+  <div class="card">
+    <h3>¿Por qué síntesis procedural?</h3>
+    <p>Los samples pregrabados no se adaptan a la física del impacto: un disparo siempre suena igual aunque la velocidad sea diferente. La síntesis procedural genera el audio en tiempo real basándose en los parámetros físicos del evento (velocidad de impacto, material, masa).</p>
+
+    <h3 style="margin-top:20px">ProceduralImpact.cs — Síntesis modal por modos de resonancia</h3>
+    <pre><code>public class ProceduralImpact : MonoBehaviour {
+    public enum Material { Metal, Wood, Plastic }
+    private float[] metalModes   = { 320f,  640f, 1200f, 2400f };
+    private float[] woodModes    = { 180f,  380f,  760f, 1400f };
+    private float[] plasticModes = { 520f,  980f, 1800f, 3200f };
+    private float metalDamp = 2f, woodDamp = 12f, plasticDamp = 6f;
+
+    void OnCollisionEnter(Collision col) {
+        float energy = Mathf.Clamp(col.relativeVelocity.magnitude / 10f, 0f, 1f);
+        for (int i = 0; i &lt; currentAmps.Length; i++)
+            currentAmps[i] = energy * (1.0f / (i + 1));
+        phase = 0f;
+    }
+
+    void OnAudioFilterRead(float[] data, int channels) {
+        for (int s = 0; s &lt; data.Length; s += channels) {
+            float sample = 0f;
+            for (int m = 0; m &lt; currentModes.Length; m++)
+                sample += currentAmps[m]
+                    * Mathf.Exp(-currentDamp * phase / sampleRate)
+                    * Mathf.Sin(2f * Mathf.PI * currentModes[m] * phase / sampleRate);
+            data[s] = data[s + 1] = Mathf.Clamp(sample, -1f, 1f);
+            phase++;
+        }
+    }
+}</code></pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman · M10</h4>
+    <div class="quiz-q">¿Qué ventaja tiene la síntesis modal procedural frente a usar un sample de impacto pregrabado?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>Un sample pregrabado es estático: siempre suena igual independientemente de si el impacto fue a 1 m/s o 50 m/s. La síntesis modal calcula las frecuencias de resonancia del material (modos) y sus amplitudes en función de la energía del impacto (<code>col.relativeVelocity.magnitude</code>). Un golpe suave produce un tono tenue de corta duración; un golpe fuerte produce el mismo timbre pero con más amplitud y sustain. Además, el metal suena diferente que la madera porque tienen modos y damping distintos. La síntesis también ocupa 0 bytes de disco — no hay samples que cargar ni gestionar en SoundBanks.</p>
+    </details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← M9</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Steam Audio</div>
+    <div class="module-title">Steam Audio — HRTF y Reverb Espacial</div>
+    <div class="module-sub">Binaural HRTF, oclusión por geometría y reverb baked para VR</div>
+  </div>
+
+  <div class="card">
+    <h3>Steam Audio — Modos y coste</h3>
+    <table>
+      <tr><th>Feature</th><th>Descripción</th><th>Coste CPU</th></tr>
+      <tr><td>HRTF Bilinear</td><td>Interpolación bilineal entre HRTFs medidas</td><td>Alto</td></tr>
+      <tr><td>HRTF Nearest</td><td>HRTF más cercana sin interpolación</td><td>Medio</td></tr>
+      <tr><td>Convolution Reverb</td><td>RIR baked real de la geometría</td><td>Alto (runtime)</td></tr>
+      <tr><td>Parametric Reverb</td><td>Parámetros RT60/EQ derivados del bake</td><td>Bajo</td></tr>
+      <tr><td>Occlusion — Raycast</td><td>Un ray desde fuente a listener</td><td>Proporcional a fuentes</td></tr>
+      <tr><td>Occlusion — Volumetric</td><td>Múltiples rays para fuentes grandes</td><td>Alto</td></tr>
+    </table>
+
+    <h3 style="margin-top:20px">LOD de audio para VR mobile (Quest 3)</h3>
+    <pre><code>public class AudioLOD : MonoBehaviour {
+    [SerializeField] private SteamAudioSource steamSource;
+
+    void Update() {
+        float dist = Vector3.Distance(
+            transform.position,
+            SteamAudioManager.Listener.transform.position);
+
+        if (dist &lt; 5f)
+            steamSource.hrtfInterpolation = HRTFInterpolation.Bilinear;
+        else if (dist &lt; 15f)
+            steamSource.hrtfInterpolation = HRTFInterpolation.Nearest;
+        else
+            steamSource.hrtfInterpolation = HRTFInterpolation.None; // panning
+    }
+}</code></pre>
+
+    <div class="warn-box">
+      <strong>Regla VR mobile:</strong> En Quest 3, limitar a 16 fuentes HRTF activas simultáneas con Bilinear. Fuentes lejanas (&gt;15 m) usan panning estéreo simple. Reverb geométrico debe ser 100% baked — nunca ray tracing en tiempo real en mobile VR. CPU objetivo: ≤ 3% con 16 fuentes HRTF.
+    </div>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman · M11</h4>
+    <div class="quiz-q">¿Por qué el HRTF personalizado da mejor localización que el HRTF genérico, y qué opciones existen en 2024 para obtenerlo sin laboratorio?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>El HRTF encapsula cómo la forma específica de tus orejas, cabeza y torso colorizan el sonido según la dirección de llegada. Un HRTF genérico es el promedio de muchas personas — funciona aceptablemente para azimut frontal pero falla en elevación (arriba/abajo), ya que los pliegues del pabellón auricular son únicos para cada persona. En 2024, opciones para HRTF personal sin laboratorio: (1) Apps de foto de oído que usan ML para estimar el HRTF a partir de imágenes (ej: Personalized HRTF de Sony, Embody); (2) Selección subjetiva de un catálogo de HRTFs en formato SOFA donde el usuario elige la que mejor localiza; (3) Escáneres 3D con smartphone del pabellón auricular para modelos físicos computacionales.</p>
+    </details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← M10</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Profiling</div>
+    <div class="module-title">Profiling y Optimización de Audio</div>
+    <div class="module-sub">Wwise Profiler, voice limiting, virtualización y formatos de compresión</div>
+  </div>
+
+  <div class="card">
+    <h3>Métricas clave — Wwise Profiler</h3>
+    <table>
+      <tr><th>Panel</th><th>Qué monitorizar</th><th>Umbral de alerta</th></tr>
+      <tr><td>Performance Monitor</td><td>CPU% total del motor de audio</td><td>&gt;3% en consola, &gt;5% en PC</td></tr>
+      <tr><td>Voice Monitor</td><td>Nº de voces activas y virtuales</td><td>&gt;150 voces activas simultáneas</td></tr>
+      <tr><td>Memory</td><td>RAM usada por SoundBanks + streaming buffers</td><td>&gt;80% del budget asignado</td></tr>
+      <tr><td>Streaming</td><td>I/O throughput y starvation events</td><td>Cualquier starvation = clicks</td></tr>
+      <tr><td>Bus Meter</td><td>Niveles de buses individuales</td><td>Clipping (&gt;0 dBFS)</td></tr>
+    </table>
+
+    <h3 style="margin-top:20px">Optimizaciones — Checklist completo</h3>
+    <pre><code>// FORMATO DE AUDIO:
+// Consola: ADPCM (4:1 compression, hardware decode, sin CPU extra)
+// PC: Vorbis @ 96 kbps (buena calidad, bajo CPU)
+// Music streaming: Vorbis @ 128 kbps, no preload
+// SFX cortos (&lt;2s): preload en RAM para latencia cero
+
+// VOICE LIMITING (por Sound SFX):
+// Explosiones: Max=3, discard oldest
+// Footsteps: Max=5, discard newest
+// Bullets: Max=8, discard oldest
+// Ambient loops: Max=1 (uno por objeto)
+
+// VIRTUALIZATION (voces fuera de rango):
+// Suspender DSP (sin CPU de audio)
+// Mantienen posición y estado, "despiertan" al acercarse el listener
+
+// SAMPLE RATE:
+// SFX cortos: 22050 Hz
+// Music / Dialogue / SFX premium: 44100 Hz
+// Nunca 96 kHz en runtime de juego</code></pre>
+
+    <h3 style="margin-top:20px">Budget por plataforma</h3>
+    <table>
+      <tr><th>Plataforma</th><th>Max Voices</th><th>RAM Budget</th><th>Formato preferido</th></tr>
+      <tr><td>PC (alta gama)</td><td>256</td><td>512 MB</td><td>Vorbis / PCM</td></tr>
+      <tr><td>PS5 / Xbox Series</td><td>200</td><td>256 MB</td><td>AT9 / XMA2</td></tr>
+      <tr><td>Nintendo Switch</td><td>128</td><td>96 MB</td><td>ADPCM</td></tr>
+      <tr><td>Mobile (iOS/Android)</td><td>64</td><td>48 MB</td><td>AAC / Vorbis bajo</td></tr>
+    </table>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman · M12</h4>
+    <div class="quiz-q">¿Qué es una "voz virtual" en Wwise y cómo reduce el coste de CPU sin perder el estado del sonido?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>Una voz virtual es aquella cuyo procesamiento DSP ha sido <strong>suspendido</strong> porque está fuera del rango audible o por debajo del umbral de virtualización. No consume CPU de audio, pero Wwise sigue trackando su posición en el tiempo, su posición 3D en el mundo y sus parámetros actuales. Cuando el listener se acerca o la voz vuelve al rango audible, Wwise la "reactiva" desde el punto correcto de la reproducción — el sonido se escucha como si hubiera estado sonando todo el tiempo. Esto permite tener 500 fuentes de sonido en una escena grande sin pagar CPU por las 400 que están lejos del jugador.</p>
+    </details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← M11</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Pipeline</div>
+    <div class="module-title">Pipeline de Assets y CI/CD de Audio</div>
+    <div class="module-sub">Git LFS, nomenclatura, Wwise Console CLI y GitHub Actions</div>
+  </div>
+
+  <div class="card">
+    <h3>Estructura de proyecto Wwise recomendada</h3>
+    <pre><code>Wwise Project/
+├── Actor-Mixer Hierarchy/
+│    ├── SFX/
+│    │    ├── Weapons/    (Pistol, Rifle, Shotgun, Explosion)
+│    │    ├── Characters/ (Footsteps, Vocalizations, Cloth)
+│    │    ├── Environment/ (Ambience, Weather, Objects)
+│    │    └── UI/         (Buttons, Menus, Notifications)
+│    └── Music/           (BGM, Stingers, Jingles)
+├── Interactive Music Hierarchy/
+│    └── Music Switch Container "BGM_Master"
+├── SoundBanks/
+│    ├── Init.bnk    (siempre)
+│    ├── UI.bnk
+│    ├── Level_01.bnk … Level_NN.bnk
+│    └── Music.bnk
+├── States/  Switches/  RTPCs/  (Game Syncs)
+└── Events/  (misma estructura que Actor-Mixer)</code></pre>
+
+    <h3 style="margin-top:20px">Convención de nomenclatura</h3>
+    <table>
+      <tr><th>Tipo</th><th>Formato</th><th>Ejemplo</th></tr>
+      <tr><td>Event (Play)</td><td>Play_[Categoria]_[Objeto]_[Accion]</td><td>Play_SFX_Weapon_Pistol_Fire</td></tr>
+      <tr><td>Event (Stop)</td><td>Stop_[Categoria]_[Objeto]</td><td>Stop_Amb_Forest_Day</td></tr>
+      <tr><td>RTPC</td><td>[Objeto]_[Propiedad]</td><td>Vehicle_Speed, Player_Health</td></tr>
+      <tr><td>State Group</td><td>[Contexto]State</td><td>CombatState, EnvironmentState</td></tr>
+      <tr><td>Switch Group</td><td>[Objeto][Material]</td><td>FootstepMaterial, WeaponType</td></tr>
+      <tr><td>SoundBank</td><td>[Contexto]_[Nombre]</td><td>Level_Dungeon, UI_Frontend</td></tr>
+      <tr><td>Audio file</td><td>[objeto]_[variante]_[num].wav</td><td>footstep_wood_01.wav</td></tr>
+    </table>
+
+    <h3 style="margin-top:20px">CI/CD — GitHub Actions + Wwise Console CLI</h3>
+    <pre><code># .github/workflows/audio_build.yml
+name: Audio CI Pipeline
+on:
+  push:
+    paths:
+      - 'WwiseProject/**'
+      - 'Assets/Audio/**'
+
+jobs:
+  validate-and-build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { lfs: true }
+
+      - name: Validate Event Naming Convention
+        run: python scripts/validate_audio_naming.py WwiseProject/
+
+      - name: Generate SoundBanks
+        run: |
+          &amp; "C:\Program Files (x86)\Audiokinetic\Wwise 2023\...\WwiseConsole.exe" `
+            generate-soundbank `
+            "$env:GITHUB_WORKSPACE\WwiseProject\Game.wproj" `
+            --platform PC,Switch --language English(US)
+
+      - name: Copy Banks to Unity
+        run: xcopy /E /Y WwiseProject\GeneratedSoundBanks\Windows `
+            UnityProject\Assets\StreamingAssets\Audio\GeneratedSoundBanks\Windows\</code></pre>
+
+    <h3 style="margin-top:20px">validate_audio_naming.py</h3>
+    <pre><code>import json, sys, re, pathlib
+
+VALID_PREFIXES = ['Play_', 'Stop_', 'Pause_', 'Resume_']
+VALID_CATEGORIES = ['SFX', 'Music', 'Amb', 'UI', 'VO']
+
+def validate(wwise_project_path):
+    banks_info = pathlib.Path(wwise_project_path) / 'GeneratedSoundBanks' / 'SoundbanksInfo.json'
+    if not banks_info.exists():
+        print("No SoundbanksInfo.json — skipping validation")
+        return True
+    data = json.loads(banks_info.read_text())
+    errors = []
+    for bank in data.get('SoundBanks', []):
+        for event in bank.get('IncludedEvents', []):
+            name = event['Name']
+            if not any(name.startswith(p) for p in VALID_PREFIXES):
+                errors.append(f"BAD PREFIX: {name}")
+            parts = name.split('_')
+            if len(parts) &lt; 3 or parts[1] not in VALID_CATEGORIES:
+                errors.append(f"BAD CATEGORY: {name}")
+    if errors:
+        print("NAMING ERRORS:\n" + "\n".join(errors))
+        sys.exit(1)
+    print(f"All events validated OK")
+
+validate(sys.argv[1])</code></pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman · M13</h4>
+    <div class="quiz-q">¿Por qué es imprescindible usar Git LFS para los assets de audio y qué ocurre si no se usa?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>Git almacena cada versión de un archivo binario de forma completa en el historial. Un WAV de 50 MB modificado 100 veces = 5 GB solo en ese archivo, más toda la historia del repo. Sin LFS, clonar el repositorio implica descargar el historial completo — potencialmente cientos de GB. Git LFS almacena el binario en un servidor externo y guarda solo un puntero (texto pequeño) en el historial de Git. Al hacer checkout, solo descarga las versiones que se necesitan. El repo se mantiene manejable y los clones son rápidos incluso con miles de assets de audio.</p>
+    </details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← M12</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">HERO — Juego Completo con Audio Interactivo</div>
+    <div class="module-sub">Proyecto integrador: Wwise/FMOD + Unity/Unreal con audio profesional completo</div>
+  </div>
+
+  <div class="hero-rubric">
+    <table>
+      <tr><th>Componente</th><th>Pts</th><th>Indicadores clave</th></tr>
+      <tr><td>Arquitectura Wwise/FMOD — jerarquía de eventos, buses y Game Syncs</td><td>20</td><td>Nomenclatura estándar, sin magic strings, SoundBanks por nivel correctos</td></tr>
+      <tr><td>Audio interactivo — States/Switches/RTPCs + música adaptativa</td><td>25</td><td>≥3 RTPCs con curvas justificadas, ≥3 segmentos música con Entry Cues, ducking funcional</td></tr>
+      <tr><td>Audio espacial y oclusión — Steam Audio HRTF + raycasting</td><td>20</td><td>HRTF binaural activo, OcclusionManager con raycasting, LOD de audio implementado</td></tr>
+      <tr><td>Integración en engine y profiling — C#/C++, Profiler sin picos</td><td>20</td><td>CPU ≤3%, Voices ≤150, sin memory leak en sesión de 10 min de Profiler</td></tr>
+      <tr><td>Pipeline y documentación — Git LFS, naming conventions, CI/CD</td><td>15</td><td>GitHub Actions funcional, validate_naming.py sin errores, README de proyecto Wwise</td></tr>
+    </table>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman 1 · Switches vs Events múltiples</h4>
+    <div class="quiz-q">¿Por qué usar Switches en lugar de múltiples Events separados para las pisadas de diferentes superficies?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>Con Switches, un solo Event "Play_Footstep" selecciona automáticamente el sonido correcto según el valor del Switch Group "Surface_Type" (Wood, Stone, Metal…). El programador solo llama a un evento; el diseñador gestiona la lógica de selección en Wwise sin tocar código. Con eventos separados, el programador debe conocer y mantener una lista de eventos por superficie — cualquier añadido de superficie requiere código nuevo. El Switch centraliza la decisión en el middleware y hace el sistema extensible sin modificar el motor del juego.</p>
+    </details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman 2 · Music Segments y Entry Cues</h4>
+    <div class="quiz-q">Explica cómo funciona el "Music Segment" y por qué las "Entry Cues" son fundamentales para transiciones musicales sin clicks.</div>
+    <details><summary>Ver respuesta</summary>
+    <p>Un Music Segment define una sección temporal de música con marcadores: Entry Cue (punto de entrada legítimo), Exit Cue (punto de salida), Custom Cues (triggers de stingers). Cuando Wwise debe transicionar de un segmento a otro, no lo hace inmediatamente — espera a la próxima Entry Cue del segmento destino para garantizar que la transición ocurra en un punto musicalmente coherente (downbeat, compás, resolución armónica). Sin Entry Cues, la transición cortaría en cualquier punto, produciendo saltos rítmicos y armónicos perceptibles que rompen la inmersión.</p>
+    </details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman 3 · Voice Limiting global vs por objeto</h4>
+    <div class="quiz-q">¿Cuál es la diferencia entre voice limiting "global" y "per game object" en Wwise y cuándo usar cada uno?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>El límite <strong>global</strong> (Max Voices en Project Settings) define cuántas voces totales puede haber en el sistema en cualquier momento. El límite <strong>per game object</strong> define cuántas instancias de un mismo sonido puede emitir un objeto específico. Ejemplo: una ametralladora sin límite per-object acumularía decenas de disparos superpuestos. Con per-object Max=8 + Discard Oldest, siempre hay como máximo 8 disparos simultáneos de ese arma. Para SFX de impacto: global moderado + per-object estricto. Para ambientes: global generoso + per-object = 1.</p>
+    </details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman 4 · Curva logarítmica en atenuación</h4>
+    <div class="quiz-q">¿Por qué se usa una curva personalizada (no lineal) en la Attenuation curve de volumen en Wwise?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>La ley del cuadrado inverso pura (–6 dB por duplicación de distancia) es demasiado agresiva para juegos: a 4 metros, el sonido ya sería inaudible en muchos casos, rompiendo el gameplay. Los diseñadores usan curvas en S: un <strong>plateau cercano</strong> (volumen máximo hasta X metros), una <strong>caída rápida en zona media</strong> para que el audio se desvanezca progresivamente, y una <strong>caída muy suave al final</strong> para que el sonido siga siendo localizable hasta el máximo de atenuación. La curva específica depende del tipo: footsteps muy agresivos (solo relevantes a corta distancia), explosiones muy suaves (perceptibles a 150 m).</p>
+    </details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman 5 · Ducking via side-chain</h4>
+    <div class="quiz-q">¿Cómo funciona el ducking mediante side-chain en Wwise y cuál es su ventaja respecto a bajar el volumen de la música manualmente desde código?</div>
+    <details><summary>Ver respuesta</summary>
+    <p>El ducking via side-chain conecta el análisis de amplitud de un bus (ej: Dialogue Bus) a un atenuador en otro bus (ej: Music Bus). Cuando hay diálogo activo, la música baja automáticamente X dB con un attack/release configurable, sin intervención del código del juego. Ventajas vs código manual: es <strong>proporcional</strong> (si hay mucho diálogo, más ducking; si es suave, menos), tiene <strong>envelope</strong> (attack/release) para que no sea un click abrupto, y el diseñador controla todos los parámetros en Wwise sin que el programador sepa que existe. Con código manual, habría que detectar inicio/fin de diálogo, gestionar Lerp del volumen, y actualizar la lógica cada vez que se añade un bus nuevo.</p>
+    </details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← M13</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_middleware_interactive_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Briefing'},
+    {id:'m1',  label:'M1 · Actor-Mixer Hierarchy'},
+    {id:'m2',  label:'M2 · Interactive Music'},
+    {id:'m3',  label:'M3 · Oclusión & Obstrucción'},
+    {id:'m4',  label:'M4 · SoundBanks & Streaming'},
+    {id:'m5',  label:'M5 · Buses & Ducking'},
+    {id:'m6',  label:'M6 · FMOD Studio'},
+    {id:'m7',  label:'M7 · Unity Integration'},
+    {id:'m8',  label:'M8 · Unreal Engine'},
+    {id:'m9',  label:'M9 · Atenuación 3D'},
+    {id:'m10', label:'M10 · Audio Procedural'},
+    {id:'m11', label:'M11 · Steam Audio HRTF'},
+    {id:'m12', label:'M12 · Profiling & Optimización'},
+    {id:'m13', label:'M13 · Pipeline CI/CD'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item'
+        + (state.done.includes(m.id) ? ' done' : '')
+        + (state.current === m.id ? ' active' : '');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length) * 100);
+    document.getElementById('pct').textContent = pct + '%';
+    document.getElementById('progress-bar').style.width = pct + '%';
+  }
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0, 0);
+  };
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

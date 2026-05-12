@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOOC: Síntesis por Modelado Físico v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0b0f17; --surface:#111827; --surface2:#1f2937;
+  --accent:#06b6d4; --accent2:#22d3ee; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#1e293b;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'Fira Code',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+/* SIDEBAR */
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* MAIN */
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+/* CODE */
+pre{background:#060a12;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono);color:#a5f3fc}
+code{font-family:var(--font-mono);font-size:12.5px;background:#060a12;padding:2px 6px;border-radius:4px}
+/* SVG */
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+/* FORMULA */
+.formula{background:rgba(6,182,212,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+/* METRICS GRID */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+/* WARN BOX */
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+/* HERO */
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+/* QUIZ */
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(0,0,0,.15);border-radius:6px;line-height:1.6}
+/* BTN */
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>Síntesis por Modelado Físico</h2>
+    <p>Digital Waveguides · Karplus-Strong · Modal</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Briefing</div>
+    <div class="module-title">Síntesis por Modelado Físico</div>
+    <div class="module-sub">Digital Waveguides, Karplus-Strong y el algoritmo minimalista</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg width="700" height="160" viewBox="0 0 700 160" font-family="Inter,sans-serif" font-size="12" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="#06b6d4"/>
+        </marker>
+      </defs>
+      <rect x="10" y="60" width="110" height="40" rx="8" fill="#111827" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="65" y="76" text-anchor="middle" fill="#e2e8f0" font-size="10">Excitación</text>
+      <text x="65" y="90" text-anchor="middle" fill="#94a3b8" font-size="9">Ruido · Bow · Breath</text>
+      <line x1="120" y1="80" x2="148" y2="80" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="148" y="55" width="130" height="50" rx="8" fill="#111827" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="213" y="73" text-anchor="middle" fill="#e2e8f0" font-size="10">DWG / Buffer Circular</text>
+      <text x="213" y="87" text-anchor="middle" fill="#94a3b8" font-size="9">Impedancia Rw · D'Alembert</text>
+      <text x="213" y="99" text-anchor="middle" fill="#94a3b8" font-size="9">Mass-Spring · KS</text>
+      <line x1="278" y1="80" x2="306" y2="80" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="306" y="55" width="130" height="50" rx="8" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+      <text x="371" y="73" text-anchor="middle" fill="#e2e8f0" font-size="10">Loop Filter</text>
+      <text x="371" y="87" text-anchor="middle" fill="#94a3b8" font-size="9">Amortiguamiento · IIR</text>
+      <text x="371" y="99" text-anchor="middle" fill="#94a3b8" font-size="9">Fraccionario · EDR</text>
+      <line x1="436" y1="80" x2="464" y2="80" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="464" y="55" width="120" height="50" rx="8" fill="#111827" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="524" y="73" text-anchor="middle" fill="#e2e8f0" font-size="10">Salida / Cuerpo</text>
+      <text x="524" y="87" text-anchor="middle" fill="#94a3b8" font-size="9">Conmutada · Modal</text>
+      <text x="524" y="99" text-anchor="middle" fill="#94a3b8" font-size="9">Formante · VST</text>
+      <text x="213" y="30" text-anchor="middle" fill="#a855f7" font-size="9">f = Fs/L</text>
+      <text x="371" y="30" text-anchor="middle" fill="#10b981" font-size="9">ω₀·h ≤ 1 (Euler)</text>
+      <text x="524" y="30" text-anchor="middle" fill="#f59e0b" font-size="9">3× oversampling NL</text>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">2 buffers</div><div class="metric-label">DWG Bidireccional</div></div>
+    <div class="metric"><div class="metric-val">f=Fs/L</div><div class="metric-label">Frecuencia KS</div></div>
+    <div class="metric"><div class="metric-val">ω₀h≤1</div><div class="metric-label">Estabilidad Euler</div></div>
+    <div class="metric"><div class="metric-val">EDR 3D</div><div class="metric-label">Loop Filter Cal.</div></div>
+    <div class="metric"><div class="metric-val">3× OVS</div><div class="metric-label">Oversampling NL</div></div>
+    <div class="metric"><div class="metric-val">±0.5 cent</div><div class="metric-label">JND afinación</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Mapa Pareto del curso</h3>
+    <table>
+      <tr><th>Principio</th><th>Concepto Clave</th><th>Herramienta</th></tr>
+      <tr><td>Ecuación de onda</td><td>D'Alembert · y± · impedancia Rw</td><td>Python / JUCE</td></tr>
+      <tr><td>Discretización</td><td>Euler simpléctico · estabilidad Z</td><td>MATLAB / scipy</td></tr>
+      <tr><td>Karplus-Strong</td><td>Buffer circular · promedio · feedback</td><td>C++ / Csound</td></tr>
+      <tr><td>Loop Filter</td><td>STFT · EDR · invfreqz · IIR calibrado</td><td>MATLAB / SciPy</td></tr>
+      <tr><td>Retraso fraccionario</td><td>Interpolación Lagrange · Allpass</td><td>JUCE DSP</td></tr>
+      <tr><td>Excitación NL</td><td>Stick-Slip · Hammer · oversampling 3×</td><td>JUCE / STK</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Ecuación de Onda</div>
+    <div class="module-title">PDE de Onda 1D y Solución de D'Alembert</div>
+    <div class="module-sub">La base de toda síntesis por waveguide: dos ondas viajeras</div>
+  </div>
+
+  <div class="card">
+    <h3>PDE y D'Alembert</h3>
+    <div class="formula">∂²y/∂t² = c² · ∂²y/∂x²   donde c = √(K/ε) (velocidad de onda)</div>
+    <div class="formula">y(x,t) = y⁺(t − x/c) + y⁻(t + x/c)   (solución de D'Alembert)</div>
+    <p>y⁺ viaja hacia la derecha; y⁻ hacia la izquierda. Esta dicotomía es exactamente la arquitectura de las Digital Waveguides: dos líneas de retardo.</p>
+    <div class="formula">f₀ = c/(2L) = (1/2L) · √(K/ε)   (cuerda fijada en ambos extremos)</div>
+    <pre>
+import numpy as np
+
+def simulate_wave_equation(L=1.0, c=343.0, T=0.02, dx=0.01):
+    dt = 0.9 * dx / c   # Criterio CFL: dt <= dx/c
+    Nx = int(L / dx) + 1
+    Nt = int(T / dt)
+    x = np.linspace(0, L, Nx)
+    y = np.zeros((Nt, Nx))
+    pluck_pos = int(0.3 * Nx)
+    y[0, :pluck_pos] = np.linspace(0, 0.01, pluck_pos)
+    y[0, pluck_pos:] = np.linspace(0.01, 0, Nx - pluck_pos)
+    y[1] = y[0].copy()
+    r = (c * dt / dx) ** 2
+    print(f"CFL ratio r = {r:.4f} (debe ser <= 1 para estabilidad)")
+    for n in range(1, Nt - 1):
+        y[n+1, 1:-1] = (2 * y[n, 1:-1] - y[n-1, 1:-1] +
+                         r * (y[n, 2:] - 2*y[n, 1:-1] + y[n, :-2]))
+        y[n+1, 0] = 0.0
+        y[n+1, -1] = 0.0
+    return y
+
+# La4 = 440 Hz: L = c/(2×440) ≈ 0.39m
+wave = simulate_wave_equation(L=0.39, c=343.0, T=0.05, dx=0.002)
+print(f"f₀ teórica: {343.0/(2*0.39):.1f} Hz")</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Digital Waveguides</div>
+    <div class="module-title">Impedancia de Onda, Uniones de Dispersión y Red Acústica</div>
+    <div class="module-sub">Buffers circulares bidireccionales, scattering junction, reflexión y transmisión</div>
+  </div>
+
+  <div class="card">
+    <h3>Impedancia Rw y Scattering Junction</h3>
+    <div class="formula">Rw ≜ F⁺/V⁺ = √(Kε)</div>
+    <div class="formula">k = (Rw₂ − Rw₁)/(Rw₂ + Rw₁)   (coeficiente de reflexión)</div>
+    <pre>
+import numpy as np
+
+class DigitalWaveguide:
+    def __init__(self, freq, fs=44100, loop_gain=0.996):
+        self.fs = fs
+        self.N = int(fs / freq)
+        self.loop_gain = loop_gain
+        self.right_going = np.zeros(self.N)  # y⁺
+        self.left_going  = np.zeros(self.N)  # y⁻
+        self.ptr = 0
+        print(f"DWG: f={freq}Hz → L={self.N} samples")
+
+    def excite(self, excitation):
+        n = min(len(excitation), self.N)
+        self.right_going[:n] = excitation[:n] / 2
+        self.left_going[:n]  = excitation[:n] / 2
+
+    def process_sample(self):
+        right_end = self.right_going[(self.ptr + self.N - 1) % self.N]
+        reflected  = -self.loop_gain * right_end
+        self.left_going[self.ptr] = reflected
+        left_end   = self.left_going[(self.ptr + 1) % self.N]
+        self.right_going[(self.ptr + 1) % self.N] = -self.loop_gain * left_end
+        output = self.right_going[self.ptr] + self.left_going[self.ptr]
+        self.ptr = (self.ptr + 1) % self.N
+        return output
+
+    def synthesize(self, duration_s):
+        n = int(duration_s * self.fs)
+        self.excite(np.random.randn(self.N))
+        return np.array([self.process_sample() for _ in range(n)])
+
+# Sintetizar La4 (440 Hz)
+dw = DigitalWaveguide(freq=440, loop_gain=0.9995)
+output = dw.synthesize(duration_s=2.0)</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Masa-Resorte</div>
+    <div class="module-title">Sistemas MSD y el Método de Euler Simpléctico</div>
+    <div class="module-sub">Percusiones y golpes — integración simpléctica para preservar energía</div>
+  </div>
+
+  <div class="card">
+    <h3>Segunda Ley de Newton y Euler Simpléctico</h3>
+    <div class="formula">m·x''(t) + Z·x'(t) + k·x(t) = F_ext(t)</div>
+    <div class="formula">v_{n+1} = v_n + h · (F_n / m)   (actualizar velocidad primero)</div>
+    <div class="formula">x_{n+1} = x_n + h · v_{n+1}     (usar velocidad YA actualizada)</div>
+    <p>El Euler Explícito inyecta energía artificialmente (inestable para ω₀·h grande). El Simpléctico preserva el área en el espacio de fase (x,v): la elipse de energía constante se mantiene como elipse sin expandirse.</p>
+    <pre>
+import numpy as np
+from scipy.io import wavfile
+
+def msd_euler_symplectic(m, Z, k, F_ext, h, n_steps):
+    """Euler Simpléctico: estable, preserva estructura simpléctica."""
+    x, v = 0.0, 0.0
+    positions = np.zeros(n_steps)
+    for n in range(n_steps):
+        F = F_ext[n] if n < len(F_ext) else 0.0
+        a = (F - Z*v - k*x) / m
+        v = v + h * a   # Primero v (actualizado)
+        x = x + h * v   # Luego x con v ya actualizado
+        positions[n] = x
+    return positions
+
+# Parámetros: tímpano (m=0.01kg, k=100 N/m, Z=0.5 Ns/m)
+fs = 44100; h = 1.0 / fs
+m, Z, k = 0.01, 0.5, 100.0
+omega_0 = np.sqrt(k/m)
+print(f"Frecuencia resonancia: {omega_0/(2*np.pi):.1f} Hz")
+print(f"ω₀·h = {omega_0*h:.6f} (debe ser << 1)")
+
+n_steps = int(1.0 * fs)
+F_ext = np.zeros(n_steps); F_ext[0] = 100.0  # Golpe impulsivo
+sym = msd_euler_symplectic(m, Z, k, F_ext, h, n_steps)
+sym_norm = sym / (np.max(np.abs(sym)) + 1e-8)
+wavfile.write('msd_drum.wav', fs, (sym_norm*32767).astype(np.int16))</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Karplus-Strong</div>
+    <div class="module-title">El Algoritmo Karplus-Strong: Buffer Circular + Filtro Promedio</div>
+    <div class="module-sub">El caso más simple de DWG — mínimo cómputo, timbre de cuerda creíble</div>
+  </div>
+
+  <div class="card">
+    <h3>Ecuación de Diferencias KS</h3>
+    <div class="formula">y(n) = b · 0.5 · [y(n−L) + y(n−L−1)]   (b ≈ 0.996 para sustain largo)</div>
+    <div class="formula">f = Fs / L   (L = longitud en samples del buffer)</div>
+    <p>El filtro de promediado actúa como pasa-bajos: las frecuencias altas decaen más rápido que las bajas, exactamente como en una guitarra real. Con solo 2 operaciones aritméticas por muestra, se obtiene un timbre de cuerda creíble.</p>
+    <pre>
+import numpy as np
+from scipy.io import wavfile
+
+def karplus_strong(freq, duration_s, fs=44100, feedback=0.996):
+    L = int(fs / freq)
+    print(f"KS: L={L} samples, f={fs/L:.2f} Hz (objetivo: {freq} Hz)")
+    n_samples = int(duration_s * fs)
+    buffer = np.random.randn(L)
+    output = np.zeros(n_samples)
+    ptr = 0
+    for n in range(n_samples):
+        current = buffer[ptr]
+        next_ptr = (ptr + 1) % L
+        avg = feedback * 0.5 * (current + buffer[next_ptr])
+        buffer[ptr] = avg
+        output[n] = current
+        ptr = (ptr + 1) % L
+    return output
+
+# Acorde de La mayor (A, C#, E)
+A_major = [220.0, 277.18, 329.63]
+chord = sum(karplus_strong(f, 4.0, feedback=0.998) for f in A_major) / len(A_major)
+chord /= np.max(np.abs(chord)) + 1e-8
+wavfile.write('ks_a_major.wav', 44100, (chord * 32767).astype(np.int16))</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Síntesis Conmutada</div>
+    <div class="module-title">Commuted Synthesis: Pre-convolucionando el Cuerpo</div>
+    <div class="module-sub">Axioma LTI: el IR del cuerpo se pre-convoluciona con la excitación</div>
+  </div>
+
+  <div class="card">
+    <h3>Axioma de Conmutación LTI</h3>
+    <div class="formula">Salida = Excitación * Cuerda * Cuerpo = (Excitación * Cuerpo) * Cuerda</div>
+    <div class="formula">Buffer_inicial = noise * h_cuerpo(t)   (pre-cómputo offline)</div>
+    <p>En tiempo real, solo se procesa la waveguide: el cuerpo está "cocinado" en la excitación inicial. Reducción drástica del costo computacional. No funciona cuando el cuerpo es no-lineal (viola la condición LTI).</p>
+    <pre>
+import numpy as np
+from scipy.signal import fftconvolve
+from scipy.io import wavfile
+
+def create_body_ir(resonant_freqs, amplitudes, decay_times, fs=44100, duration=0.5):
+    n = int(duration * fs)
+    t = np.arange(n) / fs
+    ir = np.zeros(n)
+    for f, a, tau in zip(resonant_freqs, amplitudes, decay_times):
+        decay_rate = np.log(1000) / (tau / 1000)
+        ir += a * np.exp(-decay_rate * t) * np.sin(2 * np.pi * f * t)
+    return ir / (np.max(np.abs(ir)) + 1e-8)
+
+def commuted_synthesis_guitar(freq, duration_s, fs=44100, feedback=0.997):
+    # Resonancias típicas de cuerpo de guitarra
+    body_ir = create_body_ir(
+        [80, 100, 140, 200, 280, 350],
+        [1.0, 0.8, 0.6, 0.5, 0.3, 0.2],
+        [500, 400, 300, 200, 150, 100], fs
+    )
+    L = int(fs / freq)
+    raw_noise = np.random.randn(L)
+    body_noise = fftconvolve(raw_noise, body_ir, mode='same')[:L]
+    body_noise /= np.max(np.abs(body_noise)) + 1e-8
+
+    buffer = body_noise.copy()
+    n_samples = int(duration_s * fs)
+    output = np.zeros(n_samples)
+    ptr = 0
+    for n in range(n_samples):
+        current = buffer[ptr]
+        next_ptr = (ptr + 1) % L
+        buffer[ptr] = feedback * 0.5 * (current + buffer[next_ptr])
+        output[n] = current
+        ptr = (ptr + 1) % L
+    return output</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Loop Filter y EDR</div>
+    <div class="module-title">Identificación y Diseño del Loop Filter desde Grabaciones Reales</div>
+    <div class="module-sub">STFT, Energy Decay Relief, regresión, invfreqz</div>
+  </div>
+
+  <div class="card">
+    <h3>EDR y Pipeline de Identificación</h3>
+    <div class="formula">EDR(t_k, ω_m) = EDR(t_{k+1}, ω_m) + |X(t_k, ω_m)|²</div>
+    <div class="formula">|H_loop(ω)| = e^{−τ(ω)·π/fs}   donde τ(ω) es la tasa de decaimiento medida</div>
+    <p>El pipeline: (1) F0 extraction → (2) STFT con ventana Hamming de ~4 períodos → (3) EDR 3D → (4) regresión lineal para tasa de decaimiento por frecuencia → (5) invfreqz para diseñar el IIR.</p>
+    <pre>
+import numpy as np
+from scipy.signal import stft
+from scipy.stats import linregress
+
+def compute_edr(audio, fs, hop_size=256, fft_size=4096):
+    freqs, times, Zxx = stft(audio, fs=fs, nperseg=fft_size,
+                              noverlap=fft_size-hop_size, window='hamming')
+    energy = np.abs(Zxx) ** 2
+    edr = np.cumsum(energy[:, ::-1], axis=1)[:, ::-1]
+    edr_db = 10 * np.log10(edr + 1e-12)
+    edr_db -= edr_db[:, 0:1]
+    return edr_db, freqs, times
+
+def extract_decay_rates(edr_db, freqs, times):
+    decay_rates = {}
+    for bin_idx in range(0, len(freqs), 10):
+        f = freqs[bin_idx]
+        decay_curve = edr_db[bin_idx, :]
+        mask = (decay_curve <= 0) & (decay_curve >= -30)
+        if np.sum(mask) < 5: continue
+        slope, _, _, _, _ = linregress(times[mask], decay_curve[mask])
+        decay_rates[f] = slope
+    return decay_rates
+
+# Señal simulada (E2 de guitarra: fundamental + 2 armónicos)
+fs = 44100; t = np.arange(3 * fs) / fs; f0 = 82.4
+audio_sim = (np.exp(-0.5*t) * np.sin(2*np.pi*f0*t) +
+             0.5*np.exp(-1.0*t) * np.sin(2*np.pi*2*f0*t) +
+             0.25*np.exp(-2.0*t) * np.sin(2*np.pi*3*f0*t))
+
+edr, freqs, times = compute_edr(audio_sim, fs)
+decay_rates = extract_decay_rates(edr, freqs)
+for f, rate in list(decay_rates.items())[:4]:
+    rt60 = -60 / rate if rate < 0 else float('inf')
+    print(f"  f={f:.1f}Hz: {rate:.1f}dB/s (RT60~{rt60:.2f}s)")</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Retraso Fraccionario</div>
+    <div class="module-title">Interpolación Sub-Muestra para Afinación Precisa</div>
+    <div class="module-sub">JND ±0.5 cent, interpolación Lagrange, filtro allpass</div>
+  </div>
+
+  <div class="card">
+    <h3>JND y Métodos de Interpolación</h3>
+    <p>Para 440 Hz a 44.100 Hz: L = 100.227 samples. Con L=100 (entero) → frecuencia real = 441 Hz (+3.9 cents): perceptiblemente desafinado (JND ≈ ±0.5 cent). Se necesita retraso fraccionario.</p>
+    <div class="formula">y(n−η) = (1−η)·y(n) + η·y(n−1)    (lineal — introduce Frequency Warping)</div>
+    <div class="formula">H_allpass(z) = (a + z⁻¹)/(1 + a·z⁻¹)    a = (1−η)/(1+η)</div>
+    <pre>
+import numpy as np
+from scipy.io import wavfile
+
+class FractionalDelayKS:
+    def __init__(self, freq, fs=44100, feedback=0.997, interp_order=4):
+        self.fs = fs; self.feedback = feedback
+        total_delay = fs / freq
+        self.L = int(total_delay)
+        self.frac = total_delay - self.L
+        self.actual_freq = fs / (self.L + self.frac)
+        print(f"KS Fraccionario: error = {abs(self.actual_freq-freq)/freq*1200:.4f} cents")
+        self.buffer = np.zeros(self.L + interp_order + 4)
+        self.ptr = 0; self.order = interp_order
+        self.lagrange_coeffs = self._lagrange_coeffs(self.frac, interp_order)
+
+    def _lagrange_coeffs(self, frac, N):
+        coeffs = np.zeros(N + 1)
+        for k in range(N + 1):
+            prod = 1.0
+            for m in range(N + 1):
+                if m != k: prod *= (frac - m) / (k - m)
+            coeffs[k] = prod
+        return coeffs
+
+    def _read_fractional(self):
+        return sum(c * self.buffer[(self.ptr + self.L - k) % len(self.buffer)]
+                   for k, c in enumerate(self.lagrange_coeffs))
+
+    def synthesize(self, duration_s):
+        self.buffer[:self.L] = np.random.randn(self.L)
+        n = int(duration_s * self.fs)
+        output = np.zeros(n)
+        for i in range(n):
+            delayed = self._read_fractional()
+            prev_idx = (self.ptr + self.L - 1) % len(self.buffer)
+            self.buffer[self.ptr] = self.feedback * 0.5 * (delayed + self.buffer[prev_idx])
+            output[i] = delayed
+            self.ptr = (self.ptr + 1) % len(self.buffer)
+        return output
+
+ks_frac = FractionalDelayKS(440.0, fs=44100, feedback=0.998)
+output = ks_frac.synthesize(3.0)
+output /= np.max(np.abs(output)) + 1e-8
+wavfile.write('ks_fractional_440.wav', 44100, (output*32767).astype(np.int16))</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · Csound PM Opcodes</div>
+    <div class="module-title">Modelado Físico en Csound: wgbow, wgbrass, barmodel</div>
+    <div class="module-sub">Opcodes de alto nivel para cuerdas frotadas, vientos y percusión</div>
+  </div>
+
+  <div class="card">
+    <h3>Opcodes de Physical Modeling en Csound</h3>
+    <table>
+      <tr><th>Opcode</th><th>Modelo</th><th>Parámetros Clave</th></tr>
+      <tr><td>wgbow</td><td>Cuerda frotada (violín)</td><td>amp, freq, bowpressure, bowpos, vibfreq</td></tr>
+      <tr><td>wgbrass</td><td>Viento-metal (trompeta)</td><td>amp, freq, liptension, slidepos</td></tr>
+      <tr><td>wgclar</td><td>Clarinete</td><td>amp, freq, reed stiffness, noise</td></tr>
+      <tr><td>barmodel</td><td>Barra percusiva (marimba)</td><td>kbcL, kbcR, iK, ib, ixn, ixw</td></tr>
+      <tr><td>pluck</td><td>Karplus-Strong extendido</td><td>amp, freq, istringlen, imethode</td></tr>
+    </table>
+    <pre>
+; Csound Physical Modeling — ejemplos
+; instr 1: wgbow — violín
+;   kbp  linseg 0.5, 0.1, p6, p3-0.2, p6, 0.1, 0  ; Bow pressure envelope
+;   kpos = p7   ; Bow position (0=bridge, 1=fingerboard)
+;   aout wgbow iamp, kfreq, kbp, kpos
+;   outs aout, aout
+; endin
+
+; instr 2: barmodel — marimba
+;   iK  = 1e-8   ; Rigidez de la barra
+;   ib  = 1      ; Coeficiente de amortiguamiento
+;   aout barmodel 0, 0, iK, ib, 0.5, 0.5, 0.03, 0.9, 0.5
+;   outs aout * iamp, aout * iamp
+; endin
+
+; Score:
+; i1 0 5 0.7 440 0.6 0.127 5  ; Violín La4 5s
+; i2 5 3 0.9 523.25            ; Marimba Do5
+; e</pre>
+    <p>wgbow implementa el mecanismo de stick-slip del arco. Con bowpressure=0 no hay mecanismo de excitación continua → usar opcode <code>pluck</code> para pizzicato correcto.</p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · JUCE DelayLine</div>
+    <div class="module-title">Physical Modeling en JUCE: dsp::DelayLine y ProcessorChain</div>
+    <div class="module-sub">Karplus-Strong completo como plugin VST3/AU en C++</div>
+  </div>
+
+  <div class="card">
+    <h3>Arquitectura JUCE DSP para Waveguides</h3>
+    <div class="formula">MIDI → Excitación → [DelayLine + LoopFilter + Gain] → Output</div>
+    <pre>
+// JUCE KS Voice — fragmento clave
+#pragma once
+#include &lt;JuceHeader.h&gt;
+
+class KarplusStrongVoice : public juce::SynthesiserVoice {
+public:
+    KarplusStrongVoice() {
+        delayLine.setMaximumDelayInSamples(4096);
+        auto coeffs = juce::dsp::IIR::Coefficients&lt;float&gt;::makeLowPass(44100, 8000.0f);
+        *loopFilter.state = *coeffs;
+    }
+
+    void startNote(int midiNote, float velocity, juce::SynthesiserSound*, int) override {
+        const double fs = getSampleRate();
+        const double freq = juce::MidiMessage::getMidiNoteInHertz(midiNote);
+        delayLength = fs / freq;  // Retraso fraccionario Lagrange3rd
+        loopGain = 0.9995f * velocity;
+        juce::Random rng;
+        for (int i = 0; i &lt; (int)delayLength; ++i)
+            delayLine.pushSample(0, rng.nextFloat() * 2.0f - 1.0f);
+        isActive = true;
+    }
+
+    void renderNextBlock(juce::AudioBuffer&lt;float&gt;& buf, int start, int num) override {
+        if (!isActive) return;
+        for (int n = start; n &lt; start + num; ++n) {
+            float delayed  = delayLine.popSample(0, delayLength, true);
+            float filtered = loopFilter.processSample(delayed);
+            delayLine.pushSample(0, loopGain * filtered);
+            buf.addSample(0, n, delayed);
+            buf.addSample(1, n, delayed);
+        }
+    }
+
+private:
+    juce::dsp::DelayLine&lt;float, juce::dsp::DelayLineInterpolationTypes::Lagrange3rd&gt; delayLine;
+    juce::dsp::IIR::Filter&lt;float&gt; loopFilter;
+    float delayLength = 100.0f, loopGain = 0.996f;
+    bool isActive = false;
+};</pre>
+    <p>dsp::ProcessorChain usa template metaprogramming (variadic templates): los procesadores se resuelven en compilación generando código inline sin vtable dispatch → 2-5× más rápido que un vector de punteros.</p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Dispersión e Inarmonicidad</div>
+    <div class="module-title">Filtros Allpass para Dispersión y Banded Waveguides</div>
+    <div class="module-sub">Stiffness de piano, f_n = n·f₀·√(1+B·n²), banded DWG para idiófonos</div>
+  </div>
+
+  <div class="card">
+    <h3>Dispersión y Stiffness</h3>
+    <div class="formula">f_n = n·f₀·√(1 + B·n²)   donde B ≈ 0.0001–0.01 para piano</div>
+    <div class="formula">H_allpass(z) = (a + z⁻¹)/(1 + a·z⁻¹)   a = (1−√B)/(1+√B)</div>
+    <pre>
+import numpy as np
+from scipy.signal import lfilter
+from scipy.io import wavfile
+
+def piano_string_ks(freq, duration_s, fs=44100, B=0.001, feedback=0.9998):
+    """KS con dispersión de piano (Stiffness B via filtro allpass)."""
+    L = int(fs / freq)
+    buffer = np.random.randn(L)
+    output = np.zeros(int(duration_s * fs))
+    ptr = 0
+    a_disp = float(np.clip((1 - np.sqrt(B)) / (1 + np.sqrt(B)), -0.999, 0.999))
+    allpass_state = 0.0
+    for n in range(len(output)):
+        current = buffer[ptr]
+        next_ptr = (ptr + 1) % L
+        avg = feedback * 0.5 * (current + buffer[next_ptr])
+        # Filtro allpass para dispersión
+        allpass_out = a_disp * avg + allpass_state
+        allpass_state = avg - a_disp * allpass_out
+        buffer[ptr] = allpass_out
+        output[n] = current
+        ptr = (ptr + 1) % L
+    return output
+
+# C4 con B=0.001 (cuerdas medias piano) vs B=0.01 (cuerdas cortas)
+piano_med = piano_string_ks(261.6, 5.0, B=0.001)
+piano_hi  = piano_string_ks(261.6, 5.0, B=0.01)
+for sig, name in [(piano_med, 'b001'), (piano_hi, 'b01')]:
+    s = sig / (np.max(np.abs(sig)) + 1e-8)
+    wavfile.write(f'piano_{name}.wav', 44100, (s*32767).astype(np.int16))</pre>
+    <p>Banded Waveguides (para idiófonos con fuerte inarmonicidad): Σ_k [BPF_k * DelayLine_k] donde f_k = frecuencia real del k-ésimo parcial. B crece con diámetro y disminuye con longitud: cuerdas de violín (B≈0.000002) son casi harmónicas; cuerdas de piano corto (B≈0.003) son perceptiblemente inarmónicas.</p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Excitación No Lineal</div>
+    <div class="module-title">Stick-Slip, Martillo de Piano y Oversampling</div>
+    <div class="module-sub">Fricción no-lineal, distorsión con oversampling 3×</div>
+  </div>
+
+  <div class="card">
+    <h3>Stick-Slip y Soft Clipper con Oversampling</h3>
+    <div class="formula">Señal → Upsample 3× → Non-Linear → Downsample 3× (con LPF anti-aliasing)</div>
+    <pre>
+import numpy as np
+from scipy.signal import butter, resample_poly
+
+def soft_clipper_cubic(x, threshold=0.5):
+    """Soft clipper cúbico: f(x) = x − x³/3 (genera principalmente 3er armónico)."""
+    x_norm = x / threshold
+    clipped = np.where(
+        np.abs(x_norm) <= 1,
+        x_norm - x_norm**3 / 3,
+        np.sign(x_norm) * (2/3)
+    )
+    return clipped * threshold * 1.5
+
+def waveguide_with_nl_distortion(freq, duration_s, fs=44100,
+                                  distortion_gain=5.0, oversampling=3):
+    """KS con soft-clipper en el loop. Oversampling para evitar aliasing."""
+    fs_os = fs * oversampling
+    L_os = int(fs_os / freq)
+    buffer = np.random.randn(L_os)
+    output_os = np.zeros(int(duration_s * fs_os))
+    ptr = 0
+    for n in range(len(output_os)):
+        current = buffer[ptr]
+        next_ptr = (ptr + 1) % L_os
+        avg = 0.998 * 0.5 * (current + buffer[next_ptr])
+        driven = avg * distortion_gain
+        buffer[ptr] = soft_clipper_cubic(driven) / distortion_gain
+        output_os[n] = current
+        ptr = (ptr + 1) % L_os
+    output = resample_poly(output_os, 1, oversampling)
+    return output / (np.max(np.abs(output)) + 1e-8)
+
+clean     = waveguide_with_nl_distortion(110, 2.0, distortion_gain=1.0, oversampling=1)
+distorted = waveguide_with_nl_distortion(110, 2.0, distortion_gain=8.0, oversampling=3)</pre>
+    <p>La no-linealidad dentro del loop interactúa con las frecuencias resonantes: genera armónicos que también circulan y generan sus propios armónicos (intermodulación recursiva) → sonido denso y sustain. Sin oversampling 3×, los armónicos generados por el clipper cúbico superan Nyquist → aliasing.</p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Síntesis Modal y Formantes</div>
+    <div class="module-title">Modal Synthesis y Formant Synthesis para Voz y Percusión</div>
+    <div class="module-sub">Banco de resonadores, modos normales, formantes del tracto vocal</div>
+  </div>
+
+  <div class="card">
+    <h3>Síntesis Modal</h3>
+    <div class="formula">Salida = Σ_k H_k(z) · Excitación   (suma de resonadores 2do orden)</div>
+    <div class="formula">H_k(z) = A_k / (1 − 2·r_k·cos(ω_k)·z⁻¹ + r_k²·z⁻²)</div>
+    <div class="formula">Vocal /a/: F1≈800Hz, F2≈1200Hz, F3≈2500Hz</div>
+    <pre>
+import numpy as np
+from scipy.signal import lfilter
+from scipy.io import wavfile
+
+def modal_resonator(freq, decay_time, amplitude, fs=44100, duration=2.0):
+    n = int(duration * fs)
+    omega = 2 * np.pi * freq / fs
+    r = 10 ** (-3 / (decay_time * fs))  # Polo del resonador
+    b = np.array([amplitude, 0.0])
+    a = np.array([1.0, -2*r*np.cos(omega), r**2])
+    impulse = np.zeros(n); impulse[0] = 1.0
+    return lfilter(b, a, impulse)
+
+# Campana de marimba (C4 = 261.6 Hz) — 4 modos principales
+# f₀, ~4f₀, ~9f₀, ~17f₀ (ajustados por tallado)
+modes = [(261.6, 3.0, 1.0), (1046.5, 0.8, 0.3),
+         (2354.4, 0.3, 0.1), (4447.2, 0.1, 0.05)]
+marimba = sum(modal_resonator(*m, fs=44100, duration=3.0) for m in modes)
+marimba /= np.max(np.abs(marimba)) + 1e-8
+wavfile.write('marimba_modal.wav', 44100, (marimba*32767).astype(np.int16))
+
+# Formant synthesis — vocal /a/ con excitación de glotis
+def rosenberg_pulse(T0, fs=44100):
+    """Pulso de Rosenberg (modelo de glotis)."""
+    n = np.arange(int(T0 * fs))
+    t = n / fs / T0
+    return np.where(t < 0.6, 0.5*(1 - np.cos(np.pi * t / 0.6)),
+                    np.where(t < 1.0, np.cos(np.pi * (t - 0.6) / 0.8), 0.0))</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Historia y Hardware</div>
+    <div class="module-title">Historia del PM: VLSI Sondius-XG, STK y Pianoteq</div>
+    <div class="module-sub">Yamaha VL1, CCRMA, Perry Cook, hardware dedicado de síntesis PM</div>
+  </div>
+
+  <div class="card">
+    <h3>Hitos históricos del Physical Modeling</h3>
+    <table>
+      <tr><th>Año</th><th>Hito</th><th>Relevancia</th></tr>
+      <tr><td>1983</td><td>Karplus-Strong publicado (Computer Music Journal)</td><td>Primer PM minimalista</td></tr>
+      <tr><td>1987</td><td>Julius Smith — Digital Waveguide Synthesis</td><td>Teoría DWG formal</td></tr>
+      <tr><td>1993</td><td>Yamaha VL1 — primer sintetizador PM comercial</td><td>Chip VLSI Sondius-XG</td></tr>
+      <tr><td>1995</td><td>Perry Cook — STK (Synthesis ToolKit)</td><td>Librería C++ PM de código abierto</td></tr>
+      <tr><td>2000</td><td>Essl & Cook — Banded Waveguides</td><td>Idiófonos (campanas, cuencos)</td></tr>
+      <tr><td>2006</td><td>Pianoteq — piano PM comercial de alta fidelidad</td><td>88 cuerdas + resonancia simpática</td></tr>
+      <tr><td>2011</td><td>Mutable Instruments Elements (Eurorack)</td><td>Síntesis modal en hardware</td></tr>
+    </table>
+    <p>El VL1 (1994) solo procesaba 2 voces simultáneas: cada voz requería el chip VLSI Sondius-XG completo (~500 operaciones de MAC por muestra, 22 millones/segundo). Un Mac M1 actual puede procesar 400+ voces PM simultáneas.</p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto Final — Sintetizador PM Completo</div>
+    <div class="module-sub">DWG calibrada + retraso fraccionario + loop filter IIR + excitación física + plugin JUCE</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica del Proyecto HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Descripción</th><th>Pts</th></tr>
+        <tr><td>DWG + KS Calibrado</td><td>Frecuencia exacta con retraso fraccionario Lagrange-3rd. Error &lt;0.5 cents en escala MIDI 36-96.</td><td>25</td></tr>
+        <tr><td>Loop Filter Identificado</td><td>EDR calculado desde grabación real. Filtro IIR 4+ taps con invfreqz. Comparación espectrograma real vs síntesis.</td><td>20</td></tr>
+        <tr><td>Excitación Física</td><td>Mecanismo correcto implementado (pluck: KS; bow: stick-slip; percussion: MSD Euler simpléctico).</td><td>20</td></tr>
+        <tr><td>Plugin VST3/AU en JUCE</td><td>Plugin funcional con MIDI input, APVTS parametrizado, audio output. Validado con PluginVal.</td><td>20</td></tr>
+        <tr><td>Síntesis Conmutada</td><td>IR del cuerpo pre-convolucionada. Comparación tímbrica con/sin cuerpo. Presupuesto CPU documentado.</td><td>10</td></tr>
+        <tr><td>Documentación</td><td>Diagrama de señal, análisis espectral, comparación con instrumento real, código limpio.</td><td>5</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman — Explica sin notas</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · D'Alembert y DWG</h4>
+      <p class="quiz-q">¿Cuántas operaciones por muestra necesita una DWG de guitarra de 440 Hz a 44.1 kHz, y por qué es tan eficiente comparada con FDTD?</p>
+      <details><summary>Ver respuesta</summary><p>Aproximadamente L+4 ≈ 104 operaciones (L=100 samples del buffer + 4 operaciones del loop filter y retraso fraccionario). La DWG reduce el costo de O(Nx × Nt) de FDTD a O(L) porque D'Alembert demuestra que solo se necesita propagar la onda en el punto de pickup, no en todos los puntos del espacio. Con FDTD de 200 puntos espaciales serían ~400 operaciones/sample: la DWG es ~40× más eficiente.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · Euler Simpléctico</h4>
+      <p class="quiz-q">¿Qué pasaría si implementaras el martillo de piano con Euler Explícito en lugar de Simpléctico?</p>
+      <details><summary>Ver respuesta</summary><p>El sistema MSD del martillo inyectaría energía artificialmente en cada step: la amplitud de la posición del martillo crecería exponencialmente en lugar de decaer, produciendo un golpe que "explota" en pocos milisegundos. El Euler Explícito expande sistemáticamente la elipse en el espacio de fase (x,v). Para el martillo de piano con Kh=10⁶ N/m y m=0.01 kg: ω₀=10⁴ rad/s. Con fs=44.100 Hz, ω₀·h≈0.227 &lt; 2: solo el Simpléctico es estable.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · Inarmonicidad del Piano</h4>
+      <p class="quiz-q">¿Por qué el piano se afina con "stretch tuning" y cómo se relaciona con el modelado físico?</p>
+      <details><summary>Ver respuesta</summary><p>La inarmonicidad (B &gt; 0) hace que los armónicos reales de las cuerdas graves no coincidan con los fundamentales ideales de las cuerdas agudas. El stretch tuning ajusta las frecuencias fundamentales para que las octavas suenen consonantes cuando los armónicos REALES de las cuerdas graves coinciden con los fundamentales REALES de las octavas superiores. Un modelo PM correcto que incluye inarmonicidad debe también aplicar stretch tuning: si C2 tiene B=0.003, su 8vo armónico es ~6 Hz más alto que C5 ideal → C5 sube ~6 Hz en el tuning estirado.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · Síntesis Conmutada</h4>
+      <p class="quiz-q">Si el cuerpo del instrumento tiene una resonancia no-lineal (varía con la amplitud), ¿sigue siendo válida la síntesis conmutada?</p>
+      <details><summary>Ver respuesta</summary><p>No: la síntesis conmutada requiere que todos los componentes conmutados sean LTI (lineales e invariantes en el tiempo). Un cuerpo con resonancia no-lineal viola la linealidad: f(A + B) ≠ f(A) + f(B). No se puede pre-convolucionar con una IR única porque la respuesta depende de la amplitud de entrada. El piano tampoco puede usar síntesis conmutada pura: el martillo interacciona de forma no-lineal (múltiples rebotes, rigidez variable), violando la condición LTI.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · Límite Fundamental del PM</h4>
+      <p class="quiz-q">¿Cuál es el límite fundamental del modelado físico que impide reproducir exactamente el sonido de un Stradivarius con un modelo matemático?</p>
+      <details><summary>Ver respuesta</summary><p>El problema inverso: para reproducir exactamente un Stradivarius necesitarías conocer todos sus parámetros físicos (forma de cada fibra de madera, distribución de barniz, historia de tensión, temperatura actual) con precisión imposible de medir no-destructivamente. El modelo es tan bueno como la medición de sus parámetros, y medir todos ellos destruiría el instrumento. El mejor PM puede aproximarse a un "violín excelente genérico", no al instrumento específico. Esta es la frontera honesta del modelado físico.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_modelado_fisico_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Briefing del Campo'},
+    {id:'m1',  label:'M1 · Ecuación de Onda'},
+    {id:'m2',  label:'M2 · Digital Waveguides'},
+    {id:'m3',  label:'M3 · Masa-Resorte-Amortiguador'},
+    {id:'m4',  label:'M4 · Karplus-Strong'},
+    {id:'m5',  label:'M5 · Síntesis Conmutada'},
+    {id:'m6',  label:'M6 · Loop Filter y EDR'},
+    {id:'m7',  label:'M7 · Retraso Fraccionario'},
+    {id:'m8',  label:'M8 · Csound PM Opcodes'},
+    {id:'m9',  label:'M9 · JUCE DelayLine'},
+    {id:'m10', label:'M10 · Dispersión e Inarmonicidad'},
+    {id:'m11', label:'M11 · Excitación No Lineal'},
+    {id:'m12', label:'M12 · Síntesis Modal y Formantes'},
+    {id:'m13', label:'M13 · Historia y Hardware'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

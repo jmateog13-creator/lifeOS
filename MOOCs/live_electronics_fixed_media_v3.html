@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Electronics & Fixed Media v3</title>
+<style>
+  :root {
+    --bg:#0b0f17; --surface:#111827; --surface2:#0d1320;
+    --accent:#06b6d4; --accent2:#a855f7; --accent3:#10b981;
+    --warn:#f59e0b; --danger:#ef4444;
+    --text:#e2e8f0; --muted:#94a3b8; --border:#1e293b;
+    --font-mono:'JetBrains Mono','Fira Code',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter','Segoe UI',sans-serif;display:flex;min-height:100vh;}
+  ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-track{background:var(--bg);}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+  /* Sidebar */
+  #sidebar{width:260px;min-width:260px;background:var(--surface2);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+  #sidebar-header{padding:20px 16px 14px;border-bottom:1px solid var(--border);}
+  #sidebar-header h1{font-size:1rem;font-weight:700;color:var(--accent);line-height:1.3;}
+  #sidebar-header p{font-size:.72rem;color:var(--muted);margin-top:4px;}
+  #progress-wrap{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+  .progress-ring{width:48px;height:48px;flex-shrink:0;}
+  .progress-ring circle{fill:none;stroke-width:4;}
+  .progress-ring .track{stroke:var(--border);}
+  .progress-ring .fill{stroke:var(--accent);stroke-linecap:round;
+    stroke-dasharray:126;stroke-dashoffset:126;transition:stroke-dashoffset .5s ease;}
+  #pct{font-size:1rem;font-weight:800;color:var(--accent);}
+  #progress-label{font-size:.7rem;color:var(--muted);}
+  #progress-bar{height:4px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden;}
+  #progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s ease;}
+  #nav-list{flex:1;padding:8px 0;}
+  .nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;cursor:pointer;
+    border-left:3px solid transparent;transition:all .2s;font-size:.82rem;color:var(--muted);}
+  .nav-item:hover{background:rgba(6,182,212,.06);color:var(--text);}
+  .nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent);}
+  .nav-item.done{color:var(--accent3);}
+  .nav-item.done .nav-check{color:var(--accent3);}
+  .nav-num{font-size:.7rem;font-weight:700;color:var(--muted);min-width:26px;}
+  .nav-label{flex:1;font-size:.8rem;}
+  .nav-check{font-size:.75rem;color:var(--border);}
+
+  /* Main */
+  #main{flex:1;overflow-y:auto;padding:32px 40px;margin-left:0;}
+  .module{display:none;animation:fadeIn .3s ease;}
+  .module.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+  /* Module header */
+  .module-header{margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+  .module-tag{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--accent);margin-bottom:6px;}
+  .module-title{font-size:1.9rem;font-weight:800;color:var(--text);margin-bottom:6px;line-height:1.2;}
+  .module-sub{font-size:1rem;color:var(--muted);}
+
+  /* Typography */
+  h3.section-title{font-size:1.1rem;font-weight:700;color:var(--text);margin:28px 0 14px;
+    display:flex;align-items:center;gap:8px;}
+  h3.section-title::before{content:'';display:inline-block;width:4px;height:18px;
+    background:var(--accent);border-radius:2px;}
+  p{line-height:1.7;color:var(--muted);margin-bottom:12px;}
+
+  /* Cards */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    padding:18px 20px;margin-bottom:16px;border-left:4px solid var(--accent);}
+  .card-purple{border-left-color:var(--accent2);}
+  .card-yellow{border-left-color:var(--warn);}
+  .card h4{font-size:.9rem;font-weight:700;margin-bottom:8px;color:var(--text);}
+  .card p,.card li{font-size:.87rem;color:var(--muted);line-height:1.6;}
+  .card ul,.card ol{padding-left:18px;margin-top:6px;}
+  .card li{margin-bottom:4px;}
+
+  /* Badges */
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;
+    font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:2px;}
+  .badge-theory{background:rgba(6,182,212,.15);color:var(--accent);border:1px solid rgba(6,182,212,.3);}
+  .badge-lab{background:rgba(16,185,129,.15);color:var(--accent3);border:1px solid rgba(16,185,129,.3);}
+  .badge-hero{background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.3);}
+  .badge-feynman{background:rgba(168,85,247,.15);color:var(--accent2);border:1px solid rgba(168,85,247,.3);}
+  .badge-tools{background:rgba(148,163,184,.15);color:var(--muted);border:1px solid rgba(148,163,184,.2);}
+  .badge-wrap{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:20px;}
+
+  /* Code */
+  pre{background:#050810;border:1px solid var(--border);border-radius:8px;padding:16px;
+    overflow-x:auto;margin:14px 0;position:relative;}
+  pre code{font-family:var(--font-mono);font-size:.82rem;color:#e2e8f0;line-height:1.6;}
+  .copy-btn{position:absolute;top:8px;right:8px;background:var(--border);border:none;color:var(--muted);
+    padding:3px 8px;border-radius:4px;font-size:.7rem;cursor:pointer;transition:all .2s;}
+  .copy-btn:hover{background:var(--accent);color:#000;}
+  kbd{background:#1e293b;border:1px solid #334155;border-radius:4px;padding:2px 6px;
+    font-family:var(--font-mono);font-size:.78rem;color:var(--text);}
+  .pill{display:inline-block;background:rgba(6,182,212,.1);color:var(--accent);border-radius:20px;
+    padding:2px 10px;font-size:.75rem;font-weight:600;margin:2px;}
+
+  /* Tables */
+  table.spec{width:100%;border-collapse:collapse;margin:14px 0;font-size:.84rem;}
+  table.spec th{background:rgba(6,182,212,.1);color:var(--accent);padding:9px 12px;text-align:left;
+    border-bottom:2px solid var(--border);}
+  table.spec td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top;}
+  table.spec tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+
+  /* Tool grid */
+  .tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:14px 0;}
+  .tool-link{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;transition:border-color .2s;display:block;}
+  .tool-link:hover{border-color:var(--accent);}
+  .tool-link .t-type{font-size:.65rem;text-transform:uppercase;font-weight:700;color:var(--muted);margin-bottom:4px;}
+  .tool-link .t-name{font-size:.92rem;font-weight:700;color:var(--accent);margin-bottom:4px;}
+  .tool-link .t-desc{font-size:.78rem;color:var(--muted);}
+
+  /* Diagram */
+  .diagram-box{background:#050810;border:1px solid var(--border);border-radius:8px;padding:20px;
+    margin:14px 0;text-align:center;overflow-x:auto;}
+
+  /* Metrics (v3) */
+  .metrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin:20px 0;}
+  .metric{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;}
+  .metric-val{font-size:1.7rem;font-weight:800;color:var(--accent);}
+  .metric-label{font-size:.72rem;color:var(--muted);margin-top:5px;}
+
+  /* Quiz-block (v3 Feynman) */
+  .quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    padding:18px 20px;margin:14px 0;border-left:4px solid var(--accent2);}
+  .quiz-block h4{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--accent2);margin-bottom:8px;}
+  .quiz-q{font-size:.92rem;font-weight:600;color:var(--text);margin-bottom:10px;line-height:1.5;}
+  .quiz-block details{margin-top:4px;}
+  .quiz-block summary{cursor:pointer;font-size:.82rem;font-weight:600;color:var(--accent);
+    padding:6px 0;list-style:none;display:flex;align-items:center;gap:6px;}
+  .quiz-block summary::before{content:'▶';font-size:.65rem;transition:transform .2s;}
+  .quiz-block details[open] summary::before{transform:rotate(90deg);}
+  .quiz-block details p{margin-top:10px;font-size:.86rem;color:var(--muted);line-height:1.7;
+    padding:12px 14px;background:rgba(168,85,247,.06);border-radius:6px;border-left:3px solid var(--accent2);}
+
+  /* Hero rubric (v3) */
+  .hero-rubric{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    padding:20px;margin:20px 0;}
+  .hero-rubric h3{font-size:1rem;font-weight:700;color:var(--warn);margin-bottom:14px;}
+  .hero-rubric table{width:100%;border-collapse:collapse;font-size:.84rem;}
+  .hero-rubric th{background:rgba(245,158,11,.1);color:var(--warn);padding:9px 12px;
+    text-align:left;border-bottom:2px solid var(--border);}
+  .hero-rubric td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top;}
+  .hero-rubric tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+  .hero-rubric .total-row td{font-weight:700;color:var(--text);border-top:2px solid var(--border);}
+  .hero-rubric .pts{font-weight:700;color:var(--warn);}
+
+  /* Button row (v3) */
+  .btn-row{display:flex;gap:12px;margin-top:32px;padding-top:20px;border-top:1px solid var(--border);flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border:none;border-radius:8px;
+    font-size:.88rem;font-weight:700;cursor:pointer;transition:all .2s;}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;}
+  .btn-primary:hover{opacity:.85;}
+  .btn-secondary{background:var(--surface);border:1px solid var(--border);color:var(--muted);}
+  .btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+
+  /* Exercise */
+  .exercise{background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.25);
+    border-radius:8px;padding:16px 18px;margin:12px 0;}
+  .ex-num{font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--accent2);margin-bottom:6px;}
+
+  /* Collapsible (preserved) */
+  details.collapsible{background:var(--surface);border:1px solid var(--border);border-radius:8px;
+    margin-bottom:10px;overflow:hidden;}
+  details.collapsible summary{padding:12px 16px;cursor:pointer;font-size:.88rem;font-weight:600;
+    color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;}
+  details.collapsible summary::after{content:'+';color:var(--accent);font-size:1.1rem;font-weight:700;}
+  details.collapsible[open] summary::after{content:'−';}
+  details.collapsible .collapsible-body,.detail-body{padding:0 16px 14px;font-size:.86rem;color:var(--muted);line-height:1.7;}
+
+  /* Card drill */
+  .card-drill{background:rgba(236,72,153,.07);border:1px solid rgba(236,72,153,.2);border-radius:6px;
+    padding:10px 14px;margin-bottom:8px;font-size:.84rem;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h1>Live Electronics & Fixed Media</h1>
+    <p>v3 · 15 módulos · MOOC</p>
+  </div>
+  <div id="progress-wrap">
+    <svg class="progress-ring" viewBox="0 0 48 48">
+      <circle class="track" cx="24" cy="24" r="20"/>
+      <circle class="fill" cx="24" cy="24" r="20" id="ring-fill" transform="rotate(-90 24 24)"/>
+    </svg>
+    <div>
+      <div id="pct">0%</div>
+      <div id="progress-label">completado</div>
+      <div id="progress-bar"><div id="progress-fill"></div></div>
+    </div>
+  </div>
+  <div id="nav-list"></div>
+</nav>
+
+<main id="main">
+
+<!-- ====== M0 ====== -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introducción</div>
+    <div class="module-title">Historia & Stack</div>
+    <div class="module-sub">Evolución de la electroacústica — de la música concreta al live coding — y el ecosistema de herramientas moderno</div>
+  </div>
+  <div class="badge-wrap">
+    <span class="badge badge-theory">Teoría</span>
+    <span class="badge badge-tools">Stack</span>
+  </div>
+
+  <h3 class="section-title">Línea temporal</h3>
+  <div class="diagram-box">
+    <svg viewBox="0 0 700 300" width="100%" style="max-width:700px;">
+      <defs>
+        <marker id="arr0" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#475569"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="150" x2="660" y2="150" stroke="#1e293b" stroke-width="2" marker-end="url(#arr0)"/>
+      <text x="60" y="170" fill="#64748b" font-size="10" text-anchor="middle">1948</text>
+      <text x="60" y="185" fill="#94a3b8" font-size="9" text-anchor="middle">Música concreta</text>
+      <circle cx="60" cy="150" r="5" fill="#06b6d4"/>
+      <text x="150" y="130" fill="#64748b" font-size="10" text-anchor="middle">1957</text>
+      <text x="150" y="115" fill="#94a3b8" font-size="9" text-anchor="middle">MUSIC N (Max V.M.)</text>
+      <circle cx="150" cy="150" r="5" fill="#a855f7"/>
+      <text x="240" y="170" fill="#64748b" font-size="10" text-anchor="middle">1969</text>
+      <text x="240" y="185" fill="#94a3b8" font-size="9" text-anchor="middle">Buchla / Moog</text>
+      <circle cx="240" cy="150" r="5" fill="#10b981"/>
+      <text x="330" y="130" fill="#64748b" font-size="10" text-anchor="middle">1988</text>
+      <text x="330" y="115" fill="#94a3b8" font-size="9" text-anchor="middle">Max/MSP (IRCAM)</text>
+      <circle cx="330" cy="150" r="5" fill="#06b6d4"/>
+      <text x="420" y="170" fill="#64748b" font-size="10" text-anchor="middle">1996</text>
+      <text x="420" y="185" fill="#94a3b8" font-size="9" text-anchor="middle">SuperCollider</text>
+      <circle cx="420" cy="150" r="5" fill="#a855f7"/>
+      <text x="510" y="130" fill="#64748b" font-size="10" text-anchor="middle">2008</text>
+      <text x="510" y="115" fill="#94a3b8" font-size="9" text-anchor="middle">TidalCycles/FoxDot</text>
+      <circle cx="510" cy="150" r="5" fill="#10b981"/>
+      <text x="610" y="170" fill="#64748b" font-size="10" text-anchor="middle">2020s</text>
+      <text x="610" y="185" fill="#94a3b8" font-size="9" text-anchor="middle">FluCoMa / RNBO~</text>
+      <circle cx="610" cy="150" r="5" fill="#f59e0b"/>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">15</div><div class="metric-label">Módulos</div></div>
+    <div class="metric"><div class="metric-val">4</div><div class="metric-label">Entornos principales</div></div>
+    <div class="metric"><div class="metric-val">∞</div><div class="metric-label">Posibilidades sonoras</div></div>
+    <div class="metric"><div class="metric-val">50+</div><div class="metric-label">Ejercicios</div></div>
+    <div class="metric"><div class="metric-val">1988</div><div class="metric-label">Año Max/MSP</div></div>
+    <div class="metric"><div class="metric-val">1996</div><div class="metric-label">Año SuperCollider</div></div>
+  </div>
+
+  <h3 class="section-title">Comparativa de entornos</h3>
+  <table class="spec">
+    <thead><tr><th>Entorno</th><th>Paradigma</th><th>Curva de aprendizaje</th><th>Fortalezas</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill">Max/MSP</span></td><td>Visual patchbay</td><td>Media</td><td>Prototyping rápido, multimedia, RNBO~</td></tr>
+      <tr><td><span class="pill">SuperCollider</span></td><td>Textual / OOP</td><td>Alta</td><td>Síntesis potente, JITLib, comunidad</td></tr>
+      <tr><td><span class="pill">PureData</span></td><td>Visual patchbay (open)</td><td>Media</td><td>Open source, embebido, low latency</td></tr>
+      <tr><td><span class="pill">FluCoMa</span></td><td>ML para audio</td><td>Alta</td><td>Corpus, MLP, segmentación inteligente</td></tr>
+      <tr><td><span class="pill">RNBO~</span></td><td>Export Max→HW/DAW/web</td><td>Media</td><td>Exportación multiplataforma desde Max</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="section-title">Herramientas del MOOC</h3>
+  <div class="tool-grid">
+    <div class="tool-link"><div class="t-type">Visual</div><div class="t-name">Max/MSP 8</div><div class="t-desc">Entorno de patchbay visual para audio, video y control</div></div>
+    <div class="tool-link"><div class="t-type">Textual</div><div class="t-name">SuperCollider 3</div><div class="t-desc">Servidor de síntesis sclang + scsynth</div></div>
+    <div class="tool-link"><div class="t-type">ML Audio</div><div class="t-name">FluCoMa</div><div class="t-desc">Machine learning para corpus y clasificación en tiempo real</div></div>
+    <div class="tool-link"><div class="t-type">Export</div><div class="t-name">RNBO~</div><div class="t-desc">Compilación de patches Max para VST/hardware/web</div></div>
+    <div class="tool-link"><div class="t-type">Espacio</div><div class="t-name">SPAT (IRCAM)</div><div class="t-desc">Espacialización avanzada multicanal</div></div>
+    <div class="tool-link"><div class="t-type">Sensor</div><div class="t-name">Arduino / Serial</div><div class="t-desc">Sensores físicos → OSC → Max/SC</div></div>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q1 · Stack de entornos</h4>
+    <p class="quiz-q">Explica con tus palabras por qué se usan varios entornos (Max, SC, FluCoMa) en el mismo workflow en lugar de uno solo.</p>
+    <details><summary>Ver respuesta</summary><p>Cada entorno tiene fortalezas complementarias: Max/MSP destaca en prototipado visual rápido y multimedia; SuperCollider ofrece síntesis potente y JITLib para live coding; FluCoMa aporta machine learning creativo para corpus. Combinarlos via OSC permite aprovechar lo mejor de cada uno: Max como hub de control, SC para síntesis generativa, FluCoMa para análisis inteligente.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- ====== M1 ====== -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Max/MSP</div>
+    <div class="module-title">Max/MSP Fundamentos</div>
+    <div class="module-sub">Objetos, mensajes, patchbay, audio I/O y flujo de datos en Max/MSP 8</div>
+  </div>
+  <div class="badge-wrap">
+    <span class="badge badge-theory">Teoría</span>
+    <span class="badge badge-lab">Lab</span>
+  </div>
+
+  <h3 class="section-title">Paradigma Patchbay</h3>
+  <div class="card">
+    <h4>Tipos de objetos en Max/MSP</h4>
+    <ul>
+      <li><strong>Objetos de control</strong>: generan/procesan mensajes — e.g., <kbd>metro</kbd>, <kbd>counter</kbd>, <kbd>pack</kbd></li>
+      <li><strong>Objetos de audio (~)</strong>: procesan señal de audio a la tasa del DSP — e.g., <kbd>cycle~</kbd>, <kbd>gain~</kbd>, <kbd>dac~</kbd></li>
+      <li><strong>Objetos de datos</strong>: almacenan y manipulan datos — e.g., <kbd>coll</kbd>, <kbd>dict</kbd>, <kbd>table</kbd></li>
+      <li><strong>Objetos de interfaz</strong>: GUI — e.g., <kbd>slider</kbd>, <kbd>dial</kbd>, <kbd>number</kbd>, <kbd>live.dial</kbd></li>
+    </ul>
+  </div>
+
+  <h3 class="section-title">Patch de síntesis simple</h3>
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code>/* Patch Max/MSP — representado en pseudocódigo */
+// Oscilador con control de frecuencia y volumen:
+// [number 440] → [cycle~ $1] → [gain~ $1] → [dac~]
+
+// Síntesis FM básica en Max:
+// [number 440] → [* fr] → fm_freq
+// fm_freq → [cycle~] → [* mi] → [* fm_freq] → modulation
+// fc + modulation → [cycle~] → [* env] → [dac~]
+
+// Envolvente ADSR:
+// [adsr~ 10 100 0.7 200] ← [bang] (trigger)
+//   ↓
+// [*~] ← [cycle~] → [dac~]</code></pre>
+
+  <h3 class="section-title">Flujo de mensajes</h3>
+  <table class="spec">
+    <thead><tr><th>Tipo</th><th>Ejemplo</th><th>Descripción</th></tr></thead>
+    <tbody>
+      <tr><td>Bang</td><td><kbd>button</kbd></td><td>Dispara acción sin valor</td></tr>
+      <tr><td>Integer</td><td><kbd>42</kbd></td><td>Número entero</td></tr>
+      <tr><td>Float</td><td><kbd>3.14</kbd></td><td>Número decimal</td></tr>
+      <tr><td>Symbol</td><td><kbd>hello</kbd></td><td>Cadena de texto</td></tr>
+      <tr><td>List</td><td><kbd>1 2 3</kbd></td><td>Secuencia de valores</td></tr>
+      <tr><td>Signal (~)</td><td>Cable amarillo</td><td>Audio a SR/block_size</td></tr>
+    </tbody>
+  </table>
+
+  <div class="exercise">
+    <div class="ex-num">Ejercicio 1.1</div>
+    <p>Crea un patch Max que genere una escala de Do Mayor automaticamente: usa <kbd>metro</kbd> → <kbd>counter</kbd> → <kbd>coll</kbd> → <kbd>cycle~</kbd> → <kbd>dac~</kbd>. Tempo: 120 BPM.</p>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q1 · Patchbay</h4>
+    <p class="quiz-q">¿Cuál es la diferencia entre un cable de control (gris) y un cable de señal (amarillo) en Max/MSP?</p>
+    <details><summary>Ver respuesta</summary><p>Los cables grises transportan mensajes de control (bangs, números, símbolos, listas) que se procesan a la tasa de mensajes del programa. Los cables amarillos (~) transportan señal de audio que se procesa a la tasa de muestreo (típicamente 44100 o 48000 muestras por segundo) en bloques de audio (block_size). Los objetos de audio tienen el sufijo ~ (tilde) y operan en el mundo de la señal con latencia mínima determinada por el block size.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- ====== M2 ====== -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Max/MSP</div>
+    <div class="module-title">Procesado & Síntesis en Max</div>
+    <div class="module-sub">Síntesis substractiva, FM, efectos DSP y cadenas de procesado de audio en Max/MSP</div>
+  </div>
+  <div class="badge-wrap">
+    <span class="badge badge-theory">Teoría</span>
+    <span class="badge badge-lab">Lab</span>
+  </div>
+
+  <h3 class="section-title">Síntesis substractiva en Max/MSP</h3>
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code>/* Síntesis substractiva: oscilador → filtro → envolvente */
+// [saw~ freq] → [svf~ cutoff resonance] → [*~ env] → [dac~]
+// Filtros disponibles en Max:
+// [biquad~]  — filtro de 2 polos genérico
+// [svf~]     — state variable filter (LP/HP/BP/notch)
+// [lores~]   — resonant LP simple (Moog-like)
+
+// Síntesis FM: portadora modulada en frecuencia
+// fc → [* fr] → fm_freq
+// fm_freq → [cycle~] → [* mi] → [* fm_freq] → modulation
+// fc + modulation → [cycle~] → [* env] → [dac~]</code></pre>
+
+  <h3 class="section-title">Procesado de audio en tiempo real</h3>
+  <table class="spec">
+    <thead><tr><th>Efecto</th><th>Objeto Max</th><th>Parámetros clave</th></tr></thead>
+    <tbody>
+      <tr><td>Delay / Echo</td><td><kbd>tapin~ tapout~</kbd></td><td>delay time (ms), feedback</td></tr>
+      <tr><td>Reverb</td><td><kbd>freeverb~</kbd></td><td>room size, damping, wet/dry</td></tr>
+      <tr><td>Convolución IR</td><td><kbd>conv~</kbd></td><td>IR buffer, latency</td></tr>
+      <tr><td>Pitch shift</td><td><kbd>gizmo~</kbd> (en pfft~)</td><td>semitones (in FFT domain)</td></tr>
+      <tr><td>Compressor</td><td><kbd>omx.comp~</kbd></td><td>threshold, ratio, attack, release</td></tr>
+      <tr><td>Ring Mod</td><td><kbd>*~</kbd> (dos señales)</td><td>frecuencia de portadora</td></tr>
+    </tbody>
+  </table>
+
+  <div class="quiz-block">
+    <h4>Q2 · Síntesis FM</h4>
+    <p class="quiz-q">Explica qué son el ratio y el índice de modulación en síntesis FM y cómo afectan al timbre resultante.</p>
+    <details><summary>Ver respuesta</summary><p>El ratio fm:fc determina la frecuencia de la moduladora relativa a la portadora. Ratios enteros (1:1, 2:1) producen timbres armónicos; ratios no enteros generan espectros inarmónicos (campanas, gongs). El índice de modulación (mi) escala la desviación de frecuencia: mi bajo = timbre cercano al seno, mi alto = espectro rico con muchos sidebands. Con mi=0 obtienes la portadora pura; aumentando mi se añaden progresivamente más armónicos/parciales al timbre.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- ====== M3 ====== -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Max/MSP</div>
+    <div class="module-title">gen~ & DSP Avanzado</div>
+    <div class="module-sub">Programación DSP de bajo nivel con gen~: operaciones sample-accurate, delays, filtros y síntesis compleja</div>
+  </div>
+  <div class="badge-wrap">
+    <span class="badge badge-theory">Teoría</span>
+    <span class="badge badge-lab">Lab</span>
+  </div>
+
+  <h3 class="section-title">¿Qué es gen~?</h3>
+  <div class="card card-purple">
+    <h4>gen~: DSP de bajo nivel en Max</h4>
+    <p>gen~ es un subentorno dentro de Max/MSP que compila código a DSP nativo. Todas las operaciones son <strong>sample-accurate</strong>. Usa operadores matemáticos directamente: <kbd>+</kbd>, <kbd>*</kbd>, <kbd>sin</kbd>, <kbd>exp</kbd>. Memoria persistente: <kbd>history</kbd> (1 sample), <kbd>delay</kbd> (N samples), <kbd>data</kbd> (buffer). Se compila a código nativo: muy eficiente, ideal para síntesis compleja.</p>
+  </div>
+
+  <h3 class="section-title">Oscilador y filtros en gen~</h3>
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code>/* gen~ patch — se escribe dentro del objeto gen~ en Max */
+// Oscilador de fase acumulada (phasor)
+History phase(0);
+param freq(440);
+phase = wrap(phase + freq / samplerate, 0, 1);
+out1 = sin(phase * TWOPI);
+
+// Filtro de 1 polo (low-pass simple)
+History yn(0);
+param alpha(0.1);
+yn = alpha * in1 + (1 - alpha) * yn;
+out1 = yn;
+
+// Karplus-Strong en gen~
+param freq(220);
+param damp(0.999);
+int N = int(samplerate / freq);
+data buf(N);
+History idx(0);
+val = peek(buf, idx);
+History prev(0);
+filtered = (val + prev) * 0.5 * damp;
+prev = val;
+poke(buf, filtered, idx);
+idx = (idx + 1) % N;
+out1 = filtered;</code></pre>
+
+  <div class="quiz-block">
+    <h4>Q3 · gen~ vs objetos Max</h4>
+    <p class="quiz-q">¿Por qué gen~ es más eficiente que los objetos estándar de Max para DSP de bajo nivel?</p>
+    <details><summary>Ver respuesta</summary><p>gen~ compila su contenido a código nativo (C++ compilado) en lugar de interpretar objetos Max en tiempo de ejecución. Las operaciones son sample-accurate: no hay overhead de bloque entre operaciones, lo que elimina latencias adicionales. Además, gen~ permite escribir filtros IIR personalizados, osciladores de fase acumulada y algoritmos como Karplus-Strong directamente con matemáticas a nivel de muestra. En comparación, los objetos Max estándar tienen overhead de gestión de mensajes y comunicación entre objetos.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- ====== M4 ====== -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Max/MSP</div>
+    <div class="module-title">RNBO~</div>
+    <div class="module-sub">Exportar patches Max a VST, hardware embebido, JavaScript/WebAudio y Max for Live con RNBO~</div>
+  </div>
+  <div class="badge-wrap">
+    <span class="badge badge-theory">Teoría</span>
+    <span class="badge badge-lab">Lab</span>
+  </div>
+
+  <h3 class="section-title">¿Qué es RNBO~?</h3>
+  <div class="card">
+    <h4>Export-first DSP desde Max</h4>
+    <p>RNBO~ (pronunciado "rainbow") es un subentorno de Max 8 que permite compilar patches a código C++ portable. Un mismo patch RNBO puede exportarse a: VST3/AU, Web Audio API, Max for Live, hardware embebido (Raspberry Pi, Daisy) y código C++ nativo.</p>
+  </div>
+
+  <h3 class="section-title">Diferencias RNBO~ vs gen~</h3>
+  <table class="spec">
+    <thead><tr><th>Aspecto</th><th>gen~</th><th>RNBO~</th></tr></thead>
+    <tbody>
+      <tr><td>Propósito</td><td>DSP de bajo nivel dentro de Max</td><td>Export a plataformas externas</td></tr>
+      <tr><td>Targets</td><td>Solo Max runtime</td><td>VST, web, hardware, C++</td></tr>
+      <tr><td>MIDI</td><td>No nativo</td><td>MIDI in/out nativo</td></tr>
+      <tr><td>Preset</td><td>No</td><td>Sistema de presets nativo</td></tr>
+    </tbody>
+  </table>
+
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code>/* Dentro del patch RNBO~ en Max */
+// Parámetros exportables (aparecen en el VST/plugin)
+param freq(440)    [min 20 max 20000 steps 1000];
+param ratio(2.0)   [min 0.1 max 10.0];
+param index(3.0)   [min 0.0 max 20.0];
+param gain(0.5)    [min 0.0 max 1.0];
+
+// Proceso de exportación RNBO~ → VST3:
+// 1. Clic derecho en objeto rnbo~ → "Export..."
+// 2. Elegir target: "VST3 Plugin"
+// 3. Configurar nombre, fabricante, versión
+// 4. Click "Export" → compila con CMake</code></pre>
+
+  <div class="quiz-block">
+    <h4>Q4 · RNBO~ exportación</h4>
+    <p class="quiz-q">¿Cuál es la principal ventaja de RNBO~ sobre un patch Max/MSP estándar para distribución de software musical?</p>
+    <details><summary>Ver respuesta</summary><p>RNBO~ permite exportar el mismo patch a múltiples targets sin cambiar el código fuente: como VST3/AU para cualquier DAW, como Web Audio API para el navegador, como Max for Live device, o como código C++ para hardware embebido (Raspberry Pi, Daisy Electro-Smith). Esto significa que un algoritmo de síntesis desarrollado una sola vez puede distribuirse como plugin profesional, herramienta web y dispositivo hardware, manteniendo el mismo comportamiento sonoro en todas las plataformas.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- ====== M5 ====== -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · SuperCollider</div>
+    <div class="module-title">SC Fundamentos</div>
+    <div class="module-sub">sclang, scsynth, UGens, SynthDefs, Pbind y el servidor de síntesis SuperCollider</div>
+  </div>
+  <div class="badge-wrap">
+    <span class="badge badge-theory">Teoría</span>
+    <span class="badge badge-lab">Lab</span>
+  </div>
+
+  <h3 class="section-title">Arquitectura de SuperCollider</h3>
+  <div class="card">
+    <h4>Cliente + Servidor</h4>
+    <ul>
+      <li><strong>sclang</strong>: lenguaje de programación (cliente). Aquí escribes el código.</li>
+      <li><strong>scsynth</strong>: servidor de síntesis (DSP). Recibe instrucciones via OSC.</li>
+      <li>Comunicación: sclang ↔ scsynth via OSC en localhost</li>
+    </ul>
+  </div>
+
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code">// Iniciar servidor
+s.boot;
+s.waitForBoot({ "Servidor listo".postln; });
+
+// SynthDef con UGens
+SynthDef(\fm_synth, { |out=0, freq=440, ratio=2, index=3, amp=0.3, gate=1|
+    var env = EnvGen.ar(Env.adsr(0.01, 0.2, 0.7, 0.5), gate,
+                         doneAction: Done.freeSelf);
+    var mod = SinOsc.ar(freq * ratio) * index * freq;
+    var car = SinOsc.ar(freq + mod) * amp * env;
+    Out.ar(out, car ! 2);
+}).add;
+
+// Pbind: patrón que instancia SynthDefs
+Pbind(
+    \instrument, \fm_synth,
+    \freq, Pseq([261.63, 329.63, 392, 523.25], inf),
+    \dur, 0.5
+).play;</code></pre>
+
+  <div class="quiz-block">
+    <h4>Q5 · SynthDef y UGens</h4>
+    <p class="quiz-q">Explica la diferencia entre sclang y scsynth, y qué protocolo usa uno para comunicarse con el otro.</p>
+    <details><summary>Ver respuesta</summary><p>sclang es el lenguaje de programación (cliente) donde escribes el código SuperCollider — gestiona la lógica, patrones, timing y control. scsynth es el servidor de síntesis (DSP) que genera el audio real procesando grafos de UGens. La comunicación se hace via OSC (Open Sound Control) sobre UDP en localhost. Cuando defines un SynthDef con .add, sclang lo compila y lo envía al servidor. Cuando llamas Synth(\nombre), sclang manda un mensaje OSC a scsynth diciéndole que instancie esa definición de síntesis.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- ====== M6 ====== -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · SuperCollider</div>
+    <div class="module-title">SC Avanzado / JITLib</div>
+    <div class="module-sub">Programación en vivo con JITLib: Ndefs, ProxySpace, Tdef, pattern proxies y NodeProxy</div>
+  </div>
+  <div class="badge-wrap">
+    <span class="badge badge-theory">Teoría</span>
+    <span class="badge badge-lab">Lab</span>
+  </div>
+
+  <h3 class="section-title">JITLib: Just-In-Time Library</h3>
+  <div class="card card-purple">
+    <h4>Live Coding en SuperCollider</h4>
+    <p>JITLib permite sustituir nodos del servidor en tiempo real sin interrumpir el audio. Los <strong>NodeProxy</strong> son placeholders que contienen y reemplazan synths de forma transparente: <strong>Ndef</strong> (NodeProxy con nombre global), <strong>ProxySpace</strong> (convierte ~var en NodeProxy automáticamente), <strong>Tdef</strong> (Proxy para tareas), <strong>Pdef</strong> (Proxy para Pbind).</p>
+  </div>
+
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code">// Crear un Ndef y redefinir en vivo (crossfade automático)
+Ndef(\synth1, { SinOsc.ar(440) * 0.3 }).play;
+Ndef(\synth1, { Saw.ar(440) * 0.2 });  // crossfade automático
+
+// ProxySpace convierte ~variables en NodeProxy
+p = ProxySpace.push(s);
+~kick = { SinOsc.ar(70 * XLine.ar(3, 0.5, 0.3), 0, 0.8) }.play;
+~melody = Pbind(\instrument, \fm_synth,
+    \freq, Pseq([261, 329, 392], inf), \dur, 0.25);
+
+// Pdef: patrón en vivo modificable sin interrupción
+Pdef(\mel, Pbind(\instrument, \default,
+    \freq, Prand([261, 329, 392, 440], inf), \dur, 0.5
+)).play;</code></pre>
+
+  <div class="quiz-block">
+    <h4>Q6 · JITLib</h4>
+    <p class="quiz-q">¿Qué hace JITLib de SuperCollider que es imposible de replicar en Max/MSP estándar?</p>
+    <details><summary>Ver respuesta</summary><p>JITLib permite sustituir nodos del servidor de síntesis (NodeProxy) en tiempo real sin interrupciones de audio: cambias el SynthDef que produce un sonido mientras suena, y el servidor hace crossfade automático entre el nodo antiguo y el nuevo según fadeTime. En Max/MSP los objetos DSP no pueden redefinirse en tiempo de ejecución sin interrupciones. Además, ProxySpace crea un "espacio de nombres vivo" donde todas las referencias se resuelven dinámicamente. Esto hace de JITLib la herramienta definitiva para live coding en SuperCollider.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- ====== M7 ====== -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · ML Audio</div>
+    <div class="module-title">FluCoMa</div>
+    <div class="module-sub">Fluid Corpus Manipulation: segmentación, descriptores, MLP, UMAP y clasificación de corpus de audio</div>
+  </div>
+  <div class="badge-wrap">
+    <span class="badge badge-theory">Teoría</span>
+    <span class="badge badge-lab">Lab</span>
+  </div>
+
+  <h3 class="section-title">¿Qué es FluCoMa?</h3>
+  <div class="card">
+    <h4>Fluid Corpus Manipulation Toolkit</h4>
+    <p>FluCoMa es un proyecto del AHRC (UK) que trae machine learning creativo a los entornos de programación musical. Disponible para Max/MSP, SuperCollider y PureData.</p>
+    <ul>
+      <li><strong>Segmentación</strong>: dividir corpus por onsets, transientes, novedad espectral</li>
+      <li><strong>Descriptores</strong>: extraer MFCCs, espectral centroid, loudness, pitch</li>
+      <li><strong>Análisis</strong>: UMAP, PCA, t-SNE para reducción dimensional</li>
+      <li><strong>Clasificación</strong>: MLP, KDTree, KNN para clasificación en tiempo real</li>
+    </ul>
+  </div>
+
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code">// FluCoMa en SuperCollider: segmentar → descriptores → clasificar
+~buf = Buffer.read(s, "corpus.wav");
+~slices = Buffer.alloc(s, 128);
+
+// 1. Segmentación por onsets
+FluidBufOnsetSlice.process(s, source: ~buf, indices: ~slices,
+    metric: 1, threshold: 0.3, action: { "Slices OK".postln; });
+
+// 2. Extraer MFCCs
+~mfcc_buf = Buffer.alloc(s, 128 * 13);
+FluidBufMFCC.process(s, source: ~buf, features: ~mfcc_buf,
+    numCoeffs: 13, action: { "MFCCs OK".postln; });
+
+// 3. Clasificar en tiempo real
+~mlp = FluidMLPClassifier.new(s, [13, 8, 4]);
+~mlp.train(maxEpochs: 1000, learnRate: 0.01, action: {
+    "Clasificador entrenado".postln; });</code></pre>
+
+  <div class="quiz-block">
+    <h4>Q7 · FluCoMa en live electronics</h4>
+    <p class="quiz-q">¿Qué es FluCoMa y por qué es relevante para el live electronics creativo?</p>
+    <details><summary>Ver respuesta</summary><p>FluCoMa (Fluid Corpus Manipulation) es un conjunto de herramientas para analizar, segmentar y clasificar corpus de sonido usando machine learning directamente dentro de Max/MSP, SuperCollider o PureData. Permite: segmentar automáticamente corpus en granos significativos mediante onset/transient detection; extraer descriptores (MFCCs, centroid espectral); entrenar clasificadores MLP o reducir dimensionalidad con UMAP/PCA; y navegar el corpus en tiempo real por similitud. Para live electronics significa poder clasificar y seleccionar material sonoro de forma inteligente durante la performance sin intervención manual.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- ====== M8 ====== -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · Técnicas</div>
+    <div class="module-title">Síntesis Granular & Espectral</div>
+    <div class="module-sub">Granular: wavesets, time-stretching, pitch-shifting. Espectral: FFT, PVOC, phase vocoder, convolución</div>
+  </div>
+  <div class="badge-wrap">
+    <span class="badge badge-theory">Teoría</span>
+    <span class="badge badge-lab">Lab</span>
+  </div>
+
+  <h3 class="section-title">Síntesis Granular</h3>
+  <table class="spec">
+    <thead><tr><th>Parámetro</th><th>Rango típico</th><th>Efecto musical</th></tr></thead>
+    <tbody>
+      <tr><td>Grain duration</td><td>1–200 ms</td><td>Corto = textura, largo = reconocible</td></tr>
+      <tr><td>Grain density</td><td>10–200 granos/s</td><td>Alta = nube densa, baja = granos separados</td></tr>
+      <tr><td>Position</td><td>0.0–1.0</td><td>Qué parte del source se usa</td></tr>
+      <tr><td>Pitch</td><td>-24 a +24 semitones</td><td>Transpose sin cambiar duración</td></tr>
+    </tbody>
+  </table>
+
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code">// TGrains en SuperCollider
+SynthDef(\granular, { |out=0, buf, pos=0.5, rate=1, dur=0.1, amp=0.5, dens=20|
+    var trig = Impulse.ar(dens);
+    var grain = TGrains.ar(
+        numChannels: 2, trigger: trig, bufnum: buf,
+        rate: rate, centerPos: pos + TRand.ar(-0.1, 0.1, trig),
+        dur: dur, pan: TRand.ar(-1, 1, trig), amp: amp, interp: 4
+    );
+    Out.ar(out, grain);
+}).add;
+
+// Phase Vocoder en SC
+SynthDef(\pvoc_stretch, { |out=0, buf, stretch=2.0|
+    var sig = PlayBuf.ar(1, buf, BufRateScale.kr(buf) / stretch, loop: 1);
+    var chain = FFT(LocalBuf(2048), sig);
+    var resig = IFFT(chain) * 0.8;
+    Out.ar(out, resig ! 2);
+}).add;</code></pre>
+
+  <div class="quiz-block">
+    <h4>Q8 · Granular vs Phase Vocoder</h4>
+    <p class="quiz-q">¿Cuál es la diferencia entre síntesis granular y phase vocoder para time-stretching?</p>
+    <details><summary>Ver respuesta</summary><p>La síntesis granular divide el sonido en "granos" (ventanas cortas de 1-100ms) y los reensambla con parámetros de densidad, dispersión y posición — opera en el dominio temporal. El phase vocoder analiza el audio fotograma a fotograma via FFT, extrayendo amplitudes y fases de cada bin de frecuencia, lo que permite manipular independientemente pitch y time — opera en el dominio frecuencial. Para time-stretching, el phase vocoder produce resultados más transparentes porque mantiene la coherencia de fase; el granular introduce artefactos de "batido" pero suena más texturalmente interesante para efectos creativos.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- ====== M9 ====== -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Técnicas</div>
+    <div class="module-title">Espacialización</div>
+    <div class="module-sub">Ambisonics (HOA), VBAP, binaural HRTF, SPAT5 y sistemas multicanal en vivo</div>
+  </div>
+  <div class="badge-wrap">
+    <span class="badge badge-theory">Teoría</span>
+    <span class="badge badge-lab">Lab</span>
+  </div>
+
+  <h3 class="section-title">Formatos de espacialización</h3>
+  <table class="spec">
+    <thead><tr><th>Formato</th><th>Canales</th><th>Ventajas</th><th>Herramientas</th></tr></thead>
+    <tbody>
+      <tr><td>Stereo</td><td>2</td><td>Universal, simple</td><td>Pan, mid-side</td></tr>
+      <tr><td>Ambisonics 1er orden</td><td>4 (W,X,Y,Z)</td><td>Reproductor-agnostic</td><td>ATK, SPAT5</td></tr>
+      <tr><td>HOA (High Order)</td><td>9-36</td><td>Alta resolución espacial</td><td>SPAT5, IEM, SC-HOA</td></tr>
+      <tr><td>VBAP</td><td>N altavoces</td><td>Preciso, eficiente</td><td>VBAP plugin, ATK</td></tr>
+      <tr><td>Binaural HRTF</td><td>2 (headphones)</td><td>3D en headphones</td><td>SPAT5, Steam Audio</td></tr>
+    </tbody>
+  </table>
+
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code">// Ambisonics ATK en SuperCollider
+// Encoder: fuente mono → B-format (W,X,Y,Z)
+SynthDef(\ambi_source, { |out=0, freq=440, az=0, el=0, amp=0.4|
+    var sig = SinOsc.ar(freq) * amp;
+    var encoded = FoaEncode.ar(sig, FoaEncoderMatrix.newOmni);
+    var rotated = FoaTransform.ar(encoded, 'rtt', az.degrad, el.degrad, 0);
+    Out.ar(out, rotated);
+}).add;
+
+// SPAT5 en Max/MSP:
+// [adc~ 1] → [spat5.pan~] → [dac~ 1 2 3 4 5 6 7 8]
+// [azim 45] → mueve fuente a 45° azimuth
+// [elev 30] → eleva a 30° elevation</code></pre>
+
+  <div class="quiz-block">
+    <h4>Q9 · VBAP vs Ambisonics</h4>
+    <p class="quiz-q">¿Cómo funciona VBAP y en qué difiere de Ambisonics en términos de sweet spot y escalabilidad?</p>
+    <details><summary>Ver respuesta</summary><p>VBAP (Vector Base Amplitude Panning) posiciona una fuente sonora activando solo los 2-3 altavoces más cercanos a la dirección deseada, calculando sus amplitudes mediante álgebra vectorial. Es preciso en ángulo pero colapsa si el oyente no está en el sweet spot central, y requiere reconfiguración si cambia el layout de altavoces. Ambisonics codifica toda la información espacial en canales independientes del sistema de reproducción (B-format/HOA); luego un decoder adapta esa señal a cualquier disposición. Ambisonics es más flexible y escalable; VBAP es más eficiente para pocas fuentes en sistemas fijos conocidos.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- ====== M10 ====== -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Técnicas</div>
+    <div class="module-title">Fixed Media</div>
+    <div class="module-sub">Composición para cinta/electroacústica fija: estructuración temporal, mastering y presentación acusmática</div>
+  </div>
+  <div class="badge-wrap">
+    <span class="badge badge-theory">Teoría</span>
+    <span class="badge badge-lab">Lab</span>
+  </div>
+
+  <h3 class="section-title">Música acusmática</h3>
+  <div class="card">
+    <h4>Definición</h4>
+    <p><em>Música acusmática</em>: composición para altavoces sin intérpretes en escena. El término lo acuñó Pierre Schaeffer en 1952. Categorías: <strong>Musique concrète</strong> (manipulación de sonidos grabados), <strong>Electroacústica pura</strong> (síntesis completamente electrónica), <strong>Fixed media mixta</strong> (live + tape pregrabada sincronizados).</p>
+  </div>
+
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code"># Mastering para electroacústica — medición LUFS con ffmpeg
+ffmpeg -i mix_raw.wav \
+  -af "loudnorm=I=-23:TP=-1:LRA=11:print_format=summary" \
+  -c:a pcm_s24le -ar 48000 \
+  mix_master_23lufs.wav
+
+# Formato final para festival electroacústica:
+ffmpeg -i mix_master_23lufs.wav \
+  -c:a flac -sample_fmt s32 -compression_level 8 \
+  mix_master_23lufs_24bit.flac
+
+# Target LUFS:
+# -23 LUFS FS para EBU R128 (broadcast)
+# -16 LUFS FS para plataformas de streaming
+# True peak máximo: -1.0 dBTP</code></pre>
+
+  <h3 class="section-title">Formatos de presentación</h3>
+  <table class="spec">
+    <thead><tr><th>Formato</th><th>Canales</th><th>Contexto</th></tr></thead>
+    <tbody>
+      <tr><td>Stereo</td><td>2</td><td>Concierto small venue, online</td></tr>
+      <tr><td>Quad</td><td>4</td><td>Performance art, instalación</td></tr>
+      <tr><td>Octofónico</td><td>8</td><td>Festival electroacústica</td></tr>
+      <tr><td>Binaural</td><td>2 (headphones)</td><td>Online, VR</td></tr>
+    </tbody>
+  </table>
+
+  <div class="quiz-block">
+    <h4>Q10 · Mastering electroacústico</h4>
+    <p class="quiz-q">¿Cuál es el target de LUFS para distribución en festival electroacústico según EBU R128, y qué significa TP=-1?</p>
+    <details><summary>Ver respuesta</summary><p>El target EBU R128 para broadcast y festivales electroacústicos es -23 LUFS integrado (LUFS FS = Loudness Units Full Scale). Para distribución online el target es -16 LUFS. TP=-1 significa True Peak máximo de -1 dBTP: el nivel más alto que puede alcanzar la onda tras reconstrucción en el D/A (que puede superar los picos de muestra por interpolación), limitado a -1 dBFS para dejar headroom y evitar saturación en sistemas de reproducción. Se mide con medidores compatibles con ITU-R BS.1770-4 que aplican oversampling para detectar verdaderos picos entre muestras.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- ====== M11 ====== -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Técnicas</div>
+    <div class="module-title">Performance & Sensores</div>
+    <div class="module-sub">Interfaces de control no convencionales: acelerómetros, Leap Motion, Kinect, guantes y control corporal</div>
+  </div>
+  <div class="badge-wrap">
+    <span class="badge badge-theory">Teoría</span>
+    <span class="badge badge-lab">Lab</span>
+  </div>
+
+  <h3 class="section-title">Interfaces de control no convencionales</h3>
+  <table class="spec">
+    <thead><tr><th>Sensor/Interfaz</th><th>Datos</th><th>Protocolo</th><th>Software</th></tr></thead>
+    <tbody>
+      <tr><td>Arduino + FSR</td><td>Presión (0-1023)</td><td>Serial → OSC</td><td>Firmata + Max/SC</td></tr>
+      <tr><td>Arduino + acelerómetro</td><td>XYZ aceleración</td><td>Serial → OSC</td><td>MPU-6050 + SC</td></tr>
+      <tr><td>Leap Motion</td><td>posición 3D manos</td><td>OSC (nativo)</td><td>Max4Live / SC</td></tr>
+      <tr><td>Kinect Azure</td><td>Skeleton body tracking</td><td>OSC (vía wrappers)</td><td>TouchDesigner / Max</td></tr>
+    </tbody>
+  </table>
+
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code">/* Arduino (C++) — leer FSR y enviar via Serial */
+void setup() { Serial.begin(9600); }
+void loop() {
+    int val = analogRead(A0);
+    Serial.println(val);
+    delay(10);
+}
+
+# Python puente Serial → OSC
+import serial
+from pythonosc.udp_client import SimpleUDPClient
+ser = serial.Serial('/dev/ttyUSB0', 9600)
+client = SimpleUDPClient("127.0.0.1", 7000)
+while True:
+    line = ser.readline().decode().strip()
+    if line:
+        val = int(line) / 1023.0
+        client.send_message("/sensor/fsr", val)
+
+// SuperCollider: recibir OSC del sensor
+OSCdef(\fsr, { |msg|
+    var pressure = msg[1];
+    Ndef(\synth1).set(\cutoff, pressure.linlin(0, 1, 200, 8000));
+}, '/sensor/fsr');</code></pre>
+
+  <div class="quiz-block">
+    <h4>Q11 · Mapeo sensor→parámetro</h4>
+    <p class="quiz-q">¿Por qué es preferible usar mapeo exponencial o cuadrático en lugar de lineal para sensores de presión o distancia en instrumentos electrónicos?</p>
+    <details><summary>Ver respuesta</summary><p>La percepción humana de parámetros como frecuencia, amplitud y timbre es generalmente logarítmica o no lineal. Un mapeo lineal (val → param) resulta en que la mayoría del recorrido útil del sensor queda comprimido en rangos poco perceptibles, mientras que los extremos son demasiado sensibles o insensibles. El mapeo exponencial (val² o exponencial) distribuye la sensibilidad de forma más proporcional a la percepción: más resolución en los valores bajos donde los cambios son más perceptibles, y transiciones más suaves en los valores altos. Para frecuencia se usa mapping logarítmico porque las octavas son logarítmicas.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- ====== M12 ====== -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Avanzado</div>
+    <div class="module-title">Instalaciones Sonoras</div>
+    <div class="module-sub">Diseño de instalaciones electroacústicas interactivas: activación por sensor, loops y arquitectura de señal</div>
+  </div>
+  <div class="badge-wrap">
+    <span class="badge badge-theory">Teoría</span>
+    <span class="badge badge-lab">Lab</span>
+  </div>
+
+  <h3 class="section-title">Diseño de instalaciones sonoras</h3>
+  <div class="card card-purple">
+    <h4>Principios fundamentales</h4>
+    <ul>
+      <li><strong>Autonomía</strong>: la instalación debe funcionar sin supervisión — programación defensiva</li>
+      <li><strong>Interactividad</strong>: responder al visitante de forma no-obvia pero evidente</li>
+      <li><strong>Escala temporal</strong>: pensar en horas/días, no minutos</li>
+      <li><strong>Durabilidad</strong>: hardware robusto, recuperación automática de errores</li>
+    </ul>
+  </div>
+
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code">// SC headless en Raspberry Pi con autostart
+// /etc/systemd/system/sc-install.service
+[Unit]
+Description=SuperCollider Installation
+After=sound.target
+
+[Service]
+User=pi
+ExecStart=/usr/bin/sclang /home/pi/installation/main.scd
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/sc-install.log
+
+[Install]
+WantedBy=multi-user.target
+
+// main.scd — instalación generativa
+s.waitForBoot({
+    SynthDef(\drone_generative, { |out=0, freq=55, amp=0.3|
+        var lfo = SinOsc.kr(LFNoise2.kr(0.05).range(0.01, 0.3));
+        var osc = Saw.ar(freq + LFNoise2.kr(0.1).range(-3, 3));
+        var filt = RLPF.ar(osc, lfo.range(200, 2000), 0.3);
+        Out.ar(out, filt * amp ! 4);
+    }).add;
+    Synth(\drone_generative, [freq: 55, amp: 0.2]);
+});</code></pre>
+
+  <div class="quiz-block">
+    <h4>Q12 · Instalaciones autónomas</h4>
+    <p class="quiz-q">¿Qué estrategias de programación defensiva garantizan que una instalación sonora en Raspberry Pi funcione de forma continua durante semanas sin supervisión?</p>
+    <details><summary>Ver respuesta</summary><p>Las estrategias clave son: (1) systemd service con Restart=always y RestartSec=5 para que el proceso SC se reinicie automáticamente si cae; (2) watchdog en Python que hace ping OSC a SC cada N segundos y reinicia el servicio si no responde; (3) logging con timestamps en archivo rotativo (logrotate) para diagnóstico remoto; (4) health check OSC que responde /health/ok al recibir /health/ping desde monitorización remota; (5) manejo de excepciones en SC para que un error en un SynthDef no crashee el servidor; (6) test previo de 72h continuas antes del despliegue.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- ====== M13 ====== -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Avanzado</div>
+    <div class="module-title">Physical Modeling</div>
+    <div class="module-sub">Síntesis por modelado físico: guía de ondas, Karplus-Strong, modal y modelos de instrumentos</div>
+  </div>
+  <div class="badge-wrap">
+    <span class="badge badge-theory">Teoría</span>
+    <span class="badge badge-lab">Lab</span>
+  </div>
+
+  <h3 class="section-title">Karplus-Strong (cuerdas pulsadas)</h3>
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code">// Karplus-Strong en SuperCollider
+SynthDef(\ks_string, { |out=0, freq=220, damp=0.99, amp=0.5, gate=1|
+    var env = EnvGen.kr(Env.asr(0.001, 1, 0.3), gate,
+                         doneAction: Done.freeSelf);
+    var ks = LocalIn.ar(1);
+    var filtered = (ks + Delay1.ar(ks)) * 0.5 * damp;
+    LocalOut.ar(filtered + WhiteNoise.ar * Impulse.ar(0) * amp);
+    Out.ar(out, filtered * env ! 2);
+}).add;
+
+// Modal synthesis: suma de modos resonantes (campanas)
+SynthDef(\modal_bell, { |out=0, freq=440, amp=0.5, gate=1|
+    var ratios = [1.0, 2.756, 5.404, 8.933, 13.344];
+    var decays  = [4.0, 2.5,  1.8,   1.2,   0.8];
+    var amps    = [1.0, 0.6,  0.4,   0.25,  0.15];
+    var env = EnvGen.kr(Env.perc(0.001, 0.01), gate, doneAction: Done.freeSelf);
+    var impulse = WhiteNoise.ar * env * amp;
+    var modes = ratios.collect { |r, i| Ringz.ar(impulse, freq * r, decays[i]) * amps[i] };
+    Out.ar(out, modes.sum ! 2 * 0.3);
+}).add;</code></pre>
+
+  <div class="quiz-block">
+    <h4>Q13 · Karplus-Strong</h4>
+    <p class="quiz-q">Explica paso a paso cómo funciona el algoritmo Karplus-Strong y por qué produce el timbre de una cuerda pulsada.</p>
+    <details><summary>Ver respuesta</summary><p>Karplus-Strong simula cuerdas pulsadas con este proceso: (1) llena un buffer circular (delay line) de longitud N = SR/freq con ruido aleatorio — esto simula la energía inicial de la pulsación; (2) en cada sample, el output es el valor actual del buffer; (3) ese sample se promedia con el siguiente sample del buffer (filtro paso bajo de orden 1): filtered = (val + prev) * 0.5 * decay; (4) el resultado filtrado se escribe de vuelta al buffer (realimentación). El resultado: la longitud del buffer determina la frecuencia fundamental (f = SR/N), y el filtrado iterativo elimina progresivamente las frecuencias altas — exactamente como una cuerda real pierde energía antes en los armónicos altos que en los bajos.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- ====== M14 HERO ====== -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO Final</div>
+    <div class="module-title">Performance Electroacústica</div>
+    <div class="module-sub">Proyecto final: performance electroacústica de 15 minutos integrando live electronics y fixed media</div>
+  </div>
+  <div class="badge-wrap">
+    <span class="badge badge-hero">Hero Project</span>
+    <span class="badge badge-lab">Lab</span>
+    <span class="badge badge-feynman">Feynman</span>
+  </div>
+
+  <h3 class="section-title">Descripción del Proyecto</h3>
+  <div class="card card-yellow">
+    <h4>Performance Electroacústica de 15 minutos</h4>
+    <p>Crear y ejecutar una performance electroacústica de mínimo 15 minutos que combine:</p>
+    <ul>
+      <li>Al menos <strong>2 entornos</strong> del MOOC (e.g., Max/MSP + SuperCollider)</li>
+      <li>Sección de <strong>Fixed Media</strong> pregrabada y procesada (≥5 min)</li>
+      <li>Sección de <strong>Live Electronics</strong> interactivos (≥5 min)</li>
+      <li><strong>Espacialización multicanal</strong> (≥4 canales o binaural HRTF)</li>
+      <li>Al menos un <strong>sensor/interfaz</strong> no convencional como control</li>
+      <li>Documentación técnica: patch diagram, señal routing, rider técnico</li>
+    </ul>
+  </div>
+
+  <h3 class="section-title">Arquitectura sugerida</h3>
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code">SIGNAL FLOW — Performance Electroacústica 15min
+══════════════════════════════════════════════
+
+INPUT SOURCES
+├── Micrófono en vivo → Max/MSP (procesado en tiempo real)
+├── Fixed Media (ProTools / Max playlist) → mezclador
+└── Sensor (Leap Motion → Max → OSC)
+
+MAX/MSP PATCH (central hub)
+├── [M1] FFT Analyzer → feed FluCoMa classifier
+├── [M2] Granular engine (triggered by sensor)
+├── [M3] Reverb convolution (IR spaces)
+├── [M4] SPAT5 spatializer → 8 canales
+└── [M5] Score/timeline triggering fixed media cues
+
+SUPERCOLLIDER (síntesis generativa)
+├── JITLib ProxySpace (evolución en vivo)
+├── Physical model (guitarra / viento)
+└── OSC ← Max (sincronización de cues)
+
+OUTPUT
+├── 8ch multicanal → sistema de altavoces
+└── Binaural render → grabación stereo</code></pre>
+
+  <div class="hero-rubric">
+    <h3>Rúbrica de Evaluación — 100 puntos</h3>
+    <table>
+      <thead><tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr></thead>
+      <tbody>
+        <tr><td>Integración de entornos</td><td>≥2 entornos (Max, SC, FluCoMa) funcionando simultáneamente</td><td class="pts">20</td></tr>
+        <tr><td>Fixed Media + Live Electronics</td><td>≥5 min pregrabado masterizado + ≥5 min procesado en tiempo real</td><td class="pts">30</td></tr>
+        <tr><td>Espacialización</td><td>Uso narrativo del espacio sonoro (≥4 canales o binaural)</td><td class="pts">15</td></tr>
+        <tr><td>Sensor / control no convencional</td><td>Al menos 1 interfaz gestual o sensorial integrada</td><td class="pts">10</td></tr>
+        <tr><td>Forma, documentación y calidad</td><td>Arco dramático + patch diagram + rider + grabación correcta</td><td class="pts">25</td></tr>
+      </tbody>
+      <tfoot>
+        <tr class="total-row"><td colspan="2">Total</td><td class="pts">100</td></tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <h3 class="section-title">Preguntas Feynman</h3>
+
+  <div class="quiz-block">
+    <h4>E1 · Granular vs Phase Vocoder</h4>
+    <p class="quiz-q">¿Cuál es la diferencia fundamental entre síntesis granular y phase vocoder para time-stretching?</p>
+    <details><summary>Ver respuesta</summary><p>La síntesis granular divide el sonido en granos (ventanas de 1-100 ms) y los reensambla con parámetros de densidad, dispersión y posición — opera en el dominio temporal. El phase vocoder analiza fotograma a fotograma via FFT, extrayendo amplitudes y fases de cada bin, permitiendo manipular pitch y time independientemente — opera en el dominio frecuencial. Granular introduce artefactos de "cloud" pero es creativo; el phase vocoder es más transparente para stretching de alta calidad sin artefactos de pitcheo.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>E2 · VBAP vs Ambisonics</h4>
+    <p class="quiz-q">¿Cómo funciona VBAP y en qué difiere de Ambisonics en términos de sweet spot y escalabilidad?</p>
+    <details><summary>Ver respuesta</summary><p>VBAP activa solo los 2-3 altavoces más cercanos a la dirección deseada, calculando amplitudes con álgebra vectorial. Es preciso en ángulo pero depende del sweet spot y requiere reconfiguración si cambia el layout. Ambisonics codifica la información espacial en canales independientes del sistema (B-format/HOA) y un decoder adapta a cualquier disposición. Ambisonics es más flexible y portable; VBAP más eficiente para pocas fuentes en sistemas fijos conocidos. Ambisonics escala a HOA de orden N con (N+1)² canales para mayor resolución espacial.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>E3 · JITLib live coding</h4>
+    <p class="quiz-q">¿Qué hace JITLib de SuperCollider imposible de replicar en Max/MSP estándar?</p>
+    <details><summary>Ver respuesta</summary><p>JITLib permite sustituir nodos del servidor (NodeProxy) en tiempo real sin interrupciones: cambias el SynthDef mientras suena y el servidor hace crossfade automático según fadeTime. En Max/MSP los objetos DSP no pueden redefinirse en tiempo de ejecución sin interrupciones. ProxySpace crea un espacio de nombres vivo donde todas las referencias se resuelven dinámicamente. Esto hace de JITLib la herramienta definitiva para live coding: puedes reescribir y recargar algoritmos enteros de síntesis mientras la performance continúa sin un solo click de audio.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>E4 · Karplus-Strong</h4>
+    <p class="quiz-q">¿Cómo funciona el modelo de Karplus-Strong y qué parámetros controlan el timbre?</p>
+    <details><summary>Ver respuesta</summary><p>Karplus-Strong: (1) llena un buffer circular de longitud N=SR/freq con ruido aleatorio (energía inicial); (2) cada sample: leer del buffer; (3) promediar con el siguiente sample y multiplicar por decay (filtro LP + pérdida de energía); (4) escribir el resultado de vuelta al buffer (realimentación). La frecuencia está determinada por N, el decay controla la duración (más cerca de 1.0 = sustain más largo), y el factor de promediado controla la "stiffness" de la cuerda — aumentando la pérdida diferencial de armónicos altos vs bajos.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>E5 · FluCoMa en performance</h4>
+    <p class="quiz-q">¿Qué es FluCoMa y por qué es relevante para el live electronics creativo?</p>
+    <details><summary>Ver respuesta</summary><p>FluCoMa (Fluid Corpus Manipulation) es un toolkit para analizar, segmentar y clasificar corpus de sonido usando machine learning directamente en Max/MSP, SuperCollider o PureData. Permite: segmentar corpus en granos por onsets/transientes; extraer descriptores (MFCCs, centroid espectral); entrenar clasificadores MLP o reducir dimensionalidad con UMAP; navegar el corpus por similitud en tiempo real. Para live electronics significa clasificar y seleccionar material sonoro de forma inteligente durante la performance, creando instrumentos que "aprenden" del sonido en vivo.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_live_electronics_fixed_media_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Historia & Stack'},
+    {id:'m1',  label:'M1 · Max/MSP Fundamentos'},
+    {id:'m2',  label:'M2 · Procesado & Síntesis'},
+    {id:'m3',  label:'M3 · gen~ & DSP Avanzado'},
+    {id:'m4',  label:'M4 · RNBO~'},
+    {id:'m5',  label:'M5 · SC Fundamentos'},
+    {id:'m6',  label:'M6 · SC Avanzado / JITLib'},
+    {id:'m7',  label:'M7 · FluCoMa'},
+    {id:'m8',  label:'M8 · Granular & Espectral'},
+    {id:'m9',  label:'M9 · Espacialización'},
+    {id:'m10', label:'M10 · Fixed Media'},
+    {id:'m11', label:'M11 · Performance & Sensores'},
+    {id:'m12', label:'M12 · Instalaciones'},
+    {id:'m13', label:'M13 · Physical Modeling'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"done":[],"current":"m0"}');
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(function(m){
+      const el = document.createElement('div');
+      el.className = 'nav-item';
+      el.dataset.id = m.id;
+      const isDone = state.done.indexOf(m.id) > -1;
+      if(isDone) el.classList.add('done');
+      el.innerHTML = '<span class="nav-num">' + m.id.toUpperCase() + '</span>'
+        + '<span class="nav-label">' + m.label.replace(/^M\d+ · /,'') + '</span>'
+        + '<span class="nav-check">' + (isDone ? '✓' : '○') + '</span>';
+      el.addEventListener('click', function(){ goTo(m.id); });
+      nav.appendChild(el);
+    });
+  }
+
+  function updateProgress(){
+    const pct = Math.round(state.done.length / MODULES.length * 100);
+    document.getElementById('pct').textContent = pct + '%';
+    document.getElementById('progress-fill').style.width = pct + '%';
+    const offset = 126 - (126 * pct / 100);
+    document.getElementById('ring-fill').style.strokeDashoffset = offset;
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(function(s){ s.classList.remove('active'); });
+    const sec = document.getElementById(id);
+    if(sec) sec.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(function(n){
+      n.classList.toggle('active', n.dataset.id === id);
+    });
+    state.current = id;
+    save();
+    document.getElementById('main').scrollTop = 0;
+  };
+
+  window.completeAndNext = function(current, next){
+    if(state.done.indexOf(current) === -1) state.done.push(current);
+    save();
+    buildNav();
+    updateProgress();
+    if(next) goTo(next);
+  };
+
+  window.copyCode = function(btn){
+    const code = btn.nextElementSibling.textContent;
+    navigator.clipboard.writeText(code).then(function(){
+      btn.textContent = '✓';
+      setTimeout(function(){ btn.textContent = 'copy'; }, 1500);
+    });
+  };
+
+  buildNav();
+  updateProgress();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

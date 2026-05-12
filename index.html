@@ -146,16 +146,27 @@
     <!-- Notification Container -->
     <div id="notification-area"></div>
 
+    <!-- DAILY MINIMUM -->
+    <section id="daily-minimum">
+        <div class="daily-min-header">
+            <span>⚔️ DAILY MINIMUM</span>
+            <span id="daily-min-progress"></span>
+        </div>
+        <div id="daily-min-tasks"></div>
+    </section>
+
     <!-- MANIFESTO QUOTE -->
     <div class="manifesto-quote">
         "A jack of all trades is a master of none,<br>
         but oftentimes <span class="highlight-gold">better than a master of one</span>."
     </div>
 
+    <!-- RANDOM HERO -->
     <div class="random-container">
         <button class="random-btn" onclick="spinWheel()">🎲 RANDOM MISSION</button>
     </div>
 
+    <!-- GOLDEN TASK -->
     <h2>✨ GOLDEN TASK (x2 MONEY)</h2>
     <div class="grid-container">
         <div class="skill-btn golden-btn" onclick="startTask('🧠 ZETTELKASTEN', 20, 2)">
@@ -163,21 +174,33 @@
         </div>
     </div>
 
-    <h2>💻 TECH, SAAS & IA</h2>
-    <div class="grid-container" id="grid-tech"></div>
+    <!-- WEEKLY FOCUS BANNER -->
+    <div id="weekly-focus-banner" class="weekly-focus-banner"></div>
 
-    <h2>🎹 MÚSICA & INSTRUMENTOS</h2>
-    <div class="grid-container" id="grid-music"></div>
+    <!-- BROWSE TOGGLE -->
+    <div class="toggle-categories-container">
+        <button id="toggle-categories-btn" class="toggle-categories-btn" onclick="toggleCategories()">▼ BROWSE ALL MISSIONS</button>
+    </div>
 
-    <h2>🎛️ STUDIO, VISUALS & MAX</h2>
-    <div class="grid-container" id="grid-studio"></div>
+    <!-- CATEGORIES (hidden by default) -->
+    <div id="categories-section" style="display:none;">
 
-    <h2>🛠️ MAKER & HARDWARE</h2>
-    <div class="grid-container" id="grid-maker"></div>
+        <h2 data-cat="tech">💻 TECH, SAAS & IA</h2>
+        <div class="grid-container" id="grid-tech"></div>
 
-    <h2>🌍 MIND, APUNTES & IDIOMAS</h2>
-    <div class="grid-container" id="grid-mind"></div>
+        <h2 data-cat="music">🎹 MÚSICA & INSTRUMENTOS</h2>
+        <div class="grid-container" id="grid-music"></div>
 
+        <h2 data-cat="studio">🎛️ STUDIO, VISUALS & MAX</h2>
+        <div class="grid-container" id="grid-studio"></div>
+
+        <h2 data-cat="maker">🛠️ MAKER & HARDWARE</h2>
+        <div class="grid-container" id="grid-maker"></div>
+
+        <h2 data-cat="mind">🌍 MIND, APUNTES & IDIOMAS</h2>
+        <div class="grid-container" id="grid-mind"></div>
+
+    </div>
 
     <div id="timer-overlay">
         <!-- CLOSE / BACK BUTTON -->

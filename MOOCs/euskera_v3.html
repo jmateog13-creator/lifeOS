@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Euskera — Zero to A2 v3</title>
+<style>
+:root {
+  --bg:#0b0f17; --surface:#111827; --surface2:#1e293b;
+  --accent:#06b6d4; --accent2:#67e8f9; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#1e293b;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'JetBrains Mono','Fira Code',monospace; --font-sans:'Inter','Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#0d1117;padding:2px 6px;border-radius:4px}
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(0,0,0,.15);border-radius:6px;line-height:1.6}
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+.vocab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin:12px 0}
+.vocab-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px}
+.vocab-eu{font-weight:700;color:var(--accent);font-size:.95rem}
+.vocab-es{font-size:.82rem;color:var(--muted);margin-top:2px}
+.vocab-note{font-size:.75rem;color:var(--accent2);margin-top:3px;font-style:italic}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>Euskera — Zero to A2</h2>
+    <p>Lengua vasca · 15 módulos · v3</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introducción</div>
+    <div class="module-title">Briefing — El Euskera y sus Retos</div>
+    <div class="module-sub">Lengua vasca: historia, dialectos, sistema de casos y por qué es única en Europa</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 600 200" width="560" height="190" font-family="Inter,sans-serif" font-size="12">
+      <text x="300" y="28" text-anchor="middle" fill="#06b6d4" font-size="14" font-weight="700">Dialectos del Euskera</text>
+      <circle cx="300" cy="110" r="36" fill="#06b6d415" stroke="#06b6d4" stroke-width="2"/>
+      <text x="300" y="106" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="700">Batua</text>
+      <text x="300" y="120" text-anchor="middle" fill="#94a3b8" font-size="9">(estándar 1968)</text>
+      <circle cx="120" cy="80" r="28" fill="#a855f715" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="120" y="76" text-anchor="middle" fill="#a855f7" font-size="10" font-weight="700">Bizkaiera</text>
+      <text x="120" y="88" text-anchor="middle" fill="#94a3b8" font-size="8">Vizcaíno</text>
+      <circle cx="160" cy="160" r="26" fill="#10b98115" stroke="#10b981" stroke-width="1.5"/>
+      <text x="160" y="156" text-anchor="middle" fill="#10b981" font-size="10" font-weight="700">Gipuzkera</text>
+      <text x="160" y="168" text-anchor="middle" fill="#94a3b8" font-size="8">Guipuzcoano</text>
+      <circle cx="430" cy="70" r="28" fill="#f59e0b15" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="430" y="66" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="700">Lapurtera</text>
+      <text x="430" y="78" text-anchor="middle" fill="#94a3b8" font-size="8">Laburdino</text>
+      <circle cx="470" cy="155" r="26" fill="#ef444415" stroke="#ef4444" stroke-width="1.5"/>
+      <text x="470" y="151" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="700">Zuberera</text>
+      <text x="470" y="163" text-anchor="middle" fill="#94a3b8" font-size="8">Suletino</text>
+      <circle cx="290" cy="170" r="24" fill="#06b6d415" stroke="#64748b" stroke-width="1.5"/>
+      <text x="290" y="166" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="700">Nafarrera</text>
+      <text x="290" y="178" text-anchor="middle" fill="#64748b" font-size="8">Navarro</text>
+      <line x1="148" y1="95" x2="266" y2="110" stroke="#1e293b" stroke-width="1"/>
+      <line x1="180" y1="148" x2="270" y2="130" stroke="#1e293b" stroke-width="1"/>
+      <line x1="403" y1="85" x2="334" y2="105" stroke="#1e293b" stroke-width="1"/>
+      <line x1="447" y1="143" x2="334" y2="120" stroke="#1e293b" stroke-width="1"/>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">750K</div><div class="metric-label">hablantes activos</div></div>
+    <div class="metric"><div class="metric-val">A2</div><div class="metric-label">objetivo del curso</div></div>
+    <div class="metric"><div class="metric-val">SOV</div><div class="metric-label">orden de palabras base</div></div>
+    <div class="metric"><div class="metric-val">~8</div><div class="metric-label">dialectos históricos</div></div>
+    <div class="metric"><div class="metric-val">Aislada</div><div class="metric-label">sin familia conocida</div></div>
+    <div class="metric"><div class="metric-val">Batua</div><div class="metric-label">estándar unificado 1968</div></div>
+  </div>
+
+  <div class="card">
+    <h3>¿Qué es el Euskera?</h3>
+    <p>El euskera es la lengua de los vascos, hablada en el País Vasco, Navarra e Iparralde. Es una <strong>lengua aislada</strong>: no está emparentada con ningún idioma vivo conocido, lo que la hace lingüísticamente única en Europa occidental.</p>
+    <table>
+      <tr><th>Reto</th><th>Descripción</th><th>Ejemplo</th></tr>
+      <tr><td>Sistema de casos</td><td>Sufijos en lugar de preposiciones (~10 casos)</td><td><em>etxean</em> = en casa</td></tr>
+      <tr><td>Ergatividad</td><td>Sujeto transitivo lleva sufijo especial -k</td><td><em>Neskak liburua irakurtzen du</em></td></tr>
+      <tr><td>Orden SOV</td><td>Sujeto-Objeto-Verbo; el verbo va al final</td><td><em>Ni etxean nago</em></td></tr>
+      <tr><td>Verbo auxiliar</td><td>Casi todos los verbos usan <em>izan</em> o <em>ukan</em></td><td><em>Jan dut</em> = He comido</td></tr>
+      <tr><td>Vocabulario aislado</td><td>Sin cognados con el español</td><td><em>eskerrik asko</em> = gracias</td></tr>
+      <tr><td>Concordancia verbal</td><td>Verbo acuerda con sujeto, OD e OI</td><td><em>eman dizut</em> = te lo he dado</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Fonología</div>
+    <div class="module-title">Alfabeto, Pronunciación y Sonidos Especiales</div>
+    <div class="module-sub">27 letras, vocales puras, africadas tx/ts/tz y acento en segunda sílaba</div>
+  </div>
+  <div class="card">
+    <h3>El Alfabeto Vasco (Batua)</h3>
+    <table>
+      <tr><th>Letra</th><th>Pronunciación</th><th>Ejemplo</th><th>Significado</th></tr>
+      <tr><td><strong>tx</strong></td><td>/tʃ/ como "ch" española</td><td><em>txakur</em></td><td>perro</td></tr>
+      <tr><td><strong>x</strong></td><td>/ʃ/ como "sh" inglés</td><td><em>xagu</em></td><td>ratón</td></tr>
+      <tr><td><strong>tz</strong></td><td>/ts/ africada sorda</td><td><em>bortitz</em></td><td>fuerte</td></tr>
+      <tr><td><strong>j</strong></td><td>/x/ como "j" española</td><td><em>joan</em></td><td>ir</td></tr>
+      <tr><td><strong>rr</strong></td><td>/r/ vibrante múltiple</td><td><em>horra</em></td><td>allí está</td></tr>
+      <tr><td><strong>h</strong></td><td>aspirada o muda (sur)</td><td><em>hiru</em></td><td>tres</td></tr>
+    </table>
+    <p><strong>Acento:</strong> En batua cae generalmente en la <strong>segunda sílaba</strong>. Las vocales son siempre puras — no hay diptongos decrecientes.</p>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Comunicación</div>
+    <div class="module-title">Saludos &amp; Presentación</div>
+    <div class="module-sub">Kaixo, agur, nola zaude, ni naiz — fórmulas de presentación personal</div>
+  </div>
+  <div class="card">
+    <h3>Saludos Básicos</h3>
+    <table>
+      <tr><th>Euskera</th><th>Español</th><th>Contexto</th></tr>
+      <tr><td><strong>Kaixo</strong></td><td>Hola</td><td>Informal, universal</td></tr>
+      <tr><td><strong>Agur</strong></td><td>Hola / Adiós</td><td>Formal o despedida</td></tr>
+      <tr><td><strong>Egun on</strong></td><td>Buenos días</td><td>Por la mañana</td></tr>
+      <tr><td><strong>Arratsalde on</strong></td><td>Buenas tardes</td><td>A partir del mediodía</td></tr>
+      <tr><td><strong>Gabon</strong></td><td>Buenas noches</td><td>Tarde-noche</td></tr>
+      <tr><td><strong>Gero arte</strong></td><td>Hasta luego</td><td>Despedida informal</td></tr>
+    </table>
+    <h3>Presentación Personal</h3>
+    <table>
+      <tr><th>Pregunta</th><th>Respuesta modelo</th></tr>
+      <tr><td><em>Zu nor zara?</em></td><td><em>Ni Miren naiz.</em></td></tr>
+      <tr><td><em>Nongoa zara?</em></td><td><em>Bilbokoa naiz.</em></td></tr>
+      <tr><td><em>Non bizi zara?</em></td><td><em>Donostian bizi naiz.</em></td></tr>
+      <tr><td><em>Zenbat urte dituzu?</em></td><td><em>Hogeita hamabi urte ditut.</em></td></tr>
+      <tr><td><em>Zer egiten duzu?</em></td><td><em>Medikua naiz.</em></td></tr>
+    </table>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Gramática Base</div>
+    <div class="module-title">Artículos Definidos e Indefinidos</div>
+    <div class="module-sub">El sufijo -a / -ak, bat y batzuk — el artículo como sufijo aglutinante</div>
+  </div>
+  <div class="card">
+    <h3>El Artículo en Euskera: Sufijo, no Palabra</h3>
+    <table>
+      <tr><th>Tipo</th><th>Sufijo</th><th>Ejemplo</th><th>Español</th></tr>
+      <tr><td>Definido singular</td><td><strong>-a</strong></td><td><em>etxea</em></td><td>la casa</td></tr>
+      <tr><td>Definido plural</td><td><strong>-ak</strong></td><td><em>etxeak</em></td><td>las casas</td></tr>
+      <tr><td>Indefinido singular</td><td><strong>bat</strong></td><td><em>etxe bat</em></td><td>una casa</td></tr>
+      <tr><td>Indefinido plural</td><td><strong>batzuk</strong></td><td><em>etxe batzuk</em></td><td>algunas casas</td></tr>
+    </table>
+    <div class="vocab-grid">
+      <div class="vocab-card"><div class="vocab-eu">etxea / etxeak</div><div class="vocab-es">la casa / las casas</div></div>
+      <div class="vocab-card"><div class="vocab-eu">gizona / gizonak</div><div class="vocab-es">el hombre / los hombres</div></div>
+      <div class="vocab-card"><div class="vocab-eu">liburua / liburuak</div><div class="vocab-es">el libro / los libros</div></div>
+      <div class="vocab-card"><div class="vocab-eu">txakurra / txakurrak</div><div class="vocab-es">el perro / los perros</div></div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Gramática Base</div>
+    <div class="module-title">Casos Absolutivo &amp; Ergativo</div>
+    <div class="module-sub">NOR (absolutivo) y NORK (ergativo): la ergatividad del euskera</div>
+  </div>
+  <div class="card">
+    <h3>El Sistema Ergativo</h3>
+    <table>
+      <tr><th>Caso</th><th>Cuándo</th><th>Sufijo</th><th>Ejemplo</th></tr>
+      <tr><td><strong>NOR (Absolutivo)</strong></td><td>Sujeto intransitivo / Objeto transitivo</td><td>-a / -ak</td><td><em>Neska etorri da</em></td></tr>
+      <tr><td><strong>NORK (Ergativo)</strong></td><td>Sujeto de verbo transitivo</td><td>-ak / -ek</td><td><em>Neskak liburua irakurtzen du</em></td></tr>
+    </table>
+    <p>El sufijo ergativo <strong>-k</strong> marca al agente que "causa" un efecto sobre un objeto. Sin objeto, no hay ergativo.</p>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Gramática Base</div>
+    <div class="module-title">Casos Dativo, Genitivo &amp; Locativos</div>
+    <div class="module-sub">NORI (-ri), NOREN (-ren), NONGO (-ra) y NONDIK (-tik)</div>
+  </div>
+  <div class="card">
+    <h3>Los Casos del Euskera</h3>
+    <table>
+      <tr><th>Caso</th><th>Pregunta</th><th>Sufijo</th><th>Ejemplo</th></tr>
+      <tr><td>Dativo</td><td>NORI? (¿A quién?)</td><td>-ri</td><td><em>lagunari</em> = al amigo</td></tr>
+      <tr><td>Genitivo</td><td>NOREN? (¿De quién?)</td><td>-ren</td><td><em>lagunaren</em> = del amigo</td></tr>
+      <tr><td>Locativo</td><td>NON? (¿Dónde?)</td><td>-n</td><td><em>etxean</em> = en la casa</td></tr>
+      <tr><td>Adlativo</td><td>NORA? (¿A dónde?)</td><td>-ra</td><td><em>etxera</em> = a la casa</td></tr>
+      <tr><td>Ablativo</td><td>NONDIK? (¿De dónde?)</td><td>-tik</td><td><em>etxetik</em> = desde la casa</td></tr>
+    </table>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Gramática Base</div>
+    <div class="module-title">Verbos Izan &amp; Egon</div>
+    <div class="module-sub">Ser y estar en euskera: naiz, zara, da, gara... y nago, zaude, dago...</div>
+  </div>
+  <div class="card">
+    <h3>Paradigma de Izan (ser/haber) y Egon (estar)</h3>
+    <table>
+      <tr><th>Pronombre</th><th>Izan (ser)</th><th>Egon (estar)</th></tr>
+      <tr><td>Ni (yo)</td><td>naiz</td><td>nago</td></tr>
+      <tr><td>Zu (tú)</td><td>zara</td><td>zaude</td></tr>
+      <tr><td>Hura (él/ella)</td><td>da</td><td>dago</td></tr>
+      <tr><td>Gu (nosotros)</td><td>gara</td><td>gaude</td></tr>
+      <tr><td>Zuek (vosotros)</td><td>zarete</td><td>zaudete</td></tr>
+      <tr><td>Haiek (ellos)</td><td>dira</td><td>daude</td></tr>
+    </table>
+    <p><em>Izan</em> = identidad, origen, auxiliar intransitivo. <em>Egon</em> = posición, estado temporal, ubicación.</p>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Comunicación</div>
+    <div class="module-title">Números, Tiempo &amp; Fechas</div>
+    <div class="module-sub">Sistema vigesimal, orduak (horas), egunak (días) y hilabeteak (meses)</div>
+  </div>
+  <div class="card">
+    <h3>Sistema Vigesimal del Euskera</h3>
+    <table>
+      <tr><th>Número</th><th>Euskera</th><th>Nota</th></tr>
+      <tr><td>1–10</td><td>bat, bi, hiru, lau, bost, sei, zazpi, zortzi, bederatzi, hamar</td><td>Base decimal</td></tr>
+      <tr><td>20</td><td>hogei</td><td>Base vigesimal comienza aquí</td></tr>
+      <tr><td>40</td><td>berrogei (2×20)</td><td>Como francés "quatre-vingts"</td></tr>
+      <tr><td>80</td><td>laurogei (4×20)</td><td>Pre-indoeuropeo</td></tr>
+      <tr><td>100</td><td>ehun</td><td>Forma independiente</td></tr>
+    </table>
+    <div class="vocab-grid">
+      <div class="vocab-card"><div class="vocab-eu">astelehena</div><div class="vocab-es">lunes</div></div>
+      <div class="vocab-card"><div class="vocab-eu">asteartea</div><div class="vocab-es">martes</div></div>
+      <div class="vocab-card"><div class="vocab-eu">eguaztena</div><div class="vocab-es">miércoles</div></div>
+      <div class="vocab-card"><div class="vocab-eu">osteguna</div><div class="vocab-es">jueves</div></div>
+      <div class="vocab-card"><div class="vocab-eu">ostirala</div><div class="vocab-es">viernes</div></div>
+      <div class="vocab-card"><div class="vocab-eu">larunbata</div><div class="vocab-es">sábado</div></div>
+      <div class="vocab-card"><div class="vocab-eu">igandea</div><div class="vocab-es">domingo</div></div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · Comunicación</div>
+    <div class="module-title">Familia &amp; Entorno</div>
+    <div class="module-sub">Senideak (familia), etxea (casa), herria (pueblo) y vocabulario cotidiano</div>
+  </div>
+  <div class="card">
+    <h3>Vocabulario de Familia</h3>
+    <div class="vocab-grid">
+      <div class="vocab-card"><div class="vocab-eu">aita</div><div class="vocab-es">padre</div></div>
+      <div class="vocab-card"><div class="vocab-eu">ama</div><div class="vocab-es">madre</div></div>
+      <div class="vocab-card"><div class="vocab-eu">anaia</div><div class="vocab-es">hermano</div></div>
+      <div class="vocab-card"><div class="vocab-eu">arreba</div><div class="vocab-es">hermana</div></div>
+      <div class="vocab-card"><div class="vocab-eu">semea</div><div class="vocab-es">hijo</div></div>
+      <div class="vocab-card"><div class="vocab-eu">alaba</div><div class="vocab-es">hija</div></div>
+      <div class="vocab-card"><div class="vocab-eu">aitite</div><div class="vocab-es">abuelo</div></div>
+      <div class="vocab-card"><div class="vocab-eu">amama</div><div class="vocab-es">abuela</div></div>
+    </div>
+    <h3>Vocabulario del Hogar</h3>
+    <div class="vocab-grid">
+      <div class="vocab-card"><div class="vocab-eu">sukaldea</div><div class="vocab-es">la cocina</div></div>
+      <div class="vocab-card"><div class="vocab-eu">logela</div><div class="vocab-es">el dormitorio</div></div>
+      <div class="vocab-card"><div class="vocab-eu">komunak</div><div class="vocab-es">el baño</div></div>
+      <div class="vocab-card"><div class="vocab-eu">egongela</div><div class="vocab-es">el salón</div></div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Expansión</div>
+    <div class="module-title">Verbos NOR-NORK Presente</div>
+    <div class="module-sub">Verbos transitivos: ikusi, jan, edan, entzun con auxiliar du/dut/dugu...</div>
+  </div>
+  <div class="card">
+    <h3>Auxiliar UKAN en Presente (verbos transitivos)</h3>
+    <table>
+      <tr><th>Sujeto</th><th>Objeto 3ª sg</th><th>Objeto 3ª pl</th></tr>
+      <tr><td>Nik (yo)</td><td>dut</td><td>ditut</td></tr>
+      <tr><td>Zuk (tú)</td><td>duzu</td><td>dituzu</td></tr>
+      <tr><td>Hark (él/ella)</td><td>du</td><td>ditu</td></tr>
+      <tr><td>Guk (nosotros)</td><td>dugu</td><td>ditugu</td></tr>
+      <tr><td>Haiek (ellos)</td><td>dute</td><td>dituzte</td></tr>
+    </table>
+    <p>Ejemplos: <em>Liburua irakurtzen dut</em> (Leo el libro). <em>Sagarra jan du</em> (Ha comido la manzana).</p>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Expansión</div>
+    <div class="module-title">Verbos Transitivos &amp; Intransitivos</div>
+    <div class="module-sub">Diferencia entre NOR e NOR-NORK, auxiliares ukan e izan</div>
+  </div>
+  <div class="card">
+    <h3>Transitivos (UKAN) vs Intransitivos (IZAN)</h3>
+    <table>
+      <tr><th>Tipo</th><th>Auxiliar</th><th>Ejemplo</th><th>Traducción</th></tr>
+      <tr><td>Intransitivo</td><td>IZAN (da/naiz)</td><td><em>Etorri da</em></td><td>Ha venido</td></tr>
+      <tr><td>Intransitivo</td><td>IZAN</td><td><em>Joan gara</em></td><td>Hemos ido</td></tr>
+      <tr><td>Transitivo</td><td>UKAN (du/dut)</td><td><em>Ikusi dut</em></td><td>Lo he visto</td></tr>
+      <tr><td>Transitivo</td><td>UKAN</td><td><em>Jan dugu</em></td><td>Hemos comido</td></tr>
+    </table>
+    <p>Clave: si el verbo tiene objeto directo → UKAN. Si no → IZAN.</p>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Expansión</div>
+    <div class="module-title">Pasado Simple</div>
+    <div class="module-sub">nuen/nuen (ukan pasado) y nintzen (izan pasado)</div>
+  </div>
+  <div class="card">
+    <h3>Auxiliar UKAN en Pasado</h3>
+    <table>
+      <tr><th>Sujeto</th><th>Pasado sg</th><th>Ejemplo</th></tr>
+      <tr><td>Nik</td><td>nuen</td><td><em>Ikusi nuen</em> = Lo vi</td></tr>
+      <tr><td>Zuk</td><td>zenuen</td><td><em>Jan zenuen</em> = Comiste</td></tr>
+      <tr><td>Hark</td><td>zuen</td><td><em>Edan zuen</em> = Bebió</td></tr>
+      <tr><td>Guk</td><td>genuen</td><td><em>Entzun genuen</em> = Oímos</td></tr>
+    </table>
+    <h3>Auxiliar IZAN en Pasado</h3>
+    <table>
+      <tr><th>Sujeto</th><th>Pasado</th><th>Ejemplo</th></tr>
+      <tr><td>Ni</td><td>nintzen</td><td><em>Joan nintzen</em> = Fui</td></tr>
+      <tr><td>Zu</td><td>zinen</td><td><em>Etorri zinen</em> = Viniste</td></tr>
+      <tr><td>Hura</td><td>zen</td><td><em>Joan zen</em> = Fue</td></tr>
+    </table>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Expansión</div>
+    <div class="module-title">Futuro &amp; Condicional</div>
+    <div class="module-sub">-ko/-go para futuro y baldin...-ko para condicional</div>
+  </div>
+  <div class="card">
+    <h3>Formación del Futuro</h3>
+    <p>El futuro se forma añadiendo <strong>-ko</strong> o <strong>-go</strong> al infinitivo o al radical verbal:</p>
+    <table>
+      <tr><th>Infinitivo</th><th>Futuro</th><th>Con auxiliar (1ª sg)</th></tr>
+      <tr><td>joan (ir)</td><td>joango</td><td><em>Joango naiz</em> = Iré</td></tr>
+      <tr><td>etorri (venir)</td><td>etorriko</td><td><em>Etorriko da</em> = Vendrá</td></tr>
+      <tr><td>jan (comer)</td><td>jango</td><td><em>Jango dut</em> = Comeré</td></tr>
+      <tr><td>ikusi (ver)</td><td>ikusiko</td><td><em>Ikusiko duzu</em> = Verás</td></tr>
+      <tr><td>egin (hacer)</td><td>egingo</td><td><em>Egingo dugu</em> = Haremos</td></tr>
+    </table>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Expansión</div>
+    <div class="module-title">Vocabulario Temático A2</div>
+    <div class="module-sub">Janaria, erosketak, osasuna, lana eta aisia — vocabulario esencial por temas</div>
+  </div>
+  <div class="card">
+    <h3>Vocabulario de Salud (Osasuna)</h3>
+    <div class="vocab-grid">
+      <div class="vocab-card"><div class="vocab-eu">buruko mina</div><div class="vocab-es">dolor de cabeza</div></div>
+      <div class="vocab-card"><div class="vocab-eu">sukar</div><div class="vocab-es">fiebre</div></div>
+      <div class="vocab-card"><div class="vocab-eu">sendagilea</div><div class="vocab-es">el/la médico/a</div></div>
+      <div class="vocab-card"><div class="vocab-eu">botika</div><div class="vocab-es">medicamento</div></div>
+      <div class="vocab-card"><div class="vocab-eu">gaixorik</div><div class="vocab-es">enfermo/a</div></div>
+      <div class="vocab-card"><div class="vocab-eu">ondo</div><div class="vocab-es">bien</div></div>
+    </div>
+    <h3>Vocabulario de Trabajo (Lana)</h3>
+    <div class="vocab-grid">
+      <div class="vocab-card"><div class="vocab-eu">lantegia</div><div class="vocab-es">la fábrica/empresa</div></div>
+      <div class="vocab-card"><div class="vocab-eu">bulegoa</div><div class="vocab-es">la oficina</div></div>
+      <div class="vocab-card"><div class="vocab-eu">bilerak</div><div class="vocab-es">las reuniones</div></div>
+      <div class="vocab-card"><div class="vocab-eu">soldata</div><div class="vocab-es">el salario</div></div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto Final — Conversación A2</div>
+    <div class="module-sub">Portfolio conversacional: demuestra nivel A2 real en situaciones auténticas</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica del Proyecto HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>Casos gramaticales</td><td>Absolutivo, ergativo, dativo y locativos correctos en todas las situaciones</td><td>25</td></tr>
+        <tr><td>Conjugación verbal</td><td>Auxiliares izan/ukan en presente, pasado y futuro sin errores básicos</td><td>25</td></tr>
+        <tr><td>Vocabulario activo</td><td>Vocabulario A2 sin repetición excesiva ni cambio de código</td><td>20</td></tr>
+        <tr><td>Fluidez y pronunciación</td><td>Entonación reconocible, ritmo sostenido, errores no bloquean comunicación</td><td>15</td></tr>
+        <tr><td>Comunicación efectiva</td><td>El mensaje llega al interlocutor; capacidad de autocorrección</td><td>15</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman — Explica sin notas</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Ergatividad</h4>
+      <p class="quiz-q">¿Por qué el sujeto de un verbo transitivo lleva -k en euskera pero el de uno intransitivo no? Explica con un par mínimo de ejemplo.</p>
+      <details><summary>Ver respuesta</summary><p>El euskera es ergativo: trata diferente al agente de una acción transitiva (quien hace algo a alguien) y al sujeto intransitivo. El sufijo <strong>-k</strong> marca al agente que causa un efecto sobre un objeto. En intransitivos no hay objeto afectado, así que el sujeto toma absolutivo (sin sufijo). <em>Neskak liburua irakurtzen du</em> (La chica-ERG lee el libro-ABS). <em>Neska etorri da</em> (La chica-ABS ha venido — sin objeto, sin -k).</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · Artículo Aglutinante</h4>
+      <p class="quiz-q">¿Cómo funciona el artículo -a en euskera comparado con el español? ¿Por qué se dice que es un sufijo y no una palabra?</p>
+      <details><summary>Ver respuesta</summary><p>En español "el/la" son palabras separadas que preceden al nombre. En euskera el artículo es un sufijo que se pega al final: <em>etxe</em> = casa, <em>etxea</em> = la casa. El artículo forma la base sobre la que se añaden sufijos de caso: <em>etxean</em> = en la casa, <em>etxetik</em> = desde la casa. Artículo y caso se fusionan en un único morfema aglutinado al final del sustantivo.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · Concordancia Poliargumental</h4>
+      <p class="quiz-q">¿Por qué el verbo vasco concuerda con el objeto además de con el sujeto? ¿Qué ventaja ofrece esto?</p>
+      <details><summary>Ver respuesta</summary><p>El vasco tiene concordancia poliargumental: el auxiliar lleva morfemas para sujeto, objeto directo e indirecto simultáneamente. <em>Eman dizut</em> = "te lo he dado" — <em>dizut</em> codifica yo (1ª sg) + a ti (2ª sg) en una sola palabra. Permite que el vasco sea muy conciso: una forma verbal reemplaza una frase entera. Es característica del georgiano y lenguas amerindias, excepcional en Europa.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · Izan vs Egon</h4>
+      <p class="quiz-q">Explica la diferencia entre <em>izan</em> y <em>egon</em> en euskera con tres ejemplos concretos para cada uno.</p>
+      <details><summary>Ver respuesta</summary><p><em>Izan</em> (ser/haber): identidad, origen, pertenencia y auxiliar intransitivo. <em>Ni Bilbokoa naiz</em> = soy de Bilbao; <em>Joan da</em> = ha ido; <em>Medikua da</em> = es médico. <em>Egon</em> (estar): posición, estado temporal, ubicación. <em>Etxean nago</em> = estoy en casa; <em>Pozik dago</em> = está contento; <em>Bilbon dago</em> = está en Bilbao. El criterio principal en euskera: <em>egon</em> requiere que el sujeto esté "ubicado" o "en un estado".</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · Sistema Vigesimal</h4>
+      <p class="quiz-q">¿Por qué el euskera usa un sistema vigesimal (base 20) para los números? ¿Qué otras lenguas comparten este rasgo y qué sugiere sobre el origen del euskera?</p>
+      <details><summary>Ver respuesta</summary><p>El sistema vigesimal del euskera es una característica pre-indoeuropea. <em>Berrogei</em> = 40 (2×20), <em>laurogei</em> = 80 (4×20). El mismo sistema existe en el francés antiguo (<em>quatre-vingts</em> = 80) y el georgiano, lo que sugiere que era más común en Europa prehistórica antes de la llegada del latín. Es un fósil lingüístico que preserva la aritmética de culturas anteriores a los indoeuropeos en la Península Ibérica.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_euskera_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Briefing & Retos'},
+    {id:'m1',  label:'M1 · Fonología'},
+    {id:'m2',  label:'M2 · Saludos & Presentación'},
+    {id:'m3',  label:'M3 · Artículos'},
+    {id:'m4',  label:'M4 · Absolutivo & Ergativo'},
+    {id:'m5',  label:'M5 · Dativo & Genitivo'},
+    {id:'m6',  label:'M6 · Verbos Izan & Egon'},
+    {id:'m7',  label:'M7 · Números & Tiempo'},
+    {id:'m8',  label:'M8 · Familia & Entorno'},
+    {id:'m9',  label:'M9 · Verbos NOR-NORK'},
+    {id:'m10', label:'M10 · Verbos Trans./Intrans.'},
+    {id:'m11', label:'M11 · Pasado Simple'},
+    {id:'m12', label:'M12 · Futuro & Condicional'},
+    {id:'m13', label:'M13 · Vocabulario Temático'},
+    {id:'m14', label:'M14 · HERO — Conversación A2'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

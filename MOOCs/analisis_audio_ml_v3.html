@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análisis de Audio y ML Musical v3</title>
+<style>
+:root {
+  --bg:#0b0f17; --surface:#111827; --surface2:#1e2a3a;
+  --accent:#06b6d4; --accent2:#22d3ee; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#1e293b;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'JetBrains Mono','Fira Code',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+/* SIDEBAR */
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* MAIN */
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+/* CODE */
+pre{background:#070b12;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#070b12;padding:2px 6px;border-radius:4px}
+/* SVG */
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+/* FORMULA */
+.formula{background:rgba(6,182,212,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+/* METRICS GRID */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+/* QUIZ */
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(0,0,0,.15);border-radius:6px;line-height:1.6}
+/* HERO RUBRIC */
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+/* WARN BOX */
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+/* TOOL GRID */
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:10px}
+.tool-card{background:#070b12;border:1px solid var(--border);border-radius:8px;padding:12px;font-size:.8rem}
+.tool-card strong{display:block;color:var(--accent);margin-bottom:4px}
+/* BTN */
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+/* TAG */
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:700;letter-spacing:.05em}
+.tag-a{background:rgba(6,182,212,.15);color:var(--accent)}
+.tag-b{background:rgba(168,85,247,.15);color:#a855f7}
+.tag-c{background:rgba(239,68,68,.15);color:var(--red)}
+.tag-d{background:rgba(245,158,11,.15);color:var(--warn)}
+.tag-e{background:rgba(16,185,129,.15);color:var(--green)}
+.tag-f{background:rgba(6,182,212,.1);color:var(--accent)}
+/* LIST */
+ul.drill-list{padding-left:20px}
+ul.drill-list li{margin:6px 0;font-size:.88rem;color:var(--muted)}
+ul.drill-list li strong{color:var(--text)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>Análisis de Audio y ML Musical</h2>
+    <p>Pipeline: señal → features → ML → clasificación</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introducción</div>
+    <div class="module-title">Ecosistema Audio + ML</div>
+    <div class="module-sub">Pipeline completo: señal cruda → features espectrales → ML → clasificación musical</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 130" width="100%" font-family="'JetBrains Mono',monospace" font-size="11">
+      <defs>
+        <marker id="ar" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#06b6d4"/>
+        </marker>
+      </defs>
+      <rect x="10" y="40" width="110" height="50" rx="8" fill="#111827" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="65" y="62" text-anchor="middle" fill="#06b6d4" font-weight="bold">Audio</text>
+      <text x="65" y="78" text-anchor="middle" fill="#94a3b8">WAV/MP3/FLAC</text>
+      <rect x="155" y="40" width="120" height="50" rx="8" fill="#111827" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="215" y="62" text-anchor="middle" fill="#a855f7" font-weight="bold">STFT / CQT</text>
+      <text x="215" y="78" text-anchor="middle" fill="#94a3b8">espectrograma</text>
+      <rect x="310" y="40" width="130" height="50" rx="8" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+      <text x="375" y="62" text-anchor="middle" fill="#10b981" font-weight="bold">MFCC/Chroma</text>
+      <text x="375" y="78" text-anchor="middle" fill="#94a3b8">feature vectors</text>
+      <rect x="475" y="40" width="130" height="50" rx="8" fill="#111827" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="540" y="62" text-anchor="middle" fill="#f59e0b" font-weight="bold">CNN/XGBoost</text>
+      <text x="540" y="78" text-anchor="middle" fill="#94a3b8">entrenamiento</text>
+      <rect x="640" y="40" width="130" height="50" rx="8" fill="#111827" stroke="#ef4444" stroke-width="1.5"/>
+      <text x="705" y="62" text-anchor="middle" fill="#ef4444" font-weight="bold">Clasificación</text>
+      <text x="705" y="78" text-anchor="middle" fill="#94a3b8">género/emoción/BPM</text>
+      <line x1="120" y1="65" x2="153" y2="65" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="275" y1="65" x2="308" y2="65" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="440" y1="65" x2="473" y2="65" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="605" y1="65" x2="638" y2="65" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#ar)"/>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">N/2+1</div><div class="metric-label">bins STFT (N=2048)</div></div>
+    <div class="metric"><div class="metric-val">40</div><div class="metric-label">coeficientes MFCC</div></div>
+    <div class="metric"><div class="metric-val">12</div><div class="metric-label">bins Chroma HPCP</div></div>
+    <div class="metric"><div class="metric-val">128</div><div class="metric-label">hop_length típico</div></div>
+    <div class="metric"><div class="metric-val">22050</div><div class="metric-label">Hz sample rate</div></div>
+    <div class="metric"><div class="metric-val">0.01s</div><div class="metric-label">resolución temporal</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa de Representaciones</h3>
+    <table>
+      <tr><th>Feature</th><th>Dominio</th><th>Dimensión</th><th>Mejor para</th></tr>
+      <tr><td>STFT magnitude</td><td>Tiempo-Frecuencia</td><td>1025 × T</td><td>reconstrucción, fuente</td></tr>
+      <tr><td>Mel-Spectrogram</td><td>Percepción</td><td>128 × T</td><td>CNN clasificación</td></tr>
+      <tr><td>MFCC</td><td>Cepstral</td><td>13-40 × T</td><td>voz, compacto, clásico</td></tr>
+      <tr><td>Chroma HPCP</td><td>Harmónico</td><td>12 × T</td><td>tonalidad, acordes</td></tr>
+      <tr><td>CQT</td><td>Log-Freq</td><td>84 × T</td><td>música con pitch</td></tr>
+      <tr><td>SSM</td><td>Estructura</td><td>T × T</td><td>segmentación, cover ID</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Stack de Herramientas</h3>
+    <div class="tool-grid">
+      <div class="tool-card"><strong>librosa</strong>Python: STFT, MFCC, beat, onset detection</div>
+      <div class="tool-card"><strong>Essentia</strong>C++ + Python: MIR production-grade (MTG Barcelona)</div>
+      <div class="tool-card"><strong>Essentia.js</strong>WebAssembly: inferencia en browser sin servidor</div>
+      <div class="tool-card"><strong>scikit-learn</strong>SVM, XGBoost, PCA, StandardScaler, cross_val</div>
+      <div class="tool-card"><strong>PyTorch/TF</strong>CNN, RNN, Transformer para mel-spectrograms</div>
+      <div class="tool-card"><strong>AcousticBrainz</strong>Dataset MIR: 2.5M tracks con features + tags</div>
+      <div class="tool-card"><strong>ESC-50</strong>Dataset 50 clases sonido ambiental (2000 clips)</div>
+      <div class="tool-card"><strong>Renoise + Lua</strong>DAW con API Lua para batch analysis</div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · STFT</div>
+    <div class="module-title">Short-Time Fourier Transform</div>
+    <div class="module-sub">Análisis tiempo-frecuencia: fundamento matemático y artefactos de ventaneo</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>La STFT fragmenta la señal <code>x(n)</code> en tramas cortas superpuestas y aplica la DFT a cada una:</p>
+    <div class="formula">X(m,k) = Σₙ x(n) · w(n − mH) · e^{−j2πkn/N}</div>
+    <p style="margin-top:10px;color:var(--muted)">donde <strong>m</strong>=frame, <strong>k</strong>=bin de frecuencia, <strong>H</strong>=hop_length, <strong>N</strong>=tamaño FFT, <strong>w</strong>=ventana de análisis.</p>
+    <p style="margin-top:10px;">El <strong>principio de incertidumbre</strong> de Heisenberg limita la resolución simultánea: Δt · Δf ≥ 1/(4π). Aumentar N mejora la frecuencia pero empeora el tiempo.</p>
+    <table style="margin-top:12px;">
+      <tr><th>Ventana</th><th>Main lobe (bins)</th><th>Side lobe (dB)</th><th>Uso</th></tr>
+      <tr><td>Rectangular</td><td>2</td><td>-13 dB</td><td>FFT pura, artefactos fuertes</td></tr>
+      <tr><td>Hann</td><td>4</td><td>-31 dB</td><td>audio general (defecto)</td></tr>
+      <tr><td>Hamming</td><td>4</td><td>-41 dB</td><td>voz, mínimo lóbulo lateral</td></tr>
+      <tr><td>Blackman</td><td>6</td><td>-57 dB</td><td>alta pureza espectral</td></tr>
+      <tr><td>Kaiser β=8</td><td>variable</td><td>-60 dB</td><td>filtrado de precisión</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — STFT con librosa y análisis de ventanas</h3>
+    <pre>import numpy as np
+import librosa
+import librosa.display
+import matplotlib.pyplot as plt
+
+# ── Cargar señal ────────────────────────────────────────────
+y, sr = librosa.load('track.wav', sr=22050, mono=True)
+
+# ── STFT con ventana Hann ────────────────────────────────────
+N      = 2048      # tamaño FFT → bins de frecuencia: N/2+1 = 1025
+H      = 512       # hop_length → resolución temporal: H/sr ≈ 23 ms
+window = 'hann'
+
+D = librosa.stft(y, n_fft=N, hop_length=H, window=window)
+# D.shape = (1025, T_frames) — complejo
+
+magnitude = np.abs(D)        # |X(m,k)|
+phase     = np.angle(D)      # φ(m,k)  rad
+D_db = librosa.amplitude_to_db(magnitude, ref=np.max)
+
+# ── iSTFT (reconstrucción perfecta) ─────────────────────────
+y_recon = librosa.istft(D, hop_length=H, window=window)
+snr = 10*np.log10(np.mean(y[:len(y_recon)]**2) /
+                   np.mean((y[:len(y_recon)]-y_recon)**2))
+print(f'SNR reconstrucción: {snr:.1f} dB')  # ≫ 60 dB esperado
+
+# ── Parámetros óptimos por tarea ─────────────────────────────
+PARAMS = {
+    'voz_asr':    {'n_fft': 512,  'hop': 160, 'win': 'hamming'},
+    'musica_gen': {'n_fft': 2048, 'hop': 512, 'win': 'hann'},
+    'percusion':  {'n_fft': 1024, 'hop': 256, 'win': 'hann'},
+    'pitch':      {'n_fft': 4096, 'hop': 512, 'win': 'hann'},
+}</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-c">C</span> Reto HERO — Detector de Onset basado en Spectral Flux</h3>
+    <pre>def spectral_flux_onset(y, sr, n_fft=2048, hop=512, threshold=1.5):
+    """
+    Onset detection via half-wave rectified spectral flux.
+    Returns onset times in seconds.
+    """
+    D    = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop))
+    diff = np.maximum(0, np.diff(D, axis=1))   # (bins, T-1)
+    flux = diff.sum(axis=0)                      # (T-1,)
+
+    window_frames = 43  # ~1 segundo
+    onset_frames  = []
+    for i in range(len(flux)):
+        lo = max(0, i - window_frames // 2)
+        hi = min(len(flux), i + window_frames // 2)
+        local_mean = flux[lo:hi].mean()
+        local_std  = flux[lo:hi].std()
+        if flux[i] > local_mean + threshold * local_std:
+            onset_frames.append(i)
+
+    times = librosa.frames_to_time(onset_frames, sr=sr, hop_length=hop)
+    return times</pre>
+    <p><strong>Objetivo:</strong> F1-score ≥ 0.75 vs. <code>librosa.onset.onset_detect</code> en 5 pistas variadas.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-d">D</span> Drills</h3>
+    <ul class="drill-list">
+      <li><strong>Drill 1:</strong> Cambia N de 512 a 8192 en pasos × 2. Mide resolución temporal (ms/frame) y frecuencia (Hz/bin).</li>
+      <li><strong>Drill 2:</strong> Carga un tono puro 440 Hz. Verifica que el bin k = round(440 × N / sr) tenga la máxima magnitud.</li>
+      <li><strong>Drill 3:</strong> Aplica padding cero (n_fft=4096, señal=2048 muestras). ¿Cuántos lóbulos aparecen vs sin padding?</li>
+      <li><strong>Drill 4:</strong> Reconstruye con iSTFT y calcula SNR. ¿Cuándo falla la reconstrucción perfecta?</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q1 · Resolución STFT</h4>
+    <p class="quiz-q">Si duplicas el hop_length de 256 a 512 manteniendo n_fft=2048, ¿qué sucede con el espectrograma resultante y por qué?</p>
+    <details><summary>Ver respuesta</summary><p>Se reduce el número de frames a la mitad (menos resolución temporal). El hop_length determina cuántas muestras se avanzan entre frame y frame: con hop=512 se generan la mitad de frames que con hop=256, lo que significa que el eje de tiempo del espectrograma tendrá la mitad de puntos. La resolución de frecuencia no cambia porque sigue siendo función de n_fft.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · MFCC</div>
+    <div class="module-title">Mel-Frequency Cepstral Coefficients</div>
+    <div class="module-sub">Pipeline perceptual: Mel filterbank → log → DCT → coeficientes compactos</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>El oído humano percibe el pitch en escala logarítmica (Mel). La escala Mel mapea Hz:</p>
+    <div class="formula">Mel(f) = 2595 · log₁₀(1 + f/700)</div>
+    <div class="formula">f(m) = 700 · (10^{m/2595} − 1)</div>
+    <p style="margin-top:10px">Pipeline MFCC completo:</p>
+    <pre style="margin-top:8px">Audio → pre-énfasis (0.97) → frames → ventana Hamming → FFT →
+|X|² → Mel filterbank → log → DCT → coefs [0..N_mfcc-1]</pre>
+    <p>El <strong>coeficiente C₀</strong> representa la energía total (suele descartarse). Los <strong>delta MFCC</strong> y <strong>delta-delta</strong> capturan la dinámica temporal:</p>
+    <div class="formula">Δ[t] = (Σₖ k·(c[t+k]−c[t−k])) / (2·Σₖ k²)  para k=1..K</div>
+    <p style="margin-top:8px;color:var(--muted)">Con K=2 el contexto es ±2 frames → vector final: 39 coefs (13+13Δ+13ΔΔ)</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — MFCC Pipeline completo</h3>
+    <pre>import numpy as np
+import librosa
+
+y, sr = librosa.load('track.wav', sr=22050, mono=True)
+pre_emphasis = 0.97
+y_pe = np.append(y[0], y[1:] - pre_emphasis * y[:-1])
+
+N_MFCC = 40
+N_MELS = 128
+N_FFT  = 2048
+HOP    = 512
+
+mfcc = librosa.feature.mfcc(
+    y=y_pe, sr=sr, n_mfcc=N_MFCC, n_mels=N_MELS,
+    n_fft=N_FFT, hop_length=HOP, fmin=20, fmax=8000
+)
+# mfcc.shape = (40, T_frames)
+
+delta1 = librosa.feature.delta(mfcc, order=1)
+delta2 = librosa.feature.delta(mfcc, order=2)
+mfcc_full = np.vstack([mfcc, delta1, delta2])  # (120, T)
+
+def summarize_feature(feat):
+    return np.concatenate([
+        feat.mean(axis=1), feat.std(axis=1),
+        feat.min(axis=1),  feat.max(axis=1),
+        np.percentile(feat, [25, 75], axis=1).flatten(),
+    ])
+
+feat_vec = summarize_feature(mfcc_full)
+print(f"Vector de características: {feat_vec.shape}")  # (720,)</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-c">C</span> Reto HERO — Clasificador de Género Musical con SVM</h3>
+    <pre>import librosa, numpy as np
+from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.pipeline import Pipeline
+import os, glob
+
+def extract_mfcc_features(path, n_mfcc=40, sr=22050):
+    y, _ = librosa.load(path, sr=sr, mono=True, duration=30.0)
+    y = np.append(y[0], y[1:] - 0.97 * y[:-1])
+    mfcc  = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc, hop_length=512, n_fft=2048)
+    delta = librosa.feature.delta(mfcc)
+    feat  = np.vstack([mfcc, delta])
+    return np.concatenate([feat.mean(1), feat.std(1)])
+
+pipe = Pipeline([
+    ('scaler', StandardScaler()),
+    ('svm',    SVC(kernel='rbf', C=10, gamma='scale', probability=True))
+])
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+# scores = cross_val_score(pipe, X, y, cv=cv, scoring='accuracy')
+# Objetivo: ≥ 75% en GTZAN con SVM + MFCC-40</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q2 · Log en MFCC</h4>
+    <p class="quiz-q">¿Por qué se aplica el logaritmo al filterbank Mel antes de la DCT en el pipeline MFCC?</p>
+    <details><summary>Ver respuesta</summary><p>Porque la percepción de volumen es logarítmica (ley de Weber-Fechner). El sistema auditivo humano no percibe la energía de forma lineal: duplicar la energía no duplica la sensación de volumen percibida. Al aplicar el logaritmo se simula esta compresión perceptual, lo que hace los MFCC más robustos a variaciones de volumen y más representativos de cómo el oído "escucha" realmente el espectro.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Chroma HPCP</div>
+    <div class="module-title">Chroma HPCP — Representación Tonal Armónica</div>
+    <div class="module-sub">Los 12 semitonos del círculo de quintas: invariante a la octava</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>El <strong>Chroma HPCP</strong> (Harmonic Pitch Class Profile) proyecta toda la energía espectral sobre los 12 semitonos, independientemente de la octava:</p>
+    <div class="formula">HPCP(p) = Σₖ |X(k)|² · cos²(π · (fₖ − f_ref(p)) / f_band)  si |fₖ−f_ref(p)| &lt; f_band/2</div>
+    <p style="margin-top:10px;color:var(--muted)">Donde <strong>p</strong>∈{0..11} corresponde a C, C#, D, ..., B y <strong>f_ref(p)</strong> = 440 × 2^{(p-9)/12}</p>
+    <table style="margin-top:12px;">
+      <tr><th>Índice HPCP</th><th>Nota</th><th>Frecuencia (oct 4)</th></tr>
+      <tr><td>0</td><td>C</td><td>261.63 Hz</td></tr>
+      <tr><td>2</td><td>D</td><td>293.66 Hz</td></tr>
+      <tr><td>4</td><td>E</td><td>329.63 Hz</td></tr>
+      <tr><td>7</td><td>G</td><td>392.00 Hz</td></tr>
+      <tr><td>9</td><td>A</td><td>440.00 Hz</td></tr>
+      <tr><td>11</td><td>B</td><td>493.88 Hz</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Chroma + key detection</h3>
+    <pre>import librosa
+import numpy as np
+
+y, sr = librosa.load('track.wav', sr=22050)
+
+chroma_cqt = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=1024, bins_per_octave=36)
+
+MAJOR_PROFILE = np.array([6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88])
+MINOR_PROFILE = np.array([6.33,2.68,3.52,5.38,2.60,3.53,2.54,4.75,3.98,2.69,3.34,3.17])
+mean_chroma = chroma_cqt.mean(axis=1)
+
+def key_detect(chroma_mean):
+    best_score, best_key, best_mode = -np.inf, 0, 'major'
+    for shift in range(12):
+        for profile, mode in [(MAJOR_PROFILE, 'major'), (MINOR_PROFILE, 'minor')]:
+            rotated = np.roll(profile, shift)
+            score = np.corrcoef(chroma_mean, rotated)[0, 1]
+            if score > best_score:
+                best_score, best_key, best_mode = score, shift, mode
+    NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
+    return f"{NOTES[best_key]} {best_mode}", best_score
+
+key, confidence = key_detect(mean_chroma)
+print(f"Tonalidad detectada: {key} (r={confidence:.3f})")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q3 · Invariancia a la Octava</h4>
+    <p class="quiz-q">¿Por qué el Chroma es "invariante a la octava" y qué implicación práctica tiene para cover song identification?</p>
+    <details><summary>Ver respuesta</summary><p>El Chroma suma la energía de todos los armónicos del mismo nombre de nota (C4, C5, C6...) en un solo bin. Esto significa que un do en cualquier octava se acumula en el bin 0 del vector Chroma. Para cover song ID, esto es crucial porque un cover puede tocar la misma canción en una octava diferente — al comparar vectores Chroma, las estructuras armónicas serán similares independientemente de la octava en que se ejecuten.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · SSM</div>
+    <div class="module-title">Self-Similarity Matrix</div>
+    <div class="module-sub">Estructura musical como mapa: repeticiones, puentes y secciones reflejadas</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>La SSM compara cada frame con todos los demás. Si los vectores de features están normalizados:</p>
+    <div class="formula">S = X^T · X     (cosine similarity, X columnas normalizadas)</div>
+    <div class="formula">S(i,j) = cos(θ) = x_i · x_j / (‖x_i‖ · ‖x_j‖)</div>
+    <table style="margin-top:12px;">
+      <tr><th>Patrón visual</th><th>Significado musical</th></tr>
+      <tr><td>Diagonal principal</td><td>Autocorrelación (siempre 1)</td></tr>
+      <tr><td>Diagonal paralela brillante</td><td>Sección repetida (verso, chorus)</td></tr>
+      <tr><td>Cuadrado brillante</td><td>Sección estacionaria (drones, pads)</td></tr>
+      <tr><td>Cuadrado oscuro</td><td>Cambio brusco de sección (drop)</td></tr>
+      <tr><td>Patrón checkerboard</td><td>Alternancia A-B-A-B</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — SSM + segmentación Laplaciana</h3>
+    <pre>import numpy as np
+import librosa
+from sklearn.preprocessing import normalize
+
+y, sr = librosa.load('track.wav', sr=22050, duration=120)
+chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=1024)
+mfcc   = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20, hop_length=1024)
+feat   = np.vstack([chroma, mfcc])          # (32, T)
+
+X_norm = normalize(feat, norm='l2', axis=0)
+S = X_norm.T @ X_norm   # (T, T)  cosine similarity matrix
+
+from scipy.ndimage import gaussian_filter
+S_smooth = gaussian_filter(S, sigma=8)
+
+R = librosa.segment.recurrence_matrix(feat, width=3,
+    mode='affinity', metric='cosine', sparse=False)
+novelty = librosa.segment.timelag_filter(np.median)(R, axis=1).mean(axis=0)</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q4 · Patrones SSM</h4>
+    <p class="quiz-q">En la SSM de una canción pop con estructura Intro-Verso-Chorus-Verso-Chorus-Outro, ¿qué patrón visual esperas ver y por qué?</p>
+    <details><summary>Ver respuesta</summary><p>Se esperan cuadrados brillantes repetidos en la diagonal correspondientes a chorus y versos. Cuando una sección se repite (por ejemplo el chorus en el minuto 1 y el minuto 3), sus frames son similares entre sí, produciendo un cuadrado brillante fuera de la diagonal principal que conecta esos dos momentos. El patrón general resultante es una serie de bloques cuadrados brillantes que revelan la estructura repetitiva de la canción.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Beat Tracking</div>
+    <div class="module-title">Beat Tracking — Programación Dinámica</div>
+    <div class="module-sub">Estimación de tempo y beats: onset function + DP de Ellis (2007)</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>El algoritmo de Ellis plantea el beat tracking como un problema de optimización global:</p>
+    <div class="formula">C*(t) = O(t) + max_τ { α · F(t−τ, τp) + C*(τ) }</div>
+    <div class="formula">F(Δt, τp) = −(log₂(Δt/τp))²</div>
+    <p style="margin-top:10px;color:var(--muted)"><strong>O(t)</strong>=onset strength, <strong>τp</strong>=período de beat esperado, <strong>α</strong>=peso de regularidad. La penalización <strong>F</strong> es cero cuando Δt=τp y cae como parábola en escala log.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Beat tracking + grid de cuantización</h3>
+    <pre>import librosa
+import numpy as np
+
+y, sr = librosa.load('track.wav', sr=22050)
+tempo, beat_frames = librosa.beat.beat_track(
+    y=y, sr=sr, start_bpm=120.0, tightness=100, units='frames', hop_length=512
+)
+beat_times = librosa.frames_to_time(beat_frames, sr=sr, hop_length=512)
+print(f"Tempo estimado: {tempo:.1f} BPM")
+
+def quantize_to_grid(event_times, beat_times, subdivisions=4):
+    sub_grid = []
+    for i in range(len(beat_times)-1):
+        sub_grid.extend(np.linspace(beat_times[i], beat_times[i+1], subdivisions, endpoint=False))
+    sub_grid = np.array(sub_grid)
+    quantized = sub_grid[np.argmin(np.abs(event_times[:,None] - sub_grid[None,:]), axis=1)]
+    return quantized</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q5 · Escala Logarítmica en Beat Tracking</h4>
+    <p class="quiz-q">¿Por qué la penalización F(Δt, τp) = −(log₂(Δt/τp))² usa escala logarítmica y no lineal?</p>
+    <details><summary>Ver respuesta</summary><p>Porque un beat al doble del período (τ = 2τp, cambio de octava rítmica) es más aceptable que uno a 1.5τp; la escala log da igual penalización a ratios iguales. En términos musicales, el oído percibe las subdivisiones rítmicas de forma multiplicativa: tocar en los tiempos dobles o la mitad es naturalmente más aceptable que tocar "a destiempo". La escala log captura esta simetría perceptual multiplicativa.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Pipeline</div>
+    <div class="module-title">Pipeline CNN/XGBoost</div>
+    <div class="module-sub">Arquitectura de clasificación: features → normalización → modelo → evaluación</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <table>
+      <tr><th>Enfoque</th><th>Input</th><th>Ventajas</th><th>Limitaciones</th></tr>
+      <tr><td><strong>XGBoost + MFCC</strong></td><td>Vector 720-D stats</td><td>Rápido, interpretable, funciona con pocos datos</td><td>No captura estructura temporal</td></tr>
+      <tr><td><strong>CNN + Mel-Spec</strong></td><td>Imagen 128×128</td><td>Aprende features automáticamente, SOTA</td><td>Requiere muchos datos, GPU</td></tr>
+      <tr><td><strong>Transfer Learning</strong></td><td>VGGish/YAMNet</td><td>Alta precisión sin datos propios</td><td>Caja negra, embedding fijo</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Pipeline XGBoost + MFCC</h3>
+    <pre>import numpy as np, librosa, joblib
+from xgboost import XGBClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import classification_report
+from sklearn.pipeline import Pipeline
+
+def extract_features(path, sr=22050, duration=30.0):
+    y, _ = librosa.load(path, sr=sr, mono=True, duration=duration)
+    y    = np.append(y[0], y[1:] - 0.97 * y[:-1])
+    mfcc  = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40, hop_length=512)
+    d1    = librosa.feature.delta(mfcc, order=1)
+    d2    = librosa.feature.delta(mfcc, order=2)
+    feat  = np.vstack([mfcc, d1, d2])  # (120, T)
+    stats = np.concatenate([
+        feat.mean(1), feat.std(1), feat.min(1), feat.max(1),
+        np.percentile(feat, 25, axis=1), np.percentile(feat, 75, axis=1),
+    ])   # 720-D
+    zcr  = librosa.feature.zero_crossing_rate(y, hop_length=512)[0]
+    rms  = librosa.feature.rms(y=y, hop_length=512)[0]
+    sc   = librosa.feature.spectral_centroid(y=y, sr=sr, hop_length=512)[0]
+    extra = np.array([zcr.mean(), zcr.std(), rms.mean(), rms.std(), sc.mean(), sc.std()])
+    return np.concatenate([stats, extra])  # 726-D
+
+pipe = Pipeline([
+    ('scale', StandardScaler()),
+    ('xgb',   XGBClassifier(n_estimators=400, max_depth=6, learning_rate=0.05,
+                             subsample=0.8, colsample_bytree=0.8,
+                             use_label_encoder=False, eval_metric='mlogloss',
+                             tree_method='hist', random_state=42))
+])</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q6 · Data Leakage en Pipelines</h4>
+    <p class="quiz-q">¿Por qué aplicar StandardScaler dentro de un Pipeline en lugar de antes del cross-validation?</p>
+    <details><summary>Ver respuesta</summary><p>Para que el scaler se ajuste solo en el training fold durante cross-validation, evitando data leakage. Si se escala antes de la CV, el scaler "ve" los datos de test durante el ajuste (fit) porque usa estadísticas de todo el dataset. Dentro del Pipeline, el scaler se entrena únicamente con los datos de train de cada fold, y los datos de test se transforman con esas estadísticas — simulando correctamente un escenario de producción donde el test set es desconocido.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · CNN Audio</div>
+    <div class="module-title">CNN para Clasificación de Audio</div>
+    <div class="module-sub">Mel-spectrogram como imagen: ResNet y Transfer Learning para géneros y emociones</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>Un mel-espectrograma 128×128 puede tratarse como imagen. Las CNN capturan patrones frecuencia-tiempo invariantes a traslación mediante capas de convolución 2D.</p>
+    <table style="margin-top:12px;">
+      <tr><th>Arquitectura</th><th>Params</th><th>Precisión GTZAN</th></tr>
+      <tr><td>MLP + MFCC</td><td>~100K</td><td>~72%</td></tr>
+      <tr><td>CNN 4-block desde cero</td><td>~2M</td><td>~82%</td></tr>
+      <tr><td>ResNet-34 Fine-tuning</td><td>21M</td><td>~89%</td></tr>
+      <tr><td>VGGish Transfer</td><td>72M</td><td>~91%</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — CNN PyTorch con mel-spectrograms</h3>
+    <pre>import torch, torch.nn as nn, librosa, numpy as np
+from torchvision import models, transforms
+from torch.utils.data import Dataset
+
+class MelDataset(Dataset):
+    def __init__(self, file_label_pairs, sr=22050, duration=30.0, transform=None):
+        self.data = file_label_pairs; self.sr = sr
+        self.duration = duration; self.transform = transform
+
+    def __getitem__(self, idx):
+        path, label = self.data[idx]
+        y, _  = librosa.load(path, sr=self.sr, mono=True, duration=self.duration)
+        S     = librosa.feature.melspectrogram(y=y, sr=self.sr, n_fft=2048, hop_length=512, n_mels=128, power=2.0)
+        S_db  = librosa.power_to_db(S, ref=np.max)
+        from PIL import Image
+        img = Image.fromarray(((S_db + 80) / 80 * 255).clip(0,255).astype(np.uint8))
+        img = img.resize((128, 128)).convert('RGB')
+        if self.transform: img = self.transform(img)
+        return img, label
+
+N_CLASSES = 10
+model = models.resnet34(pretrained=True)
+for name, param in model.named_parameters():
+    if 'layer4' not in name and 'fc' not in name:
+        param.requires_grad = False
+model.fc = nn.Sequential(nn.Dropout(0.5), nn.Linear(512, 128), nn.ReLU(),
+                          nn.Dropout(0.3), nn.Linear(128, N_CLASSES))</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q7 · Transfer Learning y Canales RGB</h4>
+    <p class="quiz-q">¿Por qué se convierte el mel-spectrograma a imagen RGB de 3 canales al usar ResNet pre-entrenada en ImageNet?</p>
+    <details><summary>Ver respuesta</summary><p>Porque ResNet espera 3 canales de entrada (RGB) por su primera capa Conv2d con in_channels=3; duplicar el canal permite usar los pesos pre-entrenados. Si se intenta pasar un tensor de 1 canal, la primera capa Conv2d no es compatible dimensionalmente. Al convertir a RGB (duplicando el canal en los 3), se puede aprovechar todo el aprendizaje de representación visual de ImageNet aplicado a patrones tiempo-frecuencia del audio.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · librosa Avanzado</div>
+    <div class="module-title">librosa Avanzado — Streaming, HPSS y Batch</div>
+    <div class="module-sub">Streaming, separación armónica-percusiva, y análisis de grandes colecciones</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>Para colecciones grandes, librosa ofrece <code>librosa.stream()</code> para procesamiento en bloques. La separación HPSS (Harmonic/Percussive) descompone el espectrograma usando mediana 2D sobre el eje temporal (→ armónico) y frecuencial (→ percusivo).</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Streaming + HPSS + análisis batch</h3>
+    <pre>import librosa, numpy as np, glob
+
+def analyze_stream(path, sr=22050, block_length=2048, hop_length=512):
+    stream = librosa.stream(path, block_length=block_length,
+                             frame_length=2048, hop_length=hop_length, mono=True)
+    rms_all = []
+    for y_block in stream:
+        rms = librosa.feature.rms(y=y_block, frame_length=2048, hop_length=hop_length)[0]
+        rms_all.extend(rms.tolist())
+    return np.array(rms_all)
+
+y, sr = librosa.load('mix.wav', sr=22050)
+D     = librosa.stft(y, n_fft=2048, hop_length=512)
+D_h, D_p = librosa.decompose.hpss(D, kernel_size=31, power=2.0, margin=1.0)
+y_harmonic   = librosa.istft(D_h, hop_length=512)
+y_percussive = librosa.istft(D_p, hop_length=512)
+
+def batch_analyze(root_dir, extensions=('wav','mp3','flac')):
+    results = {}
+    for ext in extensions:
+        for path in glob.glob(f"{root_dir}/**/*.{ext}", recursive=True):
+            try:
+                y, sr = librosa.load(path, sr=22050, mono=True, duration=30.0)
+                tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+                results[path] = {'tempo': float(tempo), 'duration': len(y)/sr}
+            except Exception as e:
+                print(f"Error {path}: {e}")
+    return results</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q8 · HPSS — Operación Matemática</h4>
+    <p class="quiz-q">¿Qué operación matemática realiza HPSS sobre el espectrograma de magnitud para separar las componentes armónica y percusiva?</p>
+    <details><summary>Ver respuesta</summary><p>Filtrado de mediana a lo largo del eje de tiempo (→ armónico, produce líneas horizontales) y de frecuencia (→ percusivo, produce líneas verticales). Las componentes armónicas (tonos sostenidos) crean estructuras horizontales persistentes en el espectrograma, mientras que los transientes percusivos crean estructuras verticales instantáneas. El filtro de mediana horizontal suaviza los transientes conservando lo armónico, y viceversa para el filtro vertical.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Essentia</div>
+    <div class="module-title">Essentia — MIR Production-Grade</div>
+    <div class="module-sub">C++ backend con Python bindings: análisis de audio a escala industrial (MTG Barcelona)</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>Essentia es la librería de referencia del Music Technology Group (Universitat Pompeu Fabra). Ofrece +200 algoritmos de MIR con bindings Python y soporte para inferencia de modelos TensorFlow.</p>
+    <table>
+      <tr><th>Módulo Essentia</th><th>Descripción</th></tr>
+      <tr><td>essentia.standard</td><td>Algoritmos en modo batch (array in → array out)</td></tr>
+      <tr><td>essentia.streaming</td><td>Grafo de procesamiento orientado a flujos</td></tr>
+      <tr><td>essentia.models</td><td>Modelos TF pre-entrenados: género, mood, instrument</td></tr>
+      <tr><td>TonalExtractor</td><td>Key, HPCP, chord progression</td></tr>
+      <tr><td>RhythmExtractor2013</td><td>Tempo, beat positions, beat confidence</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Essentia completo + MusicExtractor</h3>
+    <pre>import essentia
+import essentia.standard as es
+import numpy as np
+
+loader = es.MonoLoader(filename='track.wav', sampleRate=44100)
+audio  = loader()
+
+w       = es.Windowing(type='hann')
+spec    = es.Spectrum()
+mfcc_e  = es.MFCC(numberCoefficients=40, inputSize=513)
+pool    = essentia.Pool()
+
+for frame in es.FrameGenerator(audio, frameSize=2048, hopSize=512, startFromZero=True):
+    windowed  = w(frame)
+    spectrum  = spec(windowed)
+    _, mfcc_c = mfcc_e(spectrum)
+    pool.add('lowlevel.mfcc', mfcc_c)
+
+# Extractor de alto nivel
+extractor = es.MusicExtractor(
+    lowlevelSilenceRate60dBThreshold=-60,
+    rhythmMethod='multifeature', tonalHpcpSize=36
+)
+features, features_frames = extractor('track.wav')
+print("Tempo:", features['rhythm.bpm'])
+print("Key:",   features['tonal.key_key'], features['tonal.key_scale'])</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q9 · Streaming vs Standard en Essentia</h4>
+    <p class="quiz-q">¿Qué ventaja tiene el modo essentia.streaming sobre essentia.standard para archivos de audio muy largos?</p>
+    <details><summary>Ver respuesta</summary><p>Construye un grafo de procesamiento que evita buffers intermedios y permite procesar archivos de cualquier longitud con memoria constante. En el modo standard, cada algoritmo carga el array completo en memoria. En el modo streaming, los datos fluyen de un nodo al siguiente en el grafo sin almacenar el audio completo, lo que es esencial para archivos de horas de duración que no caben en RAM.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Essentia.js WASM</div>
+    <div class="module-title">Essentia.js — Inferencia WASM en Browser</div>
+    <div class="module-sub">MIR sin servidor: WebAssembly compila el C++ de Essentia para correr en el navegador</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <table>
+      <tr><th>Característica</th><th>Essentia.js</th><th>Backend Python</th></tr>
+      <tr><td>Latencia</td><td>~0ms (local)</td><td>~100-500ms (red)</td></tr>
+      <tr><td>Privacidad</td><td>Total (datos no salen)</td><td>Depende del servidor</td></tr>
+      <tr><td>Modelos</td><td>TF.js (Float16/Int8)</td><td>TF Python (Float32)</td></tr>
+      <tr><td>Tamaño bundle</td><td>~8MB WASM</td><td>Infinito (servidor)</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Essentia.js en browser</h3>
+    <pre>async function initEssentia() {
+  const EssentiaWASM = await EssentiaModule();
+  const essentia = new Essentia(EssentiaWASM);
+
+  async function analyzeFile(audioBuffer) {
+    const sr     = audioBuffer.sampleRate;
+    const signal = audioBuffer.getChannelData(0);
+
+    const mfcc_result = essentia.MFCC(
+      essentia.arrayToVector(signal), 512, 256, 40, sr
+    );
+
+    const rhythm = essentia.RhythmExtractor2013(
+      essentia.arrayToVector(signal), sr
+    );
+    const bpm    = rhythm.bpm;
+
+    const tonal = essentia.KeyExtractor(essentia.arrayToVector(signal), sr);
+    const key   = tonal.key + ' ' + tonal.scale;
+
+    return { bpm, key, mfcc: essentia.vectorToArray(mfcc_result.mfcc) };
+  }
+
+  document.getElementById('fileInput').addEventListener('change', async (e) => {
+    const file    = e.target.files[0];
+    const ctx     = new AudioContext();
+    const ab      = await file.arrayBuffer();
+    const decoded = await ctx.decodeAudioData(ab);
+    const result  = await analyzeFile(decoded);
+    document.getElementById('output').textContent =
+      `BPM: ${result.bpm.toFixed(1)} | Key: ${result.key}`;
+  });
+}</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q10 · Limitaciones WASM y Archivos Grandes</h4>
+    <p class="quiz-q">Un usuario sube un archivo de 300MB a tu app web con Essentia.js. ¿Qué problema técnico crítico encontrarás y cómo se resuelve?</p>
+    <details><summary>Ver respuesta</summary><p>El heap de WASM está limitado por la memoria disponible del tab (~1-4GB); un Float32Array de 300MB de audio más buffers intermedios puede agotar la memoria y crashear el tab. La solución es usar el Web Audio API AudioWorklet para procesar el audio por bloques de forma incremental, o limitar la duración del análisis a los primeros 30-60 segundos del archivo. Los buffers de análisis STFT intermedios pueden ser 3-10× el tamaño del audio original.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Reducción Dim.</div>
+    <div class="module-title">Reducción Dimensional y Visualización</div>
+    <div class="module-sub">PCA, t-SNE y UMAP para explorar el espacio de features musical</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <table>
+      <tr><th>Técnica</th><th>Tipo</th><th>Preserva</th><th>Uso</th></tr>
+      <tr><td>PCA</td><td>Lineal</td><td>Varianza global</td><td>Pre-procesamiento, baseline</td></tr>
+      <tr><td>t-SNE</td><td>No lineal</td><td>Estructura local</td><td>Visualización de clusters</td></tr>
+      <tr><td>UMAP</td><td>No lineal</td><td>Local + global</td><td>Visualización + embedding</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — PCA + UMAP para colección musical</h3>
+    <pre>import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.manifold import TSNE
+
+scaler  = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+pca = PCA(n_components=50, random_state=42)
+X_pca = pca.fit_transform(X_scaled)
+print(f"PCA varianza explicada (50 comps): {pca.explained_variance_ratio_.sum()*100:.1f}%")
+
+tsne = TSNE(n_components=2, perplexity=30, n_iter=1000,
+            random_state=42, init='pca', learning_rate='auto')
+X_2d = tsne.fit_transform(X_pca)
+
+try:
+    import umap
+    reducer = umap.UMAP(n_components=2, n_neighbors=15,
+                         min_dist=0.1, metric='cosine', random_state=42)
+    X_umap = reducer.fit_transform(X_scaled)
+except ImportError:
+    X_umap = X_2d
+    print("umap-learn no instalado, usando t-SNE")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q11 · PCA antes de t-SNE</h4>
+    <p class="quiz-q">¿Por qué se aplica PCA a 50 dimensiones ANTES de t-SNE en lugar de aplicar t-SNE directamente a los 720 features?</p>
+    <details><summary>Ver respuesta</summary><p>t-SNE escala mal en dimensionalidad alta (O(N²D)); PCA reduce el ruido y acelera t-SNE sin perder estructura relevante. Con 720 features, la matriz de distancias que t-SNE necesita calcular tiene N² × 720 operaciones — computacionalmente prohibitivo para colecciones grandes. PCA a 50 dimensiones preserva la mayor parte de la varianza explicada (generalmente más del 85%) y hace t-SNE factible manteniendo la estructura de clusters.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Datasets MIR</div>
+    <div class="module-title">AcousticBrainz, Cover ID y ESC-50</div>
+    <div class="module-sub">Datasets públicos de MIR: benchmarks, cover song identification y clasificación ambiental</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <table>
+      <tr><th>Dataset</th><th>Tamaño</th><th>Tarea</th><th>Features</th></tr>
+      <tr><td>AcousticBrainz</td><td>2.5M tracks</td><td>Género, mood, key, BPM</td><td>Essentia JSON + MBIDs</td></tr>
+      <tr><td>GTZAN</td><td>1000 clips 30s</td><td>Clasificación género (10)</td><td>WAV + etiquetas</td></tr>
+      <tr><td>ESC-50</td><td>2000 clips 5s</td><td>Clasificación sonido (50)</td><td>WAV + CSV etiquetas</td></tr>
+      <tr><td>FMA (Free Music)</td><td>106K tracks</td><td>Género multinivel</td><td>MP3 + metadata CSV</td></tr>
+      <tr><td>MedleyDB</td><td>122 mezclas</td><td>Separación de fuentes</td><td>Stems multípista</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — ESC-50 con MFCC + XGBoost</h3>
+    <pre>import pandas as pd, numpy as np, librosa
+from xgboost import XGBClassifier
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
+meta = pd.read_csv('ESC-50/meta/esc50.csv')
+
+def extract_esc_features(filename, root='ESC-50/audio/'):
+    path   = root + filename
+    y, sr  = librosa.load(path, sr=22050, mono=True, duration=5.0)
+    mfcc   = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40, hop_length=256)
+    d1     = librosa.feature.delta(mfcc)
+    feat   = np.vstack([mfcc, d1])
+    sc     = librosa.feature.spectral_centroid(y=y, sr=sr, hop_length=256)[0]
+    zcr    = librosa.feature.zero_crossing_rate(y, hop_length=256)[0]
+    rms    = librosa.feature.rms(y=y, hop_length=256)[0]
+    return np.concatenate([feat.mean(1), feat.std(1), feat.min(1), feat.max(1),
+                           [sc.mean(), sc.std(), zcr.mean(), zcr.std(), rms.mean(), rms.std()]])
+
+pipe = Pipeline([
+    ('sc',  StandardScaler()),
+    ('xgb', XGBClassifier(n_estimators=300, max_depth=5, learning_rate=0.1,
+                           subsample=0.8, use_label_encoder=False,
+                           eval_metric='mlogloss', random_state=42))
+])
+cv  = StratifiedKFold(n_splits=5, shuffle=False)
+# acc = cross_val_score(pipe, X, y_l, cv=cv, scoring='accuracy')
+# Baseline esperado: ~70-75% (humanos ~81%)</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q12 · Cover Song ID con Chroma Circular</h4>
+    <p class="quiz-q">En Cover Song ID con Chroma, ¿cómo detectas que dos pistas son el mismo tema aunque una esté transpuesta 3 semitonos arriba?</p>
+    <details><summary>Ver respuesta</summary><p>Calculando la correlación cruzada circular del vector Chroma: buscar el shift (0-11) que maximiza la correlación; un alto máximo indica cover. Al correlacionar circularmente se prueban todas las transposiciones posibles (los 12 semitonos): si la correlación máxima en algún desplazamiento es alta (empíricamente > 0.85), los dos temas comparten la misma estructura armónica con diferente tonalidad — señal robusta de cover.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Deployment</div>
+    <div class="module-title">Integración: Renoise + Lua y Deployment</div>
+    <div class="module-sub">Automatización de análisis en DAW y despliegue de modelos como API REST</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>Renoise es un DAW tracker con API Lua completa que permite scripting de análisis y exportación automatizada. Para deployment, los modelos se sirven vía FastAPI + uvicorn.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — FastAPI deployment del clasificador</h3>
+    <pre>from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import JSONResponse
+import librosa, numpy as np, joblib, tempfile, os
+
+app = FastAPI(title="Audio ML API v1")
+genre_model = joblib.load('genre_classifier.pkl')
+GENRES = ['blues','classical','country','disco','hiphop','jazz','metal','pop','reggae','rock']
+
+def extract_features(path: str) -> np.ndarray:
+    y, sr = librosa.load(path, sr=22050, mono=True, duration=30.0)
+    mfcc  = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40, hop_length=512)
+    d1    = librosa.feature.delta(mfcc)
+    feat  = np.vstack([mfcc, d1])
+    return np.concatenate([feat.mean(1), feat.std(1), feat.min(1), feat.max(1)])
+
+@app.post("/analyze/genre")
+async def analyze_genre(file: UploadFile = File(...)):
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
+        tmp.write(await file.read()); tmp_path = tmp.name
+    try:
+        feat       = extract_features(tmp_path).reshape(1, -1)
+        proba      = genre_model.predict_proba(feat)[0]
+        top3_idx   = proba.argsort()[-3:][::-1]
+        predictions = [{'genre': GENRES[i], 'confidence': float(proba[i])} for i in top3_idx]
+        return JSONResponse({'predictions': predictions})
+    finally:
+        os.unlink(tmp_path)
+
+# uvicorn api:app --host 0.0.0.0 --port 8000 --workers 4</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q13 · NamedTemporaryFile y Cross-Platform</h4>
+    <p class="quiz-q">¿Por qué se usa un NamedTemporaryFile con delete=False y se elimina manualmente en finally en el endpoint FastAPI?</p>
+    <details><summary>Ver respuesta</summary><p>En Windows, un NamedTemporaryFile con delete=True no puede ser abierto por otro proceso mientras está abierto; delete=False + finally garantiza limpieza incluso si hay excepciones. Cuando librosa intenta abrir el archivo temporal por su nombre en Windows, el sistema operativo rechaza el acceso porque el archivo ya está abierto por el contexto del NamedTemporaryFile. Al usar delete=False, se cierra el archivo primero y luego librosa puede accederlo, eliminándolo manualmente en el bloque finally para evitar fugas de archivos temporales.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto HERO — Analizador Musical Full-Stack</div>
+    <div class="module-sub">Integra STFT + MFCC + Chroma + Beat + CNN en un pipeline de producción con API y dashboard</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica del Proyecto HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>Pipeline STFT/MFCC correctos</td><td>Parámetros justificados, visualización spectrogram con ejes correctos</td><td>25</td></tr>
+        <tr><td>Clasificador con ≥75% accuracy</td><td>5-fold CV en dataset ≥200 clips, matriz de confusión</td><td>25</td></tr>
+        <tr><td>Beat tracking + key detection</td><td>BPM con ±5% error vs referencia, key con ≥70% accuracy</td><td>20</td></tr>
+        <tr><td>API REST funcional</td><td>FastAPI, endpoint /analyze, JSON response, manejo de errores</td><td>15</td></tr>
+        <tr><td>SSM o Cover ID</td><td>SSM visualizada con secciones etiquetadas o cover ID F1≥0.6</td><td>10</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman Final — Explica sin notas</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · STFT y Resolución</h4>
+      <p class="quiz-q">Quieres detectar la nota La4 (440 Hz) con ±5 Hz de precisión usando STFT a 22050 Hz. ¿Cuál es el n_fft mínimo práctico y cómo se calcula?</p>
+      <details><summary>Ver respuesta</summary><p>Resolución frecuencial = sr/n_fft. Para &lt;5 Hz/bin: n_fft &gt; 22050/5 = 4410. El siguiente valor práctico (potencia de 2) es n_fft=8192, que da 22050/8192 = 2.69 Hz/bin. En la práctica n_fft=4096 da 5.38 Hz/bin, la opción más común de compromiso. La penalización: mayor n_fft implica mayor ventana temporal y peor resolución en el eje de tiempo (el principio de incertidumbre de Heisenberg aplicado al análisis espectral).</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · DCT en MFCC</h4>
+      <p class="quiz-q">¿Qué garantiza la DCT en el pipeline MFCC que la hace superior al simple log-Mel para modelos de ML como SVM o XGBoost?</p>
+      <details><summary>Ver respuesta</summary><p>Decorrelaciona los filtros Mel solapados: los MFCC son casi ortogonales entre sí, lo que beneficia modelos que asumen independencia de features. Los filtros Mel se solapan entre sí por diseño, creando alta correlación entre bandas adyacentes. La DCT (tipo II) compacta la energía en los primeros coeficientes y elimina esta correlación, produciendo features aproximadamente ortogonales. SVM con kernel RBF y XGBoost funcionan mejor con features menos correlacionadas y con la información concentrada en pocas dimensiones.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · Beat Tracking y Métricas Complejas</h4>
+      <p class="quiz-q">El algoritmo de Ellis (DP) falla en música con métricas complejas como 5/4 o 7/8. ¿Por qué el modelo matemático es fundamentalmente incompatible con estas métricas?</p>
+      <details><summary>Ver respuesta</summary><p>Asume que el período inter-beat es constante (τp fijo); la penalización log-parabólica favorece ratios de 1:2 (subdivisión binaria) pero penaliza fuertemente los ratios irregulares de 5/4 o 7/8. La función F(Δt,τp)=-(log₂(Δt/τp))² tiene mínimos exactamente en τp, τp/2, 2τp (octavas rítmicas) — todos múltiplos o divisores binarios. En 5/4, los beats tienen 5 subdivisiones que no encajan en este modelo, generando errores de cuantización sistemáticos que no se pueden corregir ajustando parámetros.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · CNN y Augmentación de Datos</h4>
+      <p class="quiz-q">¿Cuál de estas augmentaciones de espectrograma es físicamente incorrecta para música y por qué podría dañar el entrenamiento?</p>
+      <details><summary>Ver respuesta</summary><p>FlipVertical: invertir el eje de frecuencia (graves a agudos y viceversa). Esto crea un espectrograma físicamente imposible: los armónicos aparecen por debajo del fundamental en lugar de por encima, lo que contradice las leyes acústicas. Un instrumento con fundamental a 100 Hz tiene armónicos a 200, 300, 400 Hz... invertir el espectrograma pone esas energías a 9850, 9750, 9650 Hz (con sr=22050). El modelo entrenaría con ejemplos que no pueden ocurrir en la realidad, perjudicando la generalización.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · Essentia.js y Limitaciones de Modelos</h4>
+      <p class="quiz-q">¿Qué limitación principal tiene Essentia.js vs Essentia Python para inferencia de modelos de clasificación musical pre-entrenados?</p>
+      <details><summary>Ver respuesta</summary><p>Los modelos TF.js deben ser más pequeños (Int8/Float16) y convertidos al formato SavedModel/GraphDef compatible con TF.js; no puede usar directamente modelos .h5 de Keras. Los modelos entrenados en Python con TensorFlow/Keras usan Float32 por defecto y se guardan en formatos como .h5 o SavedModel de TF2. Para TF.js se necesita una conversión con tensorflowjs_converter que además puede aplicar cuantización para reducir el tamaño, perdiendo algo de precisión. Adicionalmente, algunas operaciones de TF no están implementadas en TF.js, limitando qué arquitecturas son compatibles.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_analisis_audio_ml_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Ecosistema Audio ML'},
+    {id:'m1',  label:'M1 · STFT'},
+    {id:'m2',  label:'M2 · MFCC'},
+    {id:'m3',  label:'M3 · Chroma HPCP'},
+    {id:'m4',  label:'M4 · SSM'},
+    {id:'m5',  label:'M5 · Beat Tracking'},
+    {id:'m6',  label:'M6 · Pipeline CNN/XGBoost'},
+    {id:'m7',  label:'M7 · CNN Audio'},
+    {id:'m8',  label:'M8 · librosa Avanzado'},
+    {id:'m9',  label:'M9 · Essentia'},
+    {id:'m10', label:'M10 · Essentia.js WASM'},
+    {id:'m11', label:'M11 · Reducción Dim.'},
+    {id:'m12', label:'M12 · Datasets MIR'},
+    {id:'m13', label:'M13 · Deployment'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item'+(state.done.includes(m.id)?' done':'')+(state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+  function updateProgress(){
+    const pct = Math.round((state.done.length/MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id; save(); buildNav(); window.scrollTo(0,0);
+  };
+  window.completeAndNext = function(current,next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save(); if(next) goTo(next); else buildNav();
+  };
+  buildNav(); goTo(state.current);
+})();
+</script>
+</body>
+</html>

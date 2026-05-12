@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSP Vocal y Síntesis de Habla — v3</title>
+<style>
+:root {
+  --bg:#0f172a; --surface:#1e293b; --surface2:#334155;
+  --accent:#06b6d4; --accent2:#22d3ee; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#334155;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'JetBrains Mono','Fira Code',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#0d1117;padding:2px 6px;border-radius:4px}
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+.formula{background:rgba(6,182,212,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(0,0,0,.15);border-radius:6px;line-height:1.6}
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>DSP Vocal y Síntesis de Habla</h2>
+    <p>The Human Synthesizer: LPC a WaveNet DDSP</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introducción</div>
+    <div class="module-title">Ecosistema DSP Vocal</div>
+    <div class="module-sub">The Human Synthesizer: de la física del tracto vocal al vocoder neuronal DDSP</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 140" width="100%" font-family="'JetBrains Mono',monospace" font-size="11">
+      <defs><marker id="ar" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#06b6d4"/></marker></defs>
+      <rect x="5"   y="45" width="110" height="50" rx="8" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="60"  y="67" text-anchor="middle" fill="#06b6d4" font-weight="bold">Laringe</text>
+      <text x="60"  y="83" text-anchor="middle" fill="#94a3b8">Fuente G(z)</text>
+      <rect x="150" y="45" width="120" height="50" rx="8" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="210" y="67" text-anchor="middle" fill="#a855f7" font-weight="bold">Tracto Vocal</text>
+      <text x="210" y="83" text-anchor="middle" fill="#94a3b8">Filtro H(z) LPC</text>
+      <rect x="305" y="45" width="120" height="50" rx="8" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+      <text x="365" y="67" text-anchor="middle" fill="#10b981" font-weight="bold">Análisis</text>
+      <text x="365" y="83" text-anchor="middle" fill="#94a3b8">Cepstrum/MFCC</text>
+      <rect x="460" y="45" width="120" height="50" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="520" y="67" text-anchor="middle" fill="#f59e0b" font-weight="bold">WaveNet</text>
+      <text x="520" y="83" text-anchor="middle" fill="#94a3b8">Dilated Conv</text>
+      <rect x="615" y="45" width="115" height="50" rx="8" fill="#1e293b" stroke="#ef4444" stroke-width="1.5"/>
+      <text x="672" y="67" text-anchor="middle" fill="#ef4444" font-weight="bold">DDSP/LPCNet</text>
+      <text x="672" y="83" text-anchor="middle" fill="#94a3b8">Neural Vocoder</text>
+      <line x1="115" y1="70" x2="148" y2="70" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="270" y1="70" x2="303" y2="70" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="425" y1="70" x2="458" y2="70" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="580" y1="70" x2="613" y2="70" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#ar)"/>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">20–30ms</div><div class="metric-label">ventana de estacionariedad</div></div>
+    <div class="metric"><div class="metric-val">−12dB</div><div class="metric-label">caída espectral por octava (voiced)</div></div>
+    <div class="metric"><div class="metric-val">p=10–12</div><div class="metric-label">orden LPC óptimo para voz</div></div>
+    <div class="metric"><div class="metric-val">3–5</div><div class="metric-label">formantes F1–F5 en tracto vocal</div></div>
+    <div class="metric"><div class="metric-val">600bps</div><div class="metric-label">bitrate mínimo MELPe militar</div></div>
+    <div class="metric"><div class="metric-val">16kHz</div><div class="metric-label">muestras/s WaveNet original</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa de Paradigmas de Síntesis Vocal</h3>
+    <table>
+      <tr><th>Paradigma</th><th>Base matemática</th><th>Calidad MOS</th><th>Latencia</th><th>Uso</th></tr>
+      <tr><td>Concatenativo (Unit Selection)</td><td>Búsqueda de corpus</td><td>4.2–4.5</td><td>Alta</td><td>TTS clásico (Festival)</td></tr>
+      <tr><td>LPC Vocoder</td><td>AR todo-polos</td><td>2.5–3.5</td><td>Muy baja</td><td>Telecomunicaciones militares</td></tr>
+      <tr><td>WaveNet</td><td>Dilated causal conv</td><td>4.5–4.8</td><td>Alta (autoregresiva)</td><td>Google TTS</td></tr>
+      <tr><td>DDSP Vocoder</td><td>Síntesis diferenciable</td><td>4.3–4.7</td><td>Media</td><td>Voz expresiva, singing</td></tr>
+      <tr><td>LPCNet</td><td>GRU + LPC clásico</td><td>4.0–4.3</td><td>Baja (CPU)</td><td>Vapi AI, WebRTC edge</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Modelo Acústico</div>
+    <div class="module-title">Modelo Fuente-Filtro y Analogía Eléctrica</div>
+    <div class="module-sub">El habla como sistema LTI: laringe (fuente) + tracto vocal (filtro) en ventanas de 20–30ms</div>
+  </div>
+
+  <div class="formula">S(z) = G(z) · H(z) = E(z) · V(z) · R(z)
+G(z) = fuente glotal | H(z) = tracto vocal (todo-polos) | R(z) = radiación labial (cero en z=0)</div>
+
+  <div class="card">
+    <h3>Analogía eléctrica del tracto vocal</h3>
+    <table>
+      <tr><th>Magnitud acústica</th><th>Equivalente eléctrico</th><th>Fórmula</th></tr>
+      <tr><td>Inercia del aire</td><td>Inductancia L</td><td>L = ρ/A (kg/m⁴)</td></tr>
+      <tr><td>Elasticidad del aire</td><td>Capacitancia C</td><td>C = A/(ρc²) (m⁴s²/kg)</td></tr>
+      <tr><td>Fricción / viscosidad</td><td>Resistencia R</td><td>R = pérdidas viscosas</td></tr>
+      <tr><td>Presión acústica p</td><td>Voltaje V</td><td>p (Pa)</td></tr>
+      <tr><td>Flujo volumétrico U</td><td>Corriente I</td><td>U (m³/s)</td></tr>
+    </table>
+    <p style="margin-top:10px;">Frecuencia del formante F_n de un tubo cerrado-abierto de longitud L: <code>F_n = (2n-1)·c/(4L)</code>. Para tracto de 17cm: F₁≈500Hz, F₂≈1500Hz, F₃≈2500Hz.</p>
+  </div>
+
+  <div class="card">
+    <h3>Simulación del tracto vocal</h3>
+    <pre>def vocal_tract_tube(L_cm=17.0, c=340.0, n_formants=5, sr=16000):
+    L = L_cm / 100.0  # metros
+    return [(2*n - 1) * c / (4 * L) for n in range(1, n_formants+1)]
+
+VOWELS = {
+    'a': {'F1': 800, 'F2': 1200, 'F3': 2500},
+    'e': {'F1': 400, 'F2': 2000, 'F3': 2600},
+    'i': {'F1': 280, 'F2': 2600, 'F3': 3000},
+    'o': {'F1': 500, 'F2': 900,  'F3': 2500},
+    'u': {'F1': 300, 'F2': 700,  'F3': 2300},
+}
+
+def resonator_2nd_order(signal, fi, bw, sr):
+    """Filtro IIR resonador: H_i(z) = 1 / (1 - 2r·cos(ω₀)·z⁻¹ + r²·z⁻²)"""
+    r   = np.exp(-np.pi * bw / sr)
+    w0  = 2 * np.pi * fi / sr
+    a1  = -2 * r * np.cos(w0)
+    a2  = r ** 2
+    out = np.zeros_like(signal)
+    for n in range(2, len(signal)):
+        out[n] = signal[n] - a1 * out[n-1] - a2 * out[n-2]
+    return out
+
+print("Formantes tubo 17cm:", [f"{f:.0f}Hz" for f in vocal_tract_tube()])</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q1 · Caída espectral −12dB/oct</h4>
+    <p class="quiz-q">¿Por qué el espectro de la fuente glotal (voiced) tiene una caída de −12 dB/octava y no −6 dB/octava como una onda cuadrada?</p>
+    <details><summary>Ver respuesta</summary><p>La forma triangular/sierra del pulso glotal (modelo Rosenberg) contiene armónicos que decaen como 1/n² en amplitud, equivalente a −12 dB/oct. Un tren de impulsos puro (Dirac) decaería 0 dB/oct (todos los armónicos igual amplitud), una onda cuadrada −6 dB/oct (armónicos 1/n). La forma exacta del pulso glotal, con fase de cierre y apertura, produce la caída cuadrática característica de la voz humana.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · LPC</div>
+    <div class="module-title">LPC — Codificación Predictiva Lineal</div>
+    <div class="module-sub">Filtro todo-polos, Levinson-Durbin y el residuo de predicción</div>
+  </div>
+
+  <div class="formula">ŝ(n) = Σᵢ₌₁ᵖ aᵢ · s(n−i)          [predicción]
+Error: e(n) = s(n) − ŝ(n)           [residuo]
+H(z) = G / A(z) = G / (1 − Σₖ₌₁ᵖ αₖ z⁻ᵏ)   [filtro de síntesis]</div>
+
+  <div class="card">
+    <h3>Parámetros LPC</h3>
+    <table>
+      <tr><th>Parámetro</th><th>Valor típico</th><th>Efecto</th></tr>
+      <tr><td>Orden p (ancho de banda telefónico)</td><td>8–10</td><td>4–5 formantes modelados</td></tr>
+      <tr><td>Orden p (banda ancha 8kHz)</td><td>12–16</td><td>Mayor fidelidad espectral</td></tr>
+      <tr><td>Ventana de análisis</td><td>20–30ms Hamming</td><td>Estacionariedad garantizada</td></tr>
+      <tr><td>Shift (avance)</td><td>10ms (50% overlap)</td><td>Suavizado temporal</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>LPC Análisis y Síntesis End-to-End</h3>
+    <pre>def levinson_durbin(r, order):
+    """
+    Algoritmo iterativo O(p²) para resolver Rp·a = rp.
+    Explota la estructura de Toeplitz de la matriz de autocorrelacion.
+    """
+    a = np.zeros(order + 1); a[0] = 1.0; E = r[0]
+    for k in range(1, order + 1):
+        lambda_k = sum(a[i] * r[k - i] for i in range(k)) / E
+        a_new = a.copy()
+        for i in range(1, k):
+            a_new[i] = a[i] - lambda_k * a[k - i]
+        a_new[k] = -lambda_k
+        a = a_new; E = E * (1 - lambda_k ** 2)
+    return a[1:], E
+
+def lpc_analysis(frame, order=12):
+    window   = np.hamming(len(frame))
+    windowed = frame * window
+    autocorr = np.array([np.dot(windowed, np.roll(windowed, lag))
+                         for lag in range(order + 1)])
+    autocorr /= autocorr[0]
+    a, error = levinson_durbin(autocorr, order)
+    return a, np.sqrt(error)
+
+def lpc_synthesis(excitation, a, gain):
+    """Filtro IIR todo-polos 1/A(z)."""
+    b     = [gain]
+    a_iir = np.concatenate([[1], -a])
+    return signal.lfilter(b, a_iir, excitation)</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q2 · Levinson-Durbin O(p²)</h4>
+    <p class="quiz-q">¿Por qué el algoritmo de Levinson-Durbin es O(p²) en lugar de O(p³) como la inversión de una matriz general?</p>
+    <details><summary>Ver respuesta</summary><p>Explota la estructura de Toeplitz de la matriz de autocorrelación: en cada iteración k, los nuevos coeficientes se calculan a partir de los anteriores usando el coeficiente de reflexión (PARCOR), sin recalcular toda la matriz. En lugar de resolver el sistema completo en cada paso, se actualiza incrementalmente de orden k-1 a k. La clave es que R[i,j] = R[|i-j|] (solo depende de la diferencia) — propiedad que el algoritmo aprovecha recursivamente.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Cepstrum</div>
+    <div class="module-title">Cepstrum y Filtrado Homomórfico</div>
+    <div class="module-sub">Separar fuente y filtro en el dominio logarítmico: deconvolución sin inversión de matriz</div>
+  </div>
+
+  <div class="formula">log|Y(k)| = log|U(k)| + log|V(k)|   [convolución → suma en log]
+Cepstrum: c[n] = F⁻¹{ log|F{x[n]}| }
+Quefrencias bajas → tracto vocal (formantes)
+Quefrencias altas → pitch (tren de pulsos)</div>
+
+  <div class="card">
+    <h3>Cepstrum y separación fuente/filtro</h3>
+    <pre>def compute_cepstrum(signal_frame, n_fft=512):
+    X        = np.fft.rfft(signal_frame, n=n_fft)
+    log_mag  = np.log(np.abs(X) + 1e-10)
+    cepstrum = np.fft.irfft(log_mag)
+    return cepstrum
+
+def lifter_low(cepstrum, cutoff_quefrency=30):
+    """Paso-bajo: retiene tracto vocal (formantes)."""
+    liftered = cepstrum.copy()
+    liftered[cutoff_quefrency:-cutoff_quefrency] = 0
+    return liftered
+
+def cepstral_envelope(signal_frame, n_fft=512, cutoff=30):
+    cep     = compute_cepstrum(signal_frame, n_fft)
+    low_cep = lifter_low(cep, cutoff)
+    return np.exp(np.fft.rfft(low_cep).real)
+
+# Detectar pitch via cepstrum: pico mas alto en cepstrum[lag_min:lag_max]
+lag_min = int(sr * 0.002)  # 500 Hz maxima
+lag_max = int(sr * 0.020)  # 50 Hz minima
+if lag_max < len(cep):
+    pitch_lag = lag_min + np.argmax(np.abs(cep[lag_min:lag_max]))
+    F0_cep    = sr / pitch_lag
+    print(f"Pitch estimado via cepstrum: {F0_cep:.1f} Hz")
+    # Para F0=200Hz a 16kHz: T0 = 16000/200 = 80 muestras de quefrency</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q3 · Pico en quefrency</h4>
+    <p class="quiz-q">En el cepstrum de una vocal sonora (voiced) con F0=200Hz a sr=16kHz, ¿en qué muestra de quefrency aparece el pico de pitch y qué representa?</p>
+    <details><summary>Ver respuesta</summary><p>El pico aparece en la muestra 80: T0 = sr/F0 = 16000/200 = 80 muestras = 5ms de quefrency. Representa el período del pitch: la periodicidad del tren de pulsos glotales en el dominio cepstral aparece como un pico en la quefrencia igual al período T0=1/F0, exactamente igual que la periodicidad aparece como pico en la autocorrelación en el dominio temporal.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Pitch</div>
+    <div class="module-title">Detección V/UV y Estimación de Pitch</div>
+    <div class="module-sub">Clasificar voiced/unvoiced y estimar F0: ZCR, Autocorrelación, MDF y CREPE</div>
+  </div>
+
+  <div class="card">
+    <h3>Métodos de estimación de pitch</h3>
+    <table>
+      <tr><th>Método</th><th>Fórmula clave</th><th>Robustez</th><th>Coste</th></tr>
+      <tr><td>ZCR (Zero Crossing Rate)</td><td>ZCR = Σ|sign(s[n])−sign(s[n-1])| / (2N)</td><td>Baja</td><td>O(N)</td></tr>
+      <tr><td>Autocorrelación (ACF)</td><td>R(l) = Σ s[n]s[n-l], pico en l=T0</td><td>Media</td><td>O(N²)</td></tr>
+      <tr><td>MDF (Magnitude Difference Function)</td><td>MDF(l) = Σ|s[n]−s[n-l]|, mínimo en l=T0</td><td>Media-alta</td><td>O(N²)</td></tr>
+      <tr><td>YIN (mejorado ACF)</td><td>d(τ)=Σ(s[n]−s[n+τ])², normalizado</td><td>Alta</td><td>O(N log N) con FFT</td></tr>
+      <tr><td>CREPE (DNN)</td><td>Clasificación 360 clases (32.7–1975Hz)</td><td>Muy alta</td><td>GPU requerida</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>MDF Pitch Tracker con early termination</h3>
+    <pre>def magnitude_difference_function(frame, lag_min=20, lag_max=150):
+    """MDF: mínimo en lag=T0 (señal se repite → |s[n]-s[n-lag]| ≈ 0)."""
+    N       = len(frame)
+    mdf     = np.zeros(lag_max - lag_min)
+    min_mdf = np.inf
+
+    for idx, lag in enumerate(range(lag_min, lag_max)):
+        val = 0.0
+        for n in range(N - lag):
+            val += abs(frame[n] - frame[n + lag])
+            if val > min_mdf * 1.5:  # early termination
+                val = np.inf; break
+        mdf[idx] = val
+        if val < min_mdf: min_mdf = val
+
+    best_lag = lag_min + np.argmin(mdf)
+    return best_lag, mdf
+
+def pitch_track(y, sr, frame_size=512, hop=128, lag_min=20, lag_max=150):
+    f0_track = []
+    for i in range(0, len(y) - frame_size, hop):
+        frame  = y[i:i + frame_size]
+        zcr    = np.sum(np.abs(np.diff(np.sign(frame)))) / (2 * frame_size)
+        energy = np.mean(frame ** 2)
+        is_v   = (zcr < 0.15) and (energy > 0.001)
+        if is_v:
+            lag, _ = magnitude_difference_function(frame, lag_min, lag_max)
+            f0_track.append(sr / lag)
+        else:
+            f0_track.append(0.0)
+    return np.array(f0_track)</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q4 · Mínimo de MDF</h4>
+    <p class="quiz-q">¿Por qué la MDF tiene un mínimo (no un máximo) en el lag igual al período de pitch, mientras que la ACF tiene un máximo?</p>
+    <details><summary>Ver respuesta</summary><p>Cuando el retardo l = T0 (período), las muestras s[n] y s[n-l] son casi idénticas porque la señal se repite periódicamente, por lo que |s[n]−s[n−l]| ≈ 0 y la suma MDF(l) es mínima. La ACF es el producto s[n]·s[n-l], que es máximo cuando las señales son idénticas (producto de iguales = máximo). Son complementarias: ambas detectan periodicidad pero con criterio opuesto.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Features</div>
+    <div class="module-title">MFCC para Voz — Pipeline Perceptual</div>
+    <div class="module-sub">Banco de filtros Mel, DCT y estadísticas de resumen para ASR y speaker recognition</div>
+  </div>
+
+  <div class="formula">MF[r] = (1/Aᵣ) · Σₖ₌Lᵣᵁʳ |Vᵣ[k] · X(n,k)|         [banco Mel]
+MFCC[m] = (1/R) · Σᵣ₌₁ᴿ log(MF[r]) · cos[2π(r+0.5)m/R]   [DCT-II]</div>
+
+  <div class="card">
+    <h3>MFCC desde cero para voz</h3>
+    <pre>def compute_mfcc_voice(y, sr=16000, n_mfcc=13, n_mels=40,
+                        n_fft=512, hop_length=160, pre_emph=0.97):
+    # Pre-enfasis: compensa -12dB/oct de laringe (crucial en voz, no en musica)
+    y_pe = np.append(y[0], y[1:] - pre_emph * y[:-1])
+
+    # STFT
+    D   = librosa.stft(y_pe, n_fft=n_fft, hop_length=hop_length, window='hamming')
+    mag = np.abs(D)
+
+    # Banco Mel: rango 80-7600 Hz (voz: F0 minimo a fricativas altas)
+    mel_basis = librosa.filters.mel(sr=sr, n_fft=n_fft, n_mels=n_mels,
+                                     fmin=80, fmax=7600)
+    log_mel   = np.log(mel_basis @ mag + 1e-8)
+
+    # DCT-II: decorrelacion (aprox. Karhunen-Loeve)
+    from scipy.fft import dct
+    mfcc   = dct(log_mel, type=2, axis=0, norm='ortho')[:n_mfcc, :]
+
+    # Delta y delta-delta: captura dinamica temporal del habla
+    delta1 = librosa.feature.delta(mfcc, order=1)
+    delta2 = librosa.feature.delta(mfcc, order=2)
+    return np.vstack([mfcc, delta1, delta2])  # (39, T) si n_mfcc=13
+
+def speaker_embedding(y, sr=16000):
+    """Vector de identidad del locutor (156-d)."""
+    mfcc_full = compute_mfcc_voice(y, sr)
+    return np.concatenate([
+        mfcc_full.mean(axis=1),
+        mfcc_full.std(axis=1),
+        np.percentile(mfcc_full, 5,  axis=1),
+        np.percentile(mfcc_full, 95, axis=1),
+    ])</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q5 · Rango Mel 80–7600Hz</h4>
+    <p class="quiz-q">¿Por qué el banco Mel para voz se limita a 80–7600 Hz en lugar de 20–8000 Hz para audio general?</p>
+    <details><summary>Ver respuesta</summary><p>La voz humana contiene la energía fonética relevante entre 80 Hz (F0 mínimo del habla) y 7600 Hz (fricativas altas /s/, /f/). Los extremos son ruido de fondo o armónicos inaudibles que reducen la discriminabilidad del modelo sin aportar información fonética. El filtrado de rango mejora el SNR efectivo de los coeficientes y el rendimiento en ASR y speaker recognition.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Modelado Físico</div>
+    <div class="module-title">Digital Waveguide Synthesis — Kelly-Lochbaum</div>
+    <div class="module-sub">Modelado físico del tracto como guía de onda digital: dispersión bidireccional en uniones KL</div>
+  </div>
+
+  <div class="formula">Coeficiente reflexión: k = (A₂ − A₁) / (A₂ + A₁)
+P⁺₂ = (1+k)·P⁺₁ + (−k)·P⁻₂   [transmisión hacia boca]
+P⁻₁ = k·P⁺₁ + (1−k)·P⁻₂      [reflexión hacia laringe]</div>
+
+  <div class="card">
+    <h3>Digital Waveguide Vocal Tract — Kelly-Lochbaum</h3>
+    <pre>class KellyLochbaumTract:
+    """N tubos cilindricos concatenados. Cada uno = delay de 1 muestra."""
+    def __init__(self, areas, sr=16000):
+        self.N  = len(areas)
+        self.k  = np.array([
+            (areas[i+1] - areas[i]) / (areas[i+1] + areas[i] + 1e-10)
+            for i in range(self.N - 1)
+        ])
+        self.pf = np.zeros(self.N)  # onda hacia la boca (forward)
+        self.pb = np.zeros(self.N)  # onda hacia laringe (backward)
+
+    def process_sample(self, glottal_input):
+        pf_new = self.pf.copy(); pb_new = self.pb.copy()
+        pf_new[0] = glottal_input + self.pb[0] * (-1.0)  # reflexion en laringe
+
+        for i in range(self.N - 1):
+            k           = self.k[i]
+            pf_new[i+1] = (1 + k) * self.pf[i] + (-k) * self.pb[i+1]
+            pb_new[i]   = k * self.pf[i] + (1 - k) * self.pb[i+1]
+
+        output  = pf_new[-1]  # presion en la boca
+        self.pf = np.roll(pf_new, 1); self.pb = np.roll(pb_new, -1)
+        return output
+
+# Vocal /a/ con 8 tubos: areas representativas en cm²
+areas_a = [0.5, 1.0, 2.0, 3.0, 4.0, 3.5, 2.5, 1.5]
+tract   = KellyLochbaumTract(areas_a, sr=16000)
+# k=0 cuando A₁=A₂: sin reflexion, onda se transmite integra (linea continua)</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q6 · Reflexión Kelly-Lochbaum</h4>
+    <p class="quiz-q">¿Qué sucede en la unión Kelly-Lochbaum cuando A₁ = A₂ (dos tubos del mismo área)? Justifica matemáticamente.</p>
+    <details><summary>Ver respuesta</summary><p>k = (A₂ − A₁) / (A₂ + A₁) = 0/2A₁ = 0: sin reflexión. La onda se transmite íntegra sin perturbación, como una línea de transmisión continua sin discontinuidad de impedancia acústica. P⁺₂ = (1+0)·P⁺₁ + 0 = P⁺₁ y P⁻₁ = 0 + (1-0)·P⁻₂ = P⁻₂ — transmisión perfecta en ambas direcciones.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · WaveNet</div>
+    <div class="module-title">WaveNet — Convoluciones Causales Dilatadas</div>
+    <div class="module-sub">Síntesis neural de voz a nivel de muestra: campo receptivo exponencial sin RNN</div>
+  </div>
+
+  <div class="formula">Dilation d: Conv(x)[n] = Σₖ w[k] · x[n − d·k]
+z = tanh(Wf * x) ⊙ σ(Wg * x)  [Gated Activation]
+Residual: h = z + x
+Capas [1,2,4,8,...,512]: campo receptivo = 1024 muestras ≈ 23ms @ 44.1kHz</div>
+
+  <div class="card">
+    <h3>WaveNet simplificado en PyTorch</h3>
+    <pre>class CausalConv1d(nn.Module):
+    def __init__(self, in_ch, out_ch, kernel_size, dilation=1):
+        super().__init__()
+        self.padding = (kernel_size - 1) * dilation
+        self.conv = nn.Conv1d(in_ch, out_ch, kernel_size, dilation=dilation, padding=0)
+    def forward(self, x):
+        return self.conv(F.pad(x, (self.padding, 0)))  # padding causal: solo al pasado
+
+class WaveNetLayer(nn.Module):
+    def __init__(self, channels=32, kernel_size=2, dilation=1):
+        super().__init__()
+        self.filter_conv = CausalConv1d(channels, channels, kernel_size, dilation)
+        self.gate_conv   = CausalConv1d(channels, channels, kernel_size, dilation)
+        self.res_conv    = nn.Conv1d(channels, channels, 1)
+    def forward(self, x):
+        z = torch.tanh(self.filter_conv(x)) * torch.sigmoid(self.gate_conv(x))
+        return self.res_conv(z) + x, z
+
+# µ-law quantization: 256 niveles perceptualmente equivalentes a ~16-bit lineal
+def mu_law_encode(x, mu=255):
+    x_clipped = x.clip(-1, 1)
+    encoded   = np.sign(x_clipped) * np.log1p(mu * np.abs(x_clipped)) / np.log1p(mu)
+    return ((encoded + 1) / 2 * mu + 0.5).astype(np.int32)
+
+def mu_law_decode(encoded, mu=255):
+    x = 2 * encoded / mu - 1
+    return np.sign(x) * (np.exp(np.abs(x) * np.log1p(mu)) - 1) / mu</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q7 · Inferencia lenta de WaveNet</h4>
+    <p class="quiz-q">WaveNet es autoregresivo: genera muestra a muestra. ¿Por qué esto lo hace extremadamente lento en inferencia a pesar de ser convoluciones (que en training son paralelas)?</p>
+    <details><summary>Ver respuesta</summary><p>Porque no puede paralelizar la generación: cada muestra depende de todas las anteriores (causalidad estricta). T muestras requieren T pasadas forward secuenciales — imposible batching temporal. En training sí se paraleliza mediante teacher forcing (la señal real se da como entrada), pero en inferencia el output de t es el input de t+1. Para 1 segundo a 16kHz = 16000 pasos secuenciales.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · DDSP</div>
+    <div class="module-title">DDSP — Procesamiento de Señal Diferenciable</div>
+    <div class="module-sub">Síntesis físicamente informada: osciladores y filtros como nodos diferenciables</div>
+  </div>
+
+  <div class="formula">ŝ = iFFT([P × E_imp(F0) + (1−P) × E_noise] × V)
+P = periodicidad | E_imp(F0) = componente armónico | E_noise = ruido filtrado | V = filtro vocal
+L = Σᵢ ||log|STFT_i(x)| − log|STFT_i(x̂)||₁ + ||STFT_i(x)| − |STFT_i(x̂)||_F / ||STFT_i(x)||_F</div>
+
+  <div class="card">
+    <h3>DDSP Synthesizer + Multi-Scale Spectral Loss</h3>
+    <pre>def additive_synth(f0, amplitudes, sr=16000, n_samples=16000):
+    """Sintesis aditiva diferenciable."""
+    B, T, n_harmonics = amplitudes.shape
+    harmonic_freqs = f0.unsqueeze(-1) * torch.arange(1, n_harmonics+1, device=f0.device)
+    phases  = torch.cumsum(2 * np.pi * harmonic_freqs / sr, dim=1)
+    return (amplitudes * torch.sin(phases)).sum(dim=-1)
+
+def filtered_noise_synth(magnitudes, n_samples=16000):
+    """Ruido blanco filtrado en frecuencia (fase lineal)."""
+    B       = magnitudes.shape[0]
+    noise   = torch.randn(B, n_samples, device=magnitudes.device)
+    noise_f = torch.fft.rfft(noise, n=magnitudes.shape[1] * 2 - 2)
+    return torch.fft.irfft(noise_f * magnitudes[:, :noise_f.shape[1]], n=n_samples)
+
+class MultiScaleSpectralLoss(nn.Module):
+    def __init__(self, fft_sizes=(512, 1024, 2048)):
+        super().__init__(); self.fft_sizes = fft_sizes
+    def forward(self, x_real, x_pred):
+        loss = 0.0
+        for n_fft in self.fft_sizes:
+            hop  = n_fft // 4
+            S_r  = torch.abs(torch.stft(x_real, n_fft, hop, return_complex=True))
+            S_p  = torch.abs(torch.stft(x_pred, n_fft, hop, return_complex=True))
+            # Convergencia espectral + log-magnitud L1
+            sc   = torch.norm(S_r - S_p, p='fro') / (torch.norm(S_r, p='fro') + 1e-8)
+            mag  = (torch.log(S_r + 1e-8) - torch.log(S_p + 1e-8)).abs().mean()
+            loss += sc + mag
+        return loss / len(self.fft_sizes)</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q8 · Pérdida espectral multi-resolución</h4>
+    <p class="quiz-q">¿Por qué DDSP usa pérdida multi-resolución (FFT 512, 1024, 2048) en lugar de MSE en el dominio del tiempo?</p>
+    <details><summary>Ver respuesta</summary><p>El MSE en tiempo es muy sensible a desajustes de fase: dos sinusoides idénticas desfasadas en π tienen MSE máximo aunque suenen igual perceptualmente. La pérdida espectral (magnitudes STFT) es invariante a fase y produce gradientes más informativos sobre el contenido tonal. La multi-resolución es necesaria porque FFTs pequeñas (512) capturan transitorios (buena resolución temporal) y FFTs grandes (2048) capturan estructura tonal (buena resolución frecuencial) — cubriendo el trade-off de Heisenberg.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · LPCNet</div>
+    <div class="module-title">LPCNet — Vocoder Neuronal Híbrido</div>
+    <div class="module-sub">GRU + predicción lineal: calidad neural en hardware de bajo coste (15 MFLOPS)</div>
+  </div>
+
+  <div class="formula">Excitación: e[n] = s[n] − Σₖ aₖ · s[n−k]   (predicción LPC clásica)
+GRU predice: p̂[n] = GRU(features, e[n−1])   (residuo neuronal no lineal)
+Síntesis:    s[n] = p̂[n] + Σₖ aₖ · s[n−k]   (reconstrucción)</div>
+
+  <div class="card">
+    <h3>LPCNet GRU Architecture</h3>
+    <pre>class LPCNetGRU(nn.Module):
+    def __init__(self, feature_dim=20, hidden_size=128, n_outputs=256):
+        super().__init__()
+        self.feature_proj = nn.Linear(feature_dim, hidden_size)
+        self.gru_a = nn.GRU(hidden_size + 1, hidden_size, batch_first=True)
+        self.gru_b = nn.GRU(hidden_size, hidden_size, batch_first=True)
+        self.output = nn.Linear(hidden_size, n_outputs)
+
+    def forward(self, features, excitation, h_a=None, h_b=None):
+        """
+        features:   (B, T_frame, 20)  — features cada 10ms (LPC + pitch)
+        excitation: (B, T_sample, 1)  — muestra de excitacion anterior
+        """
+        feat_proj = torch.relu(self.feature_proj(features))
+        feat_rep  = feat_proj.repeat_interleave(160, dim=1)  # interpolar frame→sample
+        gru_input = torch.cat([feat_rep[:, :excitation.shape[1], :], excitation], dim=-1)
+        out_a, h_a = self.gru_a(gru_input, h_a)
+        out_b, h_b = self.gru_b(out_a, h_b)
+        return self.output(out_b), h_a, h_b  # logits de distribucion µ-law
+
+# LPCNet real: ~1M params, 15 MFLOPS por muestra en C optimizado (tiempo real en CPU)
+# WaveNet equivalente: miles de canales con dilated convs, necesita GPU
+# Clave: GRU solo modela residuo (señal simple, casi blanca) — no la voz completa</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q9 · LPCNet vs WaveNet eficiencia</h4>
+    <p class="quiz-q">¿Por qué LPCNet puede ejecutarse en tiempo real en CPU (15 MFLOPS) mientras WaveNet necesita GPU, manteniendo calidad comparable?</p>
+    <details><summary>Ver respuesta</summary><p>La GRU de LPCNet solo necesita modelar el residuo de LPC (señal simple, casi blanca — el predictor lineal ya eliminó la estructura periódica del habla). La distribución del residuo es mucho más simple que la distribución de la señal de voz completa. Esto permite una GRU pequeña de 128 unidades vs WaveNet que necesita miles de canales para modelar la distribución completa sample-a-sample de la forma de onda.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Codificadores</div>
+    <div class="module-title">Codificadores de Voz: MELPe, ACELP y Estándares</div>
+    <div class="module-sub">Telecomunicaciones vocales: de 600 bps militares a 64kbps PCM</div>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa de estándares de codificación vocal</h3>
+    <table>
+      <tr><th>Estándar</th><th>Bitrate</th><th>Paradigma</th><th>Uso</th></tr>
+      <tr><td>MELPe (FS-1015)</td><td>600–2400 bps</td><td>MELP análisis paramétrico</td><td>Militar, cifrado</td></tr>
+      <tr><td>ACELP (G.729)</td><td>8 kbps</td><td>Codificación algebraica</td><td>VoIP corporativo</td></tr>
+      <tr><td>AMR (3GPP)</td><td>4.75–12.2 kbps</td><td>Multirate ACELP</td><td>GSM/LTE</td></tr>
+      <tr><td>Opus</td><td>6–510 kbps</td><td>SILK+CELT híbrido</td><td>WebRTC, VoIP</td></tr>
+      <tr><td>EVS (3GPP)</td><td>5.9–128 kbps</td><td>ACELP+TCX</td><td>5G, banda ancha</td></tr>
+      <tr><td>PCM G.711</td><td>64 kbps</td><td>µ-law 8kHz</td><td>PSTN, VoIP legacy</td></tr>
+    </table>
+    <p style="margin-top:10px;"><strong>Principio MELPe a 600bps:</strong> transmite solo F0, periodicidad, 10 coefs LPC y bandas de ruido. La voz se reconstituye enteramente en el receptor. Lo que se pierde: la microestructura del residuo (excitación real del tracto) — por eso suena sintético.</p>
+  </div>
+
+  <div class="card">
+    <h3>Simulación de vocoder paramétrico y bitrate</h3>
+    <pre>def estimate_bitrate(order=10, frame_ms=20):
+    frames_per_sec = 1000 / frame_ms  # 50 frames/s
+    bits_voiced    = 1
+    bits_f0        = 7   # 128 niveles → 60-500 Hz
+    bits_lpc       = order * 6  # 6 bits por coeficiente
+    bits_gain      = 5   # 32 niveles
+    bits_per_frame = bits_voiced + bits_f0 + bits_lpc + bits_gain
+    bitrate        = bits_per_frame * frames_per_sec
+    print(f"Vocoder parametrico: {bitrate:.0f} bps")
+    return bitrate
+
+estimate_bitrate(order=10, frame_ms=20)  # ~750 bps, cerca de MELPe</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q10 · MELPe 600bps vs PCM 64kbps</h4>
+    <p class="quiz-q">MELPe a 600bps es inteligible pero suena sintético. ¿Qué información exacta se pierde respecto a PCM a 64kbps?</p>
+    <details><summary>Ver respuesta</summary><p>MELPe transmite solo los parámetros: F0, periodicidad, 10 coefs LPC y bandas de ruido. La voz se reconstituye sintetizando excitación con pulsos/ruido ideales. PCM preserva cada muestra de la forma de onda real, incluyendo todas las irregularidades glotales, la microestructura del residuo de predicción, las variaciones ciclo-a-ciclo del pitch y los transitorios de consonantes — todo esto da "naturalidad" que el modelo paramétrico no puede capturar con solo F0 y LPC.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · TTS Neural</div>
+    <div class="module-title">Text-to-Speech Neural End-to-End</div>
+    <div class="module-sub">Tacotron2 + HiFi-GAN: del texto a la forma de onda en dos etapas</div>
+  </div>
+
+  <div class="card">
+    <h3>Pipeline TTS moderno</h3>
+    <table>
+      <tr><th>Etapa</th><th>Input</th><th>Output</th><th>Modelo</th></tr>
+      <tr><td>Text normalization</td><td>Texto</td><td>Secuencia fonemas/grafemas</td><td>Reglas + FST</td></tr>
+      <tr><td>Acoustic model</td><td>Fonemas</td><td>Mel-spectrograma 80-band</td><td>Tacotron2, FastSpeech2</td></tr>
+      <tr><td>Vocoder</td><td>Mel-spec</td><td>Forma de onda PCM</td><td>HiFi-GAN, WaveGlow</td></tr>
+      <tr><td>Post-processing</td><td>PCM</td><td>PCM normalizado</td><td>EQ, loudness norm.</td></tr>
+    </table>
+    <p style="margin-top:10px;"><strong>HiFi-GAN (2020):</strong> vocoder GAN con Multi-Period Discriminator (MPD) sobre períodos primos [2,3,5,7,11] — coprimos entre sí → cada discriminador captura estructura periódica diferente sin solapamiento. Multi-Scale Discriminator (MSD) para cobertura multi-escala. Genera audio 22kHz en tiempo real en CPU.</p>
+  </div>
+
+  <div class="card">
+    <h3>HiFi-GAN Generator</h3>
+    <pre>class ResBlock(nn.Module):
+    def __init__(self, channels, kernel_size=3, dilations=(1,3,5)):
+        super().__init__()
+        self.convs = nn.ModuleList([
+            nn.utils.weight_norm(nn.Conv1d(
+                channels, channels, kernel_size,
+                dilation=d, padding=(kernel_size-1)*d//2))
+            for d in dilations])
+    def forward(self, x):
+        for conv in self.convs:
+            x = x + conv(F.leaky_relu(x, 0.1))
+        return x
+
+# Upsampling: rates [8,8,2,2] = 256x total
+# Si mel se extrae con hop_length=256: 1 frame mel → 256 muestras de audio
+# Reconstruye exactamente la longitud original de la forma de onda
+
+gen = HiFiGANGenerator(in_channels=80, h_u=128)
+mel = torch.randn(1, 80, 100)  # 100 frames
+wav = gen(mel)                  # → (1, 1, 25600) samples</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q11 · Discriminadores primos en HiFi-GAN</h4>
+    <p class="quiz-q">HiFi-GAN usa discriminadores en períodos primos [2,3,5,7,11]. ¿Por qué específicamente primos y no cualquier selección de períodos?</p>
+    <details><summary>Ver respuesta</summary><p>Los períodos primos son coprimos entre sí (MCD=1 para cualquier par). Esto garantiza que cada discriminador captura una estructura periódica diferente sin solapamiento entre sus patrones de análisis. Por ejemplo, un discriminador con período 6 cubriría parcialmente los de períodos 2 y 3. Con primos, se maximiza la diversidad de perspectivas sobre la señal, cubriendo un amplio espectro de periodicidades armónicas sin redundancia.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Voice Conversion</div>
+    <div class="module-title">Voice Conversion y Clonación de Voz</div>
+    <div class="module-sub">Cambiar el timbre sin cambiar el contenido: VAE, CycleGAN y Speaker Embeddings</div>
+  </div>
+
+  <div class="card">
+    <h3>Técnicas de Voice Conversion</h3>
+    <table>
+      <tr><th>Técnica</th><th>Datos requeridos</th><th>Calidad</th><th>Uso</th></tr>
+      <tr><td>Parallel VC (DTW alineado)</td><td>Pares paralelos A↔B</td><td>Alta</td><td>Conversión supervisada</td></tr>
+      <tr><td>CycleGAN-VC</td><td>No paralelo</td><td>Media-alta</td><td>Sin pares etiquetados</td></tr>
+      <tr><td>VAE-VC</td><td>No paralelo</td><td>Media</td><td>Desacoplamiento contenido/timbre</td></tr>
+      <tr><td>Zero-Shot (VITS/YourTTS)</td><td>3–10s de referencia</td><td>Alta</td><td>Clonación rápida (15.ai, Eleven)</td></tr>
+    </table>
+    <p style="margin-top:10px;"><strong>Speaker Embedding:</strong> vector de identidad del locutor (256-d) extraído por red de speaker verification (d-vector, x-vector). El VAE separa el espacio latente en contenido fonético (invariante al locutor) y estilo/timbre — permitiendo recombinar el contenido de A con el timbre de B.</p>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q12 · VAE separación contenido/timbre</h4>
+    <p class="quiz-q">¿Por qué el VAE para voice conversion separa el espacio latente en contenido fonético y estilo/timbre? ¿Qué permite esta separación que no es posible sin ella?</p>
+    <details><summary>Ver respuesta</summary><p>Para poder recombinar: el encoder comprime por separado el contenido fonético (qué se dice — fonemas, prosodia, invariante al locutor) y el estilo tímbrico (cómo suena — identidad del locutor). El decoder puede entonces generar la voz del locutor target combinando el contenido de A con el timbre de B. Sin esta separación, el espacio latente mezcla ambas dimensiones y es imposible manipular una sin alterar la otra.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Psicoacústica Vocal</div>
+    <div class="module-title">Psicoacústica Vocal: Efecto Haas y Espacialización</div>
+    <div class="module-sub">ITD/ILD binaural, efecto de precedencia y síntesis de voz 3D</div>
+  </div>
+
+  <div class="card">
+    <h3>Parámetros binaurales</h3>
+    <table>
+      <tr><th>Parámetro binaural</th><th>Rango</th><th>Sensibilidad</th></tr>
+      <tr><td>ITD (Interaural Time Difference)</td><td>0–690 µs</td><td>&lt;10 µs detectable</td></tr>
+      <tr><td>ILD (Interaural Level Difference)</td><td>0–20 dB</td><td>1 dB detectable</td></tr>
+      <tr><td>Haas fusion window</td><td>&lt;40ms</td><td>Percepción como un evento</td></tr>
+      <tr><td>Echo threshold</td><td>40–80ms</td><td>Inicio de percepción de eco</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Espacialización binaural con ITD/ILD</h3>
+    <pre>def apply_itd_ild(signal, itd_us=300, ild_db=6, sr=44100):
+    """Fuente a la derecha: oido izquierdo llega tarde y mas debil."""
+    itd_samples = int(itd_us * 1e-6 * sr)
+    right = signal.copy()
+    left  = np.zeros(len(signal) + itd_samples)
+    left[itd_samples:] = signal
+    left  = left[:len(signal)]
+    left *= 10 ** (-ild_db / 20)  # ILD: el oido mas lejano recibe menos nivel
+    return np.column_stack([left, right])
+
+def haas_demo(voice, sr=44100, delay_ms=20):
+    """
+    delay_ms < 40ms: fusion → percepcion de un solo evento
+    delay_ms 40-80ms: eco perturbador que degrada inteligibilidad
+    delay_ms > 80ms: eco claramente separado
+    """
+    delay_samples = int(delay_ms * 0.001 * sr)
+    reflection    = np.concatenate([np.zeros(delay_samples), voice])[:len(voice)] * 0.7
+    return voice + reflection
+
+# ITD 300µs @ 44100Hz = 13 muestras de retardo
+stereo = apply_itd_ild(voice, itd_us=300, ild_db=6, sr=44100)
+print(f"ITD 300µs @ 44100Hz = {int(300e-6*44100)} muestras")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q13 · Efecto Haas 40–80ms</h4>
+    <p class="quiz-q">El efecto Haas funciona con retardos &lt;40ms (fusión). ¿Qué ocurre exactamente con retardos de 40–80ms? ¿Por qué es la zona más problemática?</p>
+    <details><summary>Ver respuesta</summary><p>Los dos sonidos se perciben como eventos separados (la imagen de fusión se rompe), pero la reflexión todavía no es claramente un eco distinto: es la zona de "eco perturbador" o "haas breakout" que degrada la inteligibilidad sin ser percibido como eco natural. El cerebro ya no puede fusionar los dos eventos pero tampoco los separa cognitivamente como señal directa + reflexión ambiental — produce confusión perceptual y reduce la claridad de la voz.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto Final — The Human Synthesizer</div>
+    <div class="module-sub">Pipeline completo: análisis LPC + síntesis paramétrica + vocoder neural</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica del Proyecto HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>LPC Análisis + Síntesis</td><td>Orden p justificado, SNR reconstrucción ≥20dB, visualización filtro</td><td>25</td></tr>
+        <tr><td>Pitch tracking V/UV</td><td>F0 error &lt;5% vs pYIN, decisión V/UV accuracy ≥85%</td><td>20</td></tr>
+        <tr><td>Cepstrum y separación</td><td>Envolvente espectral visible, pico de pitch en quefrency</td><td>20</td></tr>
+        <tr><td>Síntesis de vocales</td><td>≥3 vocales audiblemente distinguibles con formantes</td><td>15</td></tr>
+        <tr><td>Integración neural (DDSP/LPCNet)</td><td>Pipeline TTS o VC funcional con librería open-source</td><td>15</td></tr>
+        <tr><td>Documentación y demo audio</td><td>Notebook ejecutable + 3 archivos WAV de demo</td><td>5</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman — Explica sin notas</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Orden LPC y sobreajuste</h4>
+      <p class="quiz-q">Si aumentas el orden LPC de p=10 a p=20 en una señal de voz a 8kHz, ¿qué sucede con la calidad de síntesis y por qué existe un orden óptimo?</p>
+      <details><summary>Ver respuesta</summary><p>A 8kHz con p=20, el filtro puede empezar a modelar la excitación glotal en lugar de solo el tracto, causando sobreajuste: el residuo de predicción deja de ser "casi blanco" y contiene estructura del tracto — la síntesis degrada porque el filtro de síntesis 1/A(z) ya no representa puramente el tracto. La regla: p ≈ sr_kHz × 1.5 + 4 para voz (2 polos por formante). A 8kHz: p ≈ 12–16 máximo.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · Cepstrum F0 y quefrency</h4>
+      <p class="quiz-q">Si quieres estimar el pitch via cepstrum y la señal tiene F0=200Hz a sr=16kHz, ¿en qué muestra exacta de quefrency buscas el pico y cómo lo calculas?</p>
+      <details><summary>Ver respuesta</summary><p>Muestra 80: T0 = sr/F0 = 16000/200 = 80 muestras = 5ms de quefrency. El procedimiento: calcular cepstrum, aplicar lifter de paso-alto (cortar quefrencias bajas del tracto, retener altas del pitch), buscar el pico más alto en el rango [sr/F0_max, sr/F0_min] = [32, 267] muestras para voz (F0 entre 60–500Hz). El pico en muestra 80 corresponde exactamente a la periodicidad de la señal.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · WaveNet vs LPCNet en inferencia</h4>
+      <p class="quiz-q">¿Por qué WaveNet necesita GPU para inferencia en tiempo real pero LPCNet puede correr en CPU de bajo coste, siendo ambos modelos autoregresivos?</p>
+      <details><summary>Ver respuesta</summary><p>WaveNet necesita miles de canales con dilated convolutions para modelar la distribución completa de la forma de onda sample-a-sample: cada paso forward involucra grandes operaciones de convolución en paralelo que se benefician de GPU. LPCNet solo modela el residuo de LPC con una GRU de 128 unidades (el predictor lineal ya factorizó la mayor parte de la estructura): 15 MFLOPS por muestra vs cientos de MFLOPS de WaveNet. La parte más costosa (la predicción lineal de LPC) es O(p) y se hace en C nativo.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · DDSP Multi-Scale Loss</h4>
+      <p class="quiz-q">¿Por qué DDSP usa pérdida multi-resolución espectral en lugar de MSE en el dominio temporal? Explica el principio de incertidumbre de Heisenberg en este contexto.</p>
+      <details><summary>Ver respuesta</summary><p>MSE en tiempo es sensible a desajustes de fase: dos sinusoides idénticas desfasadas en π tienen MSE máximo aunque suenen igual — gradientes no informativos. La pérdida espectral (magnitudes) es invariante a fase. La multi-resolución aborda el principio de Heisenberg tiempo-frecuencia: no puedes tener buena resolución temporal y frecuencial simultáneamente con un solo tamaño de FFT. FFT 512 = buena resolución temporal (transitorios), FFT 2048 = buena resolución frecuencial (tonos sostenidos). La combinación cubre el espacio completo.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · HiFi-GAN upsample ratio</h4>
+      <p class="quiz-q">HiFi-GAN usa upsample rates [8,8,2,2] para un mel-spectrograma extraído con hop_length=256 a 22050Hz. ¿Qué ratio total produce y por qué debe coincidir con el hop_length?</p>
+      <details><summary>Ver respuesta</summary><p>8×8×2×2 = 256× total. Debe coincidir con el hop_length porque el mel-spectrograma tiene 1 frame por cada hop_length muestras del audio original. Si el hop_length es 256, cada frame mel representa 256 muestras de audio. El generador debe producir exactamente 256 muestras por frame mel para reconstruir una señal de longitud T_audio = T_frames × 256 muestras. Con ratio 256 y 100 frames mel: 25600 muestras = 1.16s a 22050Hz.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_dsp_vocal_sintesis_habla_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Ecosistema DSP Vocal'},
+    {id:'m1',  label:'M1 · Modelo Fuente-Filtro'},
+    {id:'m2',  label:'M2 · LPC'},
+    {id:'m3',  label:'M3 · Cepstrum'},
+    {id:'m4',  label:'M4 · Pitch V/UV'},
+    {id:'m5',  label:'M5 · MFCC Voz'},
+    {id:'m6',  label:'M6 · Waveguide KL'},
+    {id:'m7',  label:'M7 · WaveNet'},
+    {id:'m8',  label:'M8 · DDSP'},
+    {id:'m9',  label:'M9 · LPCNet'},
+    {id:'m10', label:'M10 · Estándares Voz'},
+    {id:'m11', label:'M11 · TTS Neural'},
+    {id:'m12', label:'M12 · Voice Conversion'},
+    {id:'m13', label:'M13 · Psicoacústica'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+  function save(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
+  function buildNav(){
+    const nav=document.getElementById('nav-list'); nav.innerHTML='';
+    MODULES.forEach(m=>{
+      const el=document.createElement('div');
+      el.className='nav-item'+(state.done.includes(m.id)?' done':'')+(state.current===m.id?' active':'');
+      el.innerHTML=`<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick=()=>goTo(m.id); nav.appendChild(el);
+    }); updateProgress();
+  }
+  function updateProgress(){
+    const pct=Math.round((state.done.length/MODULES.length)*100);
+    document.getElementById('pct').textContent=pct+'%';
+    document.getElementById('progress-bar').style.width=pct+'%';
+  }
+  window.goTo=function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current=id; save(); buildNav(); window.scrollTo(0,0);
+  };
+  window.completeAndNext=function(current,next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save(); if(next) goTo(next); else buildNav();
+  };
+  buildNav(); goTo(state.current);
+})();
+</script>
+</body>
+</html>

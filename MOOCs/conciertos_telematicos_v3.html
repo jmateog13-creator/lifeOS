@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NMP & Conciertos Telemáticos v3</title>
+<style>
+:root {
+  --bg:#0f172a; --surface:#1e293b; --surface2:#334155;
+  --accent:#10b981; --accent2:#34d399; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#334155;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'Fira Code',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+/* SIDEBAR */
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(16,185,129,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* MAIN */
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+/* CODE */
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#0d1117;padding:2px 6px;border-radius:4px}
+/* SVG ECOSYSTEM */
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+/* FORMULA */
+.formula{background:rgba(16,185,129,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+/* METRICS GRID */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:22px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+/* WARN BOX */
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+/* HERO */
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(16,185,129,.07);border-radius:6px;line-height:1.6}
+/* BTN */
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+/* HIGHLIGHT */
+.hl-green{color:var(--green)} .hl-red{color:var(--red)} .hl-blue{color:var(--blue)} .hl-amber{color:var(--warn)} .hl-cyan{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>NMP & Conciertos Telemáticos</h2>
+    <p>Networking Musical a Baja Latencia</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introducción</div>
+    <div class="module-title">Ecosistema del Concierto Telemático</div>
+    <div class="module-sub">Latencia, protocolos de red y rendimiento musical distribuido</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg width="820" height="260" viewBox="0 0 820 260" font-family="Inter,sans-serif" font-size="12">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 Z" fill="#10b981"/>
+        </marker>
+      </defs>
+      <!-- Nodes -->
+      <!-- Performer A -->
+      <rect x="10" y="90" width="130" height="80" rx="8" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+      <text x="75" y="125" text-anchor="middle" fill="#10b981" font-weight="700">Performer A</text>
+      <text x="75" y="143" text-anchor="middle" fill="#94a3b8" font-size="10">JACK / Core Audio</text>
+      <text x="75" y="158" text-anchor="middle" fill="#94a3b8" font-size="10">Buffer: 64 samples</text>
+      <!-- Audio Interface -->
+      <rect x="165" y="95" width="110" height="70" rx="8" fill="#1e293b" stroke="#334155"/>
+      <text x="220" y="127" text-anchor="middle" fill="#e2e8f0" font-weight="600">Audio I/O</text>
+      <text x="220" y="143" text-anchor="middle" fill="#94a3b8" font-size="10">1.33ms @ 48kHz</text>
+      <text x="220" y="158" text-anchor="middle" fill="#94a3b8" font-size="10">ADC/DAC</text>
+      <!-- JackTrip -->
+      <rect x="300" y="85" width="120" height="90" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="360" y="120" text-anchor="middle" fill="#3b82f6" font-weight="700">JackTrip</text>
+      <text x="360" y="137" text-anchor="middle" fill="#94a3b8" font-size="10">UDP/RTP</text>
+      <text x="360" y="152" text-anchor="middle" fill="#94a3b8" font-size="10">FEC -r2</text>
+      <text x="360" y="167" text-anchor="middle" fill="#94a3b8" font-size="10">NetEQ PLC</text>
+      <!-- Network -->
+      <rect x="450" y="75" width="130" height="110" rx="8" fill="#0d1117" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="515" y="110" text-anchor="middle" fill="#f59e0b" font-weight="700">RED / WAN</text>
+      <text x="515" y="128" text-anchor="middle" fill="#94a3b8" font-size="10">Fiber: 4.9µs/km</text>
+      <text x="515" y="144" text-anchor="middle" fill="#94a3b8" font-size="10">AES67/PTP</text>
+      <text x="515" y="160" text-anchor="middle" fill="#94a3b8" font-size="10">Dante/RAVENNA</text>
+      <text x="515" y="176" text-anchor="middle" fill="#94a3b8" font-size="10">MEC/5G URLLC</text>
+      <!-- JackTrip B -->
+      <rect x="608" y="85" width="110" height="90" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="663" y="120" text-anchor="middle" fill="#3b82f6" font-weight="700">JackTrip B</text>
+      <text x="663" y="137" text-anchor="middle" fill="#94a3b8" font-size="10">AR PLC</text>
+      <text x="663" y="152" text-anchor="middle" fill="#94a3b8" font-size="10">Jitter Buffer</text>
+      <text x="663" y="167" text-anchor="middle" fill="#94a3b8" font-size="10">NetEQ</text>
+      <!-- Performer B -->
+      <rect x="745" y="90" width="65" height="80" rx="8" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+      <text x="777" y="128" text-anchor="middle" fill="#10b981" font-weight="700">Perf B</text>
+      <text x="777" y="144" text-anchor="middle" fill="#94a3b8" font-size="10">JACK</text>
+      <text x="777" y="159" text-anchor="middle" fill="#94a3b8" font-size="10">64 buf</text>
+      <!-- Arrows -->
+      <line x1="140" y1="130" x2="165" y2="130" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="275" y1="130" x2="300" y2="130" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="420" y1="130" x2="450" y2="130" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="580" y1="130" x2="608" y2="130" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="718" y1="130" x2="745" y2="130" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr)"/>
+      <!-- Latency Budget -->
+      <rect x="10" y="200" width="800" height="48" rx="6" fill="#0d1117" stroke="#334155"/>
+      <text x="30" y="222" fill="#94a3b8" font-size="11">L_total = </text>
+      <text x="90" y="222" fill="#22c55e" font-size="11">L_io(1.33ms)</text>
+      <text x="180" y="222" fill="#94a3b8" font-size="11"> + </text>
+      <text x="200" y="222" fill="#3b82f6" font-size="11">L_buf(1.33ms)</text>
+      <text x="285" y="222" fill="#94a3b8" font-size="11"> + </text>
+      <text x="305" y="222" fill="#f59e0b" font-size="11">L_proc(≈0ms)</text>
+      <text x="390" y="222" fill="#94a3b8" font-size="11"> + </text>
+      <text x="408" y="222" fill="#ef4444" font-size="11">L_net(variable)</text>
+      <text x="510" y="222" fill="#94a3b8" font-size="11"> + </text>
+      <text x="528" y="222" fill="#a855f7" font-size="11">L_jitter</text>
+      <text x="600" y="222" fill="#94a3b8" font-size="11"> → meta: </text>
+      <text x="650" y="222" fill="#10b981" font-weight="700" font-size="11">&lt; 25ms (sweet spot) / &lt; 50ms (tolerable)</text>
+      <text x="30" y="240" fill="#94a3b8" font-size="10">Buffer: T = Samples/fs  →  64/48000 = 1.33ms   |   Fiber: latency = length / (2/3·c) = 4.9µs/km</text>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">&lt;25ms</div><div class="metric-label">Sweet spot NMP</div></div>
+    <div class="metric"><div class="metric-val">64</div><div class="metric-label">Buffer samples (JACK)</div></div>
+    <div class="metric"><div class="metric-val">1.33ms</div><div class="metric-label">T_buf @ 48kHz</div></div>
+    <div class="metric"><div class="metric-val">4.9µs/km</div><div class="metric-label">Latencia fibra óptica</div></div>
+    <div class="metric"><div class="metric-val">864kbps</div><div class="metric-label">Ancho de banda NMP</div></div>
+    <div class="metric"><div class="metric-val">&lt;1µs</div><div class="metric-label">Sync PTP IEEE 1588</div></div>
+  </div>
+
+  <div class="card">
+    <h3>¿Por qué NMP es diferente al streaming?</h3>
+    <p>El streaming (Spotify, YouTube) tolera 2-5s de latencia. La música colaborativa en tiempo real requiere <strong>&lt;25ms</strong> end-to-end para que el músico perciba interacción natural. Por encima de 50ms, la interacción musical se rompe (equivale a 17m de distancia física). TCP introduce Head-of-Line Blocking (HOL): un paquete perdido bloquea toda la cola → obligatorio UDP/RTP para NMP.</p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Fundamentos</div>
+    <div class="module-title">Presupuesto de Latencia</div>
+    <div class="module-sub">L_total = L_io + L_buf + L_proc + L_net + L_jitter</div>
+  </div>
+
+  <div class="formula">L_total = L_io + L_buf + L_proc + L_net + L_jitter<br>
+T_buf = Samples / f_s → 64 / 48000 = 1.333 ms<br>
+T_fiber = length / ((2/3) · c) = length · 4.9 µs/km<br>
+T_jitter_buf = JB_size / f_s (adaptive: 10-80ms)</div>
+
+  <div class="card">
+    <h3>Desglose del Presupuesto</h3>
+    <table>
+      <tr><th>Componente</th><th>Fórmula</th><th>Típico</th><th>Optimizable</th></tr>
+      <tr><td>L_io (ADC/DAC)</td><td>~2 × T_buf</td><td>2.67ms</td><td>Parcialmente</td></tr>
+      <tr><td>L_buf (JACK buffer)</td><td>Samples/fs</td><td>1.33ms</td><td>Sí (min 32s)</td></tr>
+      <tr><td>L_proc (DSP)</td><td>algoritmo-dependiente</td><td>0–2ms</td><td>Sí</td></tr>
+      <tr><td>L_net (propagación)</td><td>length/((2/3)·c)</td><td>2–50ms</td><td>No (física)</td></tr>
+      <tr><td>L_jitter (buffer)</td><td>3σ jitter</td><td>5–20ms</td><td>NetEQ adaptativo</td></tr>
+    </table>
+    <p><strong>Meta práctica:</strong> Con dos artistas en la misma ciudad (≤20km fibra, 0.1ms red): L_total ≈ 1.33+1.33+0.1+5 ≈ 8ms. Inter-continental (100ms red): imposible &lt;25ms → usar directores virtuales o retardo intencional.</p>
+  </div>
+
+  <div class="card">
+    <h3>Optimización de Buffer JACK</h3>
+    <pre>
+# Iniciar JACK con buffer 64 samples @ 48kHz → 1.33ms
+jackd -d alsa -d hw:0 -r 48000 -p 64 -n 2
+
+# Verificar latencia real (debe ser &lt;3ms por lado)
+jack_iodelay
+
+# Con RTIRQ para prioridad de interrupción (Linux RT kernel)
+sudo rtirq start
+sudo chrt -f 90 jackd -d alsa -d hw:0 -r 48000 -p 64 -n 2
+
+# macOS: Core Audio con buffer mínimo
+# En JACK OSX: -p 64 equivale a ~1.45ms (driver overhead)</pre>
+  </div>
+
+  <div class="card">
+    <h3>Latencia de Fibra Óptica</h3>
+    <pre>
+import math
+
+def fiber_latency_ms(distance_km: float, n_refraction: float = 1.4682) -> float:
+    """
+    SMF-28 @ 1550nm: n = 1.4682
+    Latencia ONE-WAY = distance / (c/n) = distance * n / c
+    Aprox: 4.9µs/km
+    """
+    c = 3e8  # m/s
+    v_fiber = c / n_refraction
+    latency_s = (distance_km * 1000) / v_fiber
+    return latency_s * 1000  # en ms
+
+# Madrid-Barcelona (~620km): 3.04ms one-way
+print(f"Madrid-Bcn: {fiber_latency_ms(620):.2f}ms one-way")
+# Madrid-NY (~7000km): 34.3ms one-way → RTT ≈ 68ms → imposible NMP
+print(f"Madrid-NY: {fiber_latency_ms(7000):.2f}ms one-way")</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← M0</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Protocolo</div>
+    <div class="module-title">UDP/RTP vs TCP — Por qué importa</div>
+    <div class="module-sub">Head-of-Line Blocking, RTP payload, redundancia FEC</div>
+  </div>
+
+  <div class="warn-box"><strong>⚠ Regla de oro:</strong> NUNCA usar TCP para audio en tiempo real. El HOL Blocking de TCP puede introducir hasta 200ms+ de latencia adicional en condición de pérdida de 1 solo paquete.</div>
+
+  <div class="card">
+    <h3>TCP Head-of-Line Blocking</h3>
+    <p>TCP garantiza entrega en orden. Si el paquete Nº5 se pierde, los paquetes 6,7,8... se retienen en el buffer del receptor hasta que llega la retransmisión del 5. En audio, este retraso crea un "glitch" amplificado por el RTT de la red.</p>
+    <ul>
+      <li><strong>RTP sobre UDP:</strong> Los paquetes llegan (o no). Si uno se pierde, el siguiente se procesa igualmente. El PLC rellena el hueco.</li>
+      <li><strong>QUIC (HTTP/3):</strong> UDP-based, streams independientes → elimina HOL entre streams. Experimental para NMP.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Estructura de Paquete RTP</h3>
+    <pre>
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|V=2|P|X|  CC   |M|     PT      |       Sequence Number         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                           Timestamp                           |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|           Synchronization Source (SSRC) identifier           |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                  Audio Payload (L16/24/OPUS)                  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+# Cálculo de ancho de banda (1ch, 16bit, 48kHz, buffer 64):
+samples_per_packet = 64
+bytes_per_sample   = 2          # L16
+channels           = 1
+rtp_header_bytes   = 12
+udp_ip_header      = 28
+
+payload  = samples_per_packet * bytes_per_sample * channels   # 128 bytes
+rtp_pkt  = payload + rtp_header_bytes + udp_ip_header         # 168 bytes
+pps      = 48000 / samples_per_packet                         # 750 paquetes/s
+bps      = pps * rtp_pkt * 8                                  # ~1.008 Mbps (1ch)
+# JackTrip bidireccional stereo: ~4 Mbps total
+print(f"{bps/1e6:.3f} Mbps (1ch L16)")</pre>
+  </div>
+
+  <div class="card">
+    <h3>FEC — Forward Error Correction en JackTrip</h3>
+    <pre>
+# JackTrip con redundancia -r2: envía cada paquete 2 veces (diferido 1 paquete)
+# Si PKT_n llega corrupto, PKT_n incluido en PKT_(n+1) como redundancia
+jacktrip -s -r 2 -o 24 -z -p 5005
+
+# Opciones clave:
+# -r 2    : 2 paquetes redundantes (FEC ligero)
+# -o 24   : port offset (24 canales)
+# -z      : zero underrun (rellena silencio en lugar de repetir)
+# -p 5005 : puerto UDP base
+
+# Alternativa: Opus con FEC (50% overhead, recupera 1 paquete)
+import opuslib
+encoder = opuslib.Encoder(48000, 1, opuslib.APPLICATION_AUDIO)
+encoder.fec = True
+encoder.packet_loss_perc = 10  # anticipa 10% pérdida</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← M1</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Ocultación</div>
+    <div class="module-title">Packet Loss Concealment — AR PLC & NetEQ</div>
+    <div class="module-sub">Modelo autoregresivo, GRU correction, NetEQ decision logic</div>
+  </div>
+
+  <div class="formula">AR PLC: y[n] = Σᵢ φᵢ · y[n−i] + ε[n]<br>
+Coeficientes φᵢ estimados por Levinson-Durbin (p=10-16)<br>
+GRU correction: r[n] = GRU(features) para residuo no-lineal</div>
+
+  <div class="card">
+    <h3>AR PLC — Predicción Lineal para Ocultación</h3>
+    <pre>
+import numpy as np
+
+def ar_plc(history: np.ndarray, order: int = 10, frames_to_conceal: int = 1) -> np.ndarray:
+    """
+    Modelo AR de orden p para predecir muestras perdidas.
+    history: últimas muestras conocidas (mínimo order)
+    """
+    from scipy.signal import lfilter
+
+    # Estimar coeficientes AR (Yule-Walker / Levinson-Durbin)
+    r = np.correlate(history, history, mode='full')
+    r = r[len(r)//2:][:order+1]
+
+    # Resolver sistema Toeplitz: R*a = r[1:]
+    from scipy.linalg import solve_toeplitz
+    a = solve_toeplitz(r[:order], -r[1:order+1])
+
+    # Generar frames de ocultación
+    buf = list(history[-order:])
+    concealed = []
+    for _ in range(frames_to_conceal * 64):  # 64 muestras/frame
+        y_pred = sum(a[i] * buf[-(i+1)] for i in range(order))
+        buf.append(y_pred)
+        concealed.append(y_pred)
+
+    # Aplicar fade-out para evitar clics
+    result = np.array(concealed)
+    fade = np.linspace(1.0, 0.3, len(result))
+    return result * fade</pre>
+  </div>
+
+  <div class="card">
+    <h3>NetEQ — Máquina de Estados Adaptativa</h3>
+    <table>
+      <tr><th>Estado</th><th>Condición</th><th>Acción</th></tr>
+      <tr><td>Normal</td><td>Buffer OK, sin pérdida</td><td>Play directo</td></tr>
+      <tr><td>Accelerate</td><td>Buffer lleno (&gt;2× objetivo)</td><td>WSOLA compresión temporal</td></tr>
+      <tr><td>Preemptive Expand</td><td>Buffer bajo (≤1× objetivo)</td><td>WSOLA expansión temporal</td></tr>
+      <tr><td>PLC (AR)</td><td>Paquete perdido</td><td>AR synthesis + fade-out</td></tr>
+      <tr><td>CNG</td><td>VAD silencio + pérdida</td><td>Comfort noise generado</td></tr>
+    </table>
+    <pre>
+class NetEQState:
+    """Simplificación de la lógica de decisión de NetEQ (WebRTC)"""
+    NORMAL = "normal"
+    ACCELERATE = "accelerate"
+    EXPAND = "expand"
+    PLC = "plc"
+
+    def __init__(self, target_buf_ms=50, fs=48000):
+        self.target = int(target_buf_ms * fs / 1000)
+        self.buffer = []
+        self.state = self.NORMAL
+
+    def decide(self, packet_arrived: bool) -> str:
+        buf_len = len(self.buffer)
+        if not packet_arrived:
+            self.state = self.PLC
+        elif buf_len > 2 * self.target:
+            self.state = self.ACCELERATE
+        elif buf_len < self.target // 2:
+            self.state = self.EXPAND
+        else:
+            self.state = self.NORMAL
+        return self.state</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← M2</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · JackTrip</div>
+    <div class="module-title">JackTrip — Configuración y Flujo</div>
+    <div class="module-sub">CLI, HUB mode, señales bidireccionales, Web JackTrip</div>
+  </div>
+
+  <div class="card">
+    <h3>Arquitecturas JackTrip</h3>
+    <pre>
+# ==========================================
+# MODO P2P (dos artistas)
+# ==========================================
+# Servidor (artista A — IP pública o port-forwarded)
+jacktrip -s -r 2 -z -p 5005
+
+# Cliente (artista B)
+jacktrip -c 192.168.1.100 -r 2 -z -p 5005
+
+# ==========================================
+# HUB MODE (múltiples artistas — director virtual)
+# ==========================================
+# Servidor hub (cloud VM — baja latencia con artistas)
+jacktrip -S --nojackportsconnect -p 5005
+
+# Cada artista conecta:
+jacktrip -C hub.myserver.com -p 5005
+
+# ==========================================
+# Web JackTrip (browser-based, WebRTC + JACK)
+# ==========================================
+# Usa Opus en WebRTC con constraints de latencia:
+const constraints = {
+  audio: {
+    sampleRate: 48000,
+    channelCount: 1,
+    echoCancellation: false,   // ¡crítico! ECN agrega latencia
+    noiseSuppression: false,   // idem
+    autoGainControl: false,
+    latency: 0.001             // hint 1ms (navegador puede ignorar)
+  }
+};</pre>
+  </div>
+
+  <div class="card">
+    <h3>Optimización del Sistema Operativo</h3>
+    <pre>
+# Linux: kernel RT + IRQ affinity
+sudo apt install linux-image-rt-amd64
+sudo cpupower frequency-set -g performance
+sudo rtirq start
+
+# Verificar que JACK corre con prioridad RT
+ps -eo pid,rtprio,cmd | grep jackd  # debe mostrar rtprio: 70-90
+
+# macOS: deshabilitar Spotlight durante el concierto
+sudo mdutil -a -i off
+# Aumentar buffer del kernel de audio
+sudo sysctl -w kern.sched_rt_period_us=1000000
+
+# Windows: ASIO driver (latencia ≈ 1-3ms vs 10ms+ WASAPI)
+# Usar ASIO4ALL o driver nativo de la interfaz</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← M3</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Sincronización</div>
+    <div class="module-title">AES67, Dante y PTP IEEE 1588</div>
+    <div class="module-sub">Sub-microsegundo sync, network media clock, interoperabilidad</div>
+  </div>
+
+  <div class="formula">PTP Sync: T_offset = ((T2−T1) − (T4−T3)) / 2<br>
+Dante: 0.25–1ms latencia, 512×512 matrix @ 1Gb Ethernet<br>
+AES67: payload L24 @ 48kHz, 1ms frame (48 samples/paquete)</div>
+
+  <div class="card">
+    <h3>PTP IEEE 1588 — Precision Time Protocol</h3>
+    <pre>
+# ptpd — daemon PTP en Linux
+sudo apt install ptpd
+sudo ptpd -M -i eth0 -C   # Master mode
+sudo ptpd -s -i eth0 -C   # Slave mode
+
+# linuxptp (más preciso, hardware timestamping)
+sudo ptp4l -i eth0 -m     # master
+sudo ptp4l -i eth0 -s     # slave
+sudo phc2sys -s eth0 -w   # sincroniza reloj de sistema al PTP
+
+# Verificar offset (debe ser &lt;1µs con hardware TS)
+pmc -u -b 0 'GET CURRENT_DATA_SET'
+# currentUtcOffset, offsetFromMaster (nanosegundos)</pre>
+  </div>
+
+  <div class="card">
+    <h3>Dante vs AES67 vs RAVENNA</h3>
+    <table>
+      <tr><th>Protocolo</th><th>Latencia</th><th>Canales</th><th>Red</th><th>Sync</th></tr>
+      <tr><td>Dante</td><td>0.25–1ms</td><td>512×512</td><td>1Gb Ethernet</td><td>PTP v1</td></tr>
+      <tr><td>AES67</td><td>1ms</td><td>ilimitado</td><td>IP estándar</td><td>PTP v2</td></tr>
+      <tr><td>RAVENNA</td><td>1ms</td><td>ilimitado</td><td>IP/AVB</td><td>PTP v2 / AVB</td></tr>
+      <tr><td>AVB/TSN</td><td>2ms</td><td>red local</td><td>AVB switch</td><td>gPTP (802.1AS)</td></tr>
+      <tr><td>MADI</td><td>sub-sample</td><td>64</td><td>coaxial/fibra</td><td>word clock</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← M4</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Infraestructura</div>
+    <div class="module-title">Infraestructura de Red para NMP</div>
+    <div class="module-sub">QoS, VLAN, switches AVB, MEC/5G URLLC</div>
+  </div>
+
+  <div class="card">
+    <h3>QoS y Priorización de Tráfico</h3>
+    <pre>
+# Linux: tc (traffic control) para priorizar audio UDP
+# Marcar paquetes RTP con DSCP EF (Expedited Forwarding)
+sudo tc qdisc add dev eth0 root handle 1: prio
+sudo tc filter add dev eth0 protocol ip parent 1:0 prio 1 \
+    u32 match ip dport 5005 0xffff flowid 1:1
+
+# En el router/switch: habilitar DSCP EF → cola de alta prioridad
+# DSCP EF = 0x2E (46) → latencia mínima garantizada
+
+# Verificar con iperf3 (medir jitter real)
+iperf3 -u -c 192.168.1.100 -b 10M -t 30 --dscp 46
+# Resultado: Jitter debe ser &lt;1ms en red local, &lt;5ms en LAN</pre>
+  </div>
+
+  <div class="card">
+    <h3>MEC y 5G URLLC para NMP</h3>
+    <p>Multi-Access Edge Computing (MEC) mueve el procesamiento JackTrip al borde de la red 5G, reduciendo la latencia de backhaul. URLLC (Ultra-Reliable Low-Latency Communication) garantiza &lt;1ms de latencia radio.</p>
+    <pre>
+# Optimización MILP para asignación de recursos MEC
+# Variables: x_i ∈ {0,1} (procesar localmente o en MEC)
+# Objetivo: minimizar L_total = Σ x_i·L_mec_i + (1-x_i)·L_local_i
+# Sujeto a: L_mec_i ≤ 25ms (constraint URLLC)
+#           Σ x_i·C_i ≤ C_mec (capacidad del servidor MEC)
+
+from scipy.optimize import linprog
+# n artistas, cada uno con latencia local L_local y MEC L_mec
+L_local = [8, 12, 15, 10]   # ms
+L_mec   = [3, 4, 3.5, 4.2]  # ms (MEC más rápido)
+C_req   = [10, 15, 12, 8]   # MHz de compute requerido
+C_mec_max = 30              # MHz disponibles en servidor MEC</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← M5</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Embedded</div>
+    <div class="module-title">NMP en Hardware Embebido — PIC32 Bare-Metal</div>
+    <div class="module-sub">DMA, I2S, UDP sin OS, latencia determinista</div>
+  </div>
+
+  <div class="card">
+    <h3>Arquitectura Bare-Metal para NMP</h3>
+    <pre>
+// PIC32MZ — Audio NMP bare-metal (pseudocódigo)
+// I2S DMA → buffer circular → UDP TX sin sistema operativo
+
+#include &lt;sys/attribs.h&gt;
+#include "harmony/v2_06/framework/driver/i2s/drv_i2s.h"
+
+#define SAMPLE_RATE   48000
+#define BUFFER_SAMPLES 64
+#define UDP_PORT       5005
+
+// Doble buffer para DMA (ping-pong)
+static int32_t dma_buf_a[BUFFER_SAMPLES];
+static int32_t dma_buf_b[BUFFER_SAMPLES];
+static volatile bool buf_ready = false;
+static volatile int32_t* active_buf = dma_buf_a;
+
+// ISR de DMA — se ejecuta cada 1.33ms (64/48000)
+void __ISR(_DMA0_VECTOR, ipl7SRS) DMA0_Handler(void) {
+    // Intercambiar buffers (ping-pong)
+    if (active_buf == dma_buf_a) {
+        active_buf = dma_buf_b;
+        udp_send_async(dma_buf_a, BUFFER_SAMPLES * 4);
+    } else {
+        active_buf = dma_buf_a;
+        udp_send_async(dma_buf_b, BUFFER_SAMPLES * 4);
+    }
+    buf_ready = true;
+    IFS4CLR = _IFS4_DMA0IF_MASK;  // limpiar flag
+}
+
+// Configurar DMA periódico I2S
+void init_audio_dma(void) {
+    DCH0CON  = 0x03;               // prioridad 3
+    DCH0ECON = (I2S_RX_IRQ &lt;&lt; 8); // trigger en I2S RX
+    DCH0SSA  = (uint32_t)&I2SXRXBUF;
+    DCH0DSA  = (uint32_t)dma_buf_a;
+    DCH0SSIZ = 4;
+    DCH0DSIZ = BUFFER_SAMPLES * 4;
+    DCH0CONSET = _DCH0CON_CHEN_MASK;
+}</pre>
+  </div>
+
+  <div class="card">
+    <h3>Ventajas del Bare-Metal para NMP</h3>
+    <ul>
+      <li><strong>Latencia determinista:</strong> Sin preemption de OS → jitter &lt;0.1ms</li>
+      <li><strong>Arranque rápido:</strong> &lt;100ms vs 30s de Linux embebido</li>
+      <li><strong>Bajo consumo:</strong> PIC32 a 200MHz → ≈0.5W vs Raspberry Pi 3-5W</li>
+      <li><strong>Sin overhead TCP/IP stack completo:</strong> lwIP minimal stack, solo UDP/RTP</li>
+    </ul>
+    <div class="warn-box"><strong>Desventaja:</strong> Sin OS, la gestión de red (pérdida de paquetes, reconexión) debe implementarse manualmente. Usar FreeRTOS con lwIP es un compromiso razonable (añade ~50µs de jitter).</div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← M6</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · Codec</div>
+    <div class="module-title">Codecs de Audio para NMP — Opus, L16, L24</div>
+    <div class="module-sub">Compresión vs latencia, configuración óptima de Opus para NMP</div>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa de Codecs para NMP</h3>
+    <table>
+      <tr><th>Codec</th><th>Bitrate</th><th>Latencia codec</th><th>Calidad</th><th>CPU</th></tr>
+      <tr><td>PCM L16</td><td>768kbps</td><td>0ms (sin codec)</td><td>Perfecta</td><td>Mínima</td></tr>
+      <tr><td>PCM L24</td><td>1.15Mbps</td><td>0ms</td><td>Perfecta</td><td>Mínima</td></tr>
+      <tr><td>Opus @ 64k</td><td>64kbps</td><td>2.5ms (frame 120s)</td><td>Transparente</td><td>Baja</td></tr>
+      <tr><td>Opus @ 320k</td><td>320kbps</td><td>2.5ms</td><td>Transparente+</td><td>Baja</td></tr>
+      <tr><td>FLAC</td><td>500-900kbps</td><td>variable</td><td>Lossless</td><td>Media</td></tr>
+      <tr><td>AAC-LC</td><td>128kbps</td><td>~21ms</td><td>Alta</td><td>Media</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Opus para NMP — Configuración MUSIC mode</h3>
+    <pre>
+import opuslib
+
+# NMP óptimo: modo MUSIC, frame mínimo 2.5ms
+encoder = opuslib.Encoder(
+    fs=48000,
+    channels=1,
+    application=opuslib.APPLICATION_AUDIO  # vs VOIP — sin VAD
+)
+# Frame size: 120 muestras = 2.5ms @ 48kHz (mínimo Opus)
+# Nota: JackTrip usa L16 sin codec por defecto
+FRAME_SIZE = 120  # 2.5ms
+
+encoder.bitrate = 320_000    # 320kbps para máxima calidad musical
+encoder.complexity = 10      # máxima calidad computacional
+encoder.fec = True           # FEC interno Opus
+encoder.packet_loss_perc = 5 # anticipa 5% pérdida
+encoder.bandwidth = opuslib.BANDWIDTH_FULLBAND  # 20kHz
+
+def encode_frame(pcm_float32: list) -> bytes:
+    # Convertir float32 [-1,1] a int16
+    pcm_int16 = [int(max(-32768, min(32767, s * 32767))) for s in pcm_float32]
+    return encoder.encode(bytes(pcm_int16), FRAME_SIZE)</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← M7</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Psicoacústica</div>
+    <div class="module-title">Percepción Temporal en NMP</div>
+    <div class="module-sub">Umbrales de latencia, fusión auditiva, tempo y sincronía</div>
+  </div>
+
+  <div class="card">
+    <h3>Umbrales Psicoacústicos para NMP</h3>
+    <table>
+      <tr><th>Latencia</th><th>Percepción</th><th>Contexto Musical</th></tr>
+      <tr><td>&lt;1ms</td><td>Imperceptible absolutamente</td><td>Efectos DSP locales</td></tr>
+      <tr><td>1–10ms</td><td>Imperceptible en música</td><td>NMP óptimo</td></tr>
+      <tr><td>10–25ms</td><td>Leve sensación de "espacio"</td><td>NMP aceptable</td></tr>
+      <tr><td>25–50ms</td><td>Perceptible, aún musical</td><td>NMP con adaptación</td></tr>
+      <tr><td>50–100ms</td><td>Retardo claramente audible</td><td>Difícil sin compensación</td></tr>
+      <tr><td>&gt;100ms</td><td>Echo / imposible sincronía</td><td>Solo música asíncrona</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Estrategias de Compensación Perceptual</h3>
+    <pre>
+# Estrategia 1: Director Virtual (latencia &gt;50ms)
+# Todos los músicos siguen un click track enviado desde el servidor.
+# La latencia de red es conocida → se compensa con adelanto del click.
+
+def calculate_click_offset(latency_ms: float, tempo_bpm: float) -> float:
+    """
+    Adelantar el click en función de la latencia medida.
+    El músico toca 'latency_ms' antes de que el beat suene en el hub.
+    """
+    beat_duration_ms = 60000 / tempo_bpm
+    offset_beats = latency_ms / beat_duration_ms
+    return offset_beats  # fracciones de beat a adelantar
+
+# Estrategia 2: High Latency Mode (JackTrip)
+# Músicos trabajan con latencia conocida y constante.
+# Se adaptan como en una sala grande (10ms = 3.4m distancia).
+jacktrip_cmd = "jacktrip -s -q 4 --loopback"  # -q: buffer de jitter fijo
+
+# Estrategia 3: Latencia Asimétrica
+# El oyente recibe mezcla con latencia; los músicos se escuchan con menor delay.
+# Implementado en Lola (protocolo italiano de baja latencia).</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← M8</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Plataformas</div>
+    <div class="module-title">Plataformas NMP — JackTrip, Lola, SoundJack, JamKazam</div>
+    <div class="module-sub">Comparativa y casos de uso</div>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa de Plataformas</h3>
+    <table>
+      <tr><th>Plataforma</th><th>Latencia</th><th>OS</th><th>Codec</th><th>Canales</th><th>Costo</th></tr>
+      <tr><td>JackTrip</td><td>~5ms LAN</td><td>Win/Mac/Lin</td><td>L16/L24</td><td>Multi</td><td>Gratis</td></tr>
+      <tr><td>Lola</td><td>&lt;5ms</td><td>Windows</td><td>PCM</td><td>2–8</td><td>HW req.</td></tr>
+      <tr><td>SoundJack</td><td>~10ms</td><td>Win/Mac</td><td>Opus/PCM</td><td>1–2</td><td>Gratis</td></tr>
+      <tr><td>JamKazam</td><td>~20ms</td><td>Win/Mac</td><td>propietario</td><td>8</td><td>Freemium</td></tr>
+      <tr><td>Jamulus</td><td>~15ms</td><td>multiplataforma</td><td>Opus</td><td>Multi</td><td>Gratis</td></tr>
+      <tr><td>NINJAM</td><td>1 compás</td><td>Win/Mac/Lin</td><td>OGG</td><td>Multi</td><td>Gratis</td></tr>
+    </table>
+    <p><strong>Nota:</strong> NINJAM usa latencia de 1 compás intencionalmente (música "desfasada" como técnica composicional). SoundJack es ideal para uso con interfaz de audio existente sin hardware especial.</p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← M9</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Monitoreo</div>
+    <div class="module-title">Monitoreo y Diagnóstico de Red</div>
+    <div class="module-sub">RTT, jitter, pérdida de paquetes, Wireshark, iperf3</div>
+  </div>
+
+  <div class="card">
+    <h3>Herramientas de Diagnóstico NMP</h3>
+    <pre>
+# 1. Medir RTT y jitter básicos
+ping -i 0.01 -c 1000 192.168.1.100
+# Resultado: min/avg/max/mdev — mdev es el jitter
+
+# 2. iperf3 — ancho de banda y jitter UDP
+iperf3 -u -c 192.168.1.100 -b 5M -t 30 -i 1
+# -u: UDP, -b: bitrate, -i: intervalo reportes
+
+# 3. Wireshark — captura y análisis RTP
+# Filtro para paquetes JackTrip RTP:
+# udp.port == 5005 && rtp
+
+# 4. jack_iodelay — medir latencia JACK real
+jack_iodelay
+# Conectar salida → entrada físicamente y ejecutar
+# Resultado: latencia en samples y ms
+
+# 5. qjackctl — GUI para monitoreo en tiempo real
+# Muestra: DSP load, buffer underruns (xruns), latencia
+
+# 6. Calcular jitter de RTP con Python
+import statistics
+timestamps = [...]  # timestamps de llegada de paquetes (en ms)
+intervals = [timestamps[i+1] - timestamps[i] for i in range(len(timestamps)-1)]
+jitter_ms = statistics.stdev(intervals)
+print(f"Jitter: {jitter_ms:.3f} ms  (meta: &lt;2ms para NMP)")</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← M10</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Casos</div>
+    <div class="module-title">Casos de Estudio — Conciertos Telemáticos Reales</div>
+    <div class="module-sub">CCRMA, SoundWIRE, Lola Orchestra</div>
+  </div>
+
+  <div class="card">
+    <h3>Casos Históricos y Actuales</h3>
+    <table>
+      <tr><th>Proyecto</th><th>Año</th><th>Distancia</th><th>Latencia</th><th>Tecnología</th></tr>
+      <tr><td>CCRMA SoundWIRE</td><td>2000–</td><td>Stanford↔Tokyo</td><td>~80ms</td><td>JACK + UDP</td></tr>
+      <tr><td>Lola Orchestra</td><td>2012–</td><td>inter-Europa</td><td>5–20ms</td><td>Lola protocol</td></tr>
+      <tr><td>JackTrip COVID</td><td>2020</td><td>ciudad-ciudad</td><td>10–30ms</td><td>JackTrip + Zoom</td></tr>
+      <tr><td>Network Music Festival</td><td>anual</td><td>global</td><td>variable</td><td>múltiples</td></tr>
+      <tr><td>NIME Performances</td><td>anual</td><td>global</td><td>1 compás</td><td>NINJAM+JT</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Setup Completo para Concierto Telemático Local</h3>
+    <pre>
+# Setup recomendado para concierto en misma ciudad (&lt;10ms total)
+# -----------------------------------------
+# HARDWARE por performer:
+# - Interfaz audio USB/Thunderbolt (latencia &lt;1ms): RME Babyface, Focusrite
+# - Cable de red Cat6 (sin WiFi)
+# - Computadora con kernel RT (Linux) o M1/M2 Mac
+#
+# SOFTWARE:
+# 1. Instalar JACK: jackd -d alsa -d hw:0 -r 48000 -p 64 -n 2
+# 2. JackTrip: jacktrip -s -r 2 -z (servidor) / jacktrip -c IP -r 2 -z (cliente)
+# 3. Conectar puertos en qjackctl o con jack_connect:
+jack_connect JackTrip:receive_1 system:playback_1
+jack_connect system:capture_1 JackTrip:send_1
+# 4. Verificar latencia: jack_iodelay (debe ser &lt;5ms total)
+# 5. Monitorear xruns: 0 xruns en 30min = configuración estable</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← M11</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Composición</div>
+    <div class="module-title">Composición para Redes — Latencia como Recurso Musical</div>
+    <div class="module-sub">Polifonía asíncrona, ecología de latencias, dirección virtual</div>
+  </div>
+
+  <div class="card">
+    <h3>La Latencia como Elemento Compositivo</h3>
+    <p>En lugar de combatir la latencia, compositores como Pauline Oliveros y Mark Dresser la incorporan como elemento musical:</p>
+    <ul>
+      <li><strong>Música de latencia larga (&gt;50ms):</strong> Canon distribuido — cada performer es un eco del anterior. La latencia fija se convierte en intervalo rítmico.</li>
+      <li><strong>Contrapunto asíncrono:</strong> Múltiples performers en ciudades distintas con latencias diferentes → ployphony emergente no planeada.</li>
+      <li><strong>Delay como intervalo:</strong> 25ms = ~1/2 pulsación a 120bpm. Se puede componer específicamente para ese espacio.</li>
+      <li><strong>Feedback loops de red:</strong> Usar el delay de red como efecto (similar a tape delay).</li>
+    </ul>
+    <pre>
+# Calcular latencia como intervalo rítmico
+def latency_as_rhythm(latency_ms: float, tempo_bpm: float) -> dict:
+    beat_ms = 60000 / tempo_bpm
+    subdivision = latency_ms / beat_ms
+    return {
+        "latency_ms": latency_ms,
+        "tempo_bpm": tempo_bpm,
+        "beat_fraction": subdivision,
+        "musical_value": f"1/{round(1/subdivision)}" if subdivision &lt; 1 else f"{subdivision:.2f} beats"
+    }
+
+# Ejemplo: 25ms con 120bpm → 1/2 del beat (quaver rest)
+print(latency_as_rhythm(25, 120))</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← M12</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto Final — Concierto Telemático End-to-End</div>
+    <div class="module-sub">Diseño completo de infraestructura NMP con evaluación Feynman</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica del Proyecto HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>Presupuesto de latencia</td><td>Análisis L_total con cada componente medido y documentado</td><td>20</td></tr>
+        <tr><td>Configuración JackTrip</td><td>Setup funcional con buffer 64, FEC -r2, cero xruns en 10min</td><td>25</td></tr>
+        <tr><td>Sincronización PTP</td><td>PTP configurado, offset &lt;10µs verificado con pmc</td><td>15</td></tr>
+        <tr><td>PLC implementado</td><td>AR PLC funcional, prueba con 10% pérdida artificial</td><td>20</td></tr>
+        <tr><td>Concierto realizado</td><td>Performance &gt;5min con otro performer remoto, grabada</td><td>20</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman — Explica sin notas</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Latencia</h4>
+      <p class="quiz-q">¿Por qué no se puede usar WiFi para NMP profesional y qué dos parámetros del buffer de JACK controlan la latencia de audio?</p>
+      <details><summary>Ver respuesta</summary><p>WiFi introduce jitter variable (1–20ms) por colisiones, retransmisiones y CSMA/CA. Es impredecible y rompe la temporalidad musical. Los dos parámetros de JACK son: <strong>-p (periodo/buffer en samples)</strong> que determina T_buf=samples/fs, y <strong>-n (número de periodos)</strong> que determina el buffer total de seguridad. Con -p 64 -n 2 @ 48kHz: T_buf=1.33ms, T_total=2.67ms.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · HOL Blocking</h4>
+      <p class="quiz-q">Explica qué es el Head-of-Line Blocking de TCP y dibuja mentalmente qué sucede con los paquetes 6,7,8 si el paquete 5 se pierde.</p>
+      <details><summary>Ver respuesta</summary><p>TCP garantiza orden de entrega. Si PKT5 se pierde, el receptor envía ACK por PKT4 y espera PKT5 retransmitido. PKT6, PKT7, PKT8 ya llegaron al buffer del kernel pero <strong>no pueden ser entregados a la aplicación</strong> hasta que PKT5 llegue. En una red con RTT=50ms, esto introduce 50ms+ de retardo adicional justo cuando llegó la retransmisión → inaceptable para audio de 1.33ms de frame.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · PLC</h4>
+      <p class="quiz-q">¿Qué hace el AR PLC cuando se pierde un paquete? ¿Por qué se aplica fade-out en lugar de continuar la predicción indefinidamente?</p>
+      <details><summary>Ver respuesta</summary><p>El AR PLC usa los últimos p samples conocidos y los coeficientes autoregresivos (estimados por Levinson-Durbin sobre el audio reciente) para <em>predecir</em> las muestras perdidas: y[n]=Σφᵢy[n−i]. El fade-out se aplica porque el modelo AR es estadísticamente correcto a corto plazo pero la predicción diverge progresivamente. Más allá de ~20ms de ocultación, el modelo produce artefactos o tonos falsos → se atenúa a silencio para evitar ruido percibido peor que el silencio.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · PTP</h4>
+      <p class="quiz-q">¿Por qué AES67 requiere PTP y no simplemente NTP? ¿Cuál es la diferencia en precisión?</p>
+      <details><summary>Ver respuesta</summary><p>NTP (Network Time Protocol) sincroniza relojes de sistema con precisión de ~1ms usando software timestamping. AES67 necesita sincronía de muestras de audio @ 48kHz → resolución de 1/48000 = 20.8µs. PTP (IEEE 1588) usa <strong>hardware timestamping</strong> en el NIC para eliminar el jitter del sistema operativo, logrando offset &lt;1µs. Sin esta precisión, dos canales de audio sincronizados tendrían drift de samples al cabo de segundos.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · Composición</h4>
+      <p class="quiz-q">¿Cómo puede una latencia fija de 25ms convertirse en un intervalo musical a 120bpm? Calcula la fracción de beat.</p>
+      <details><summary>Ver respuesta</summary><p>A 120bpm, un beat dura 500ms. Una latencia de 25ms = 25/500 = 1/20 del beat. En términos musicales, es aproximadamente 1/16 de beat (ya que 500/16=31.25ms) o más exactamente una semicorchea de 32avos (500/32=15.6ms ≈ 25ms entre ambos). Un compositor puede diseñar un canon donde el segundo performer llega 1/20 de beat "tarde" sistemáticamente, creando un efecto de flam percusivo o un rubato controlado.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← M13</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_conciertos_telematicos_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Ecosistema NMP'},
+    {id:'m1',  label:'M1 · Presupuesto Latencia'},
+    {id:'m2',  label:'M2 · UDP/RTP vs TCP'},
+    {id:'m3',  label:'M3 · PLC & NetEQ'},
+    {id:'m4',  label:'M4 · JackTrip'},
+    {id:'m5',  label:'M5 · AES67 & PTP'},
+    {id:'m6',  label:'M6 · Infraestructura Red'},
+    {id:'m7',  label:'M7 · PIC32 Bare-Metal'},
+    {id:'m8',  label:'M8 · Codecs NMP'},
+    {id:'m9',  label:'M9 · Psicoacústica'},
+    {id:'m10', label:'M10 · Plataformas'},
+    {id:'m11', label:'M11 · Monitoreo'},
+    {id:'m12', label:'M12 · Casos de Estudio'},
+    {id:'m13', label:'M13 · Composición Red'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

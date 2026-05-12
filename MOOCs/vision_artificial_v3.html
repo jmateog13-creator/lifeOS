@@ -1,0 +1,2151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Visión Artificial para el Arte — MOOC v3</title>
+<style>
+:root{
+  --bg:#0b0f17;
+  --surface:#111827;
+  --surface2:#0d1320;
+  --accent:#06b6d4;
+  --accent2:#a855f7;
+  --warn:#f59e0b;
+  --text:#e2e8f0;
+  --muted:#64748b;
+  --border:#1e293b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter','Segoe UI',sans-serif;display:flex;min-height:100vh}
+
+/* SIDEBAR */
+#sidebar{width:260px;min-width:260px;background:var(--surface2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:4px}
+#sidebar-header p{font-size:.7rem;color:var(--muted)}
+.progress-ring{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border)}
+.ring-val{font-size:1.4rem;font-weight:800;color:var(--accent)}
+.ring-val span{font-size:.65rem;font-weight:400;color:var(--muted);display:block}
+#progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;flex:1}
+#progress-bar div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .4s}
+#nav-list{flex:1;padding:8px 0;list-style:none}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;color:#94a3b8;font-size:.78rem;border-left:3px solid transparent;transition:all .2s}
+.nav-item:hover{background:rgba(6,182,212,.07);color:var(--text);border-left-color:var(--accent)}
+.nav-item.active{background:rgba(6,182,212,.12);color:var(--accent);border-left-color:var(--accent);font-weight:600}
+.nav-item.done{color:#10b981}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0}
+.nav-item.done .nav-dot{background:#10b981}
+.nav-item.active .nav-dot{background:var(--accent)}
+.nav-label{flex:1}
+
+/* MAIN */
+#main{margin-left:260px;flex:1;padding:40px;max-width:960px}
+.module{display:none}
+.module.active{display:block}
+
+/* MODULE HEADER */
+.module-tag{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:6px}
+.module-title{font-size:1.7rem;font-weight:800;line-height:1.2;margin-bottom:6px}
+.module-title span{color:var(--accent)}
+.module-sub{font-size:.82rem;color:var(--muted);margin-bottom:28px}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:20px;overflow:hidden}
+.card-header{padding:13px 18px;font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.card-body{padding:18px}
+.card-a .card-header{background:rgba(6,182,212,.12);color:var(--accent)}
+.card-b .card-header{background:rgba(168,85,247,.12);color:var(--accent2)}
+.card-c .card-header{background:rgba(239,68,68,.12);color:#ef4444}
+.card-d .card-header{background:rgba(245,158,11,.12);color:var(--warn)}
+.card-e .card-header{background:rgba(16,185,129,.12);color:#10b981}
+.card-f .card-header{background:rgba(99,102,241,.12);color:#818cf8}
+
+/* TYPOGRAPHY */
+h3{font-size:.95rem;font-weight:700;margin-bottom:10px;color:var(--text)}
+h4{font-size:.85rem;font-weight:600;margin-bottom:8px;color:#94a3b8}
+p{font-size:.85rem;line-height:1.7;color:#94a3b8;margin-bottom:10px}
+ul,ol{font-size:.85rem;color:#94a3b8;padding-left:18px;margin-bottom:10px;line-height:1.8}
+pre{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px;overflow-x:auto;margin:10px 0}
+code{font-family:'JetBrains Mono','Fira Code',monospace;font-size:.78rem;color:#10b981}
+pre code{color:#cbd5e1}
+.formula{font-family:'JetBrains Mono','Fira Code',monospace;font-size:.82rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--warn);margin:8px 0}
+
+/* DETAILS */
+details{border:1px solid var(--border);border-radius:8px;margin-bottom:10px}
+details summary{padding:11px 14px;font-size:.82rem;font-weight:600;cursor:pointer;color:#94a3b8;list-style:none;display:flex;align-items:center;gap:8px}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:'▶';font-size:.6rem;transition:transform .2s;color:var(--accent)}
+details[open] summary::before{transform:rotate(90deg)}
+details p{padding:14px;border-top:1px solid var(--border);font-size:.82rem;color:#94a3b8;line-height:1.7;margin:0}
+
+/* QUIZ BLOCK — Feynman */
+.quiz-block{border:1px solid var(--border);border-radius:8px;margin-bottom:12px;overflow:hidden}
+.quiz-block h4{padding:12px 14px 0;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:0}
+.quiz-q{padding:8px 14px 12px;font-size:.85rem;color:var(--text);margin:0}
+.quiz-block details{border:none;border-top:1px solid var(--border);border-radius:0;margin:0}
+.quiz-block details summary{color:var(--accent)}
+.quiz-block details p{border-top:1px solid var(--border)}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center}
+.metric-val{font-size:1.4rem;font-weight:800;color:var(--accent)}
+.metric-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+
+/* HERO RUBRIC */
+.hero-rubric{width:100%;border-collapse:collapse;font-size:.78rem;margin:16px 0}
+.hero-rubric th{background:var(--surface2);color:var(--warn);padding:9px 12px;text-align:left;font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+.hero-rubric td{padding:9px 12px;border-bottom:1px solid var(--border);color:#94a3b8;vertical-align:top}
+.hero-rubric tr:hover td{background:rgba(255,255,255,.02)}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:.78rem;margin:10px 0}
+th{background:var(--surface2);color:var(--accent);padding:8px 10px;text-align:left;font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+td{padding:8px 10px;border-bottom:1px solid var(--border);color:#94a3b8;vertical-align:top}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* DRILLS */
+.drill-list{list-style:none;padding:0}
+.drill-list li{padding:9px 12px;border:1px solid var(--border);border-radius:6px;margin-bottom:6px;font-size:.82rem;color:#94a3b8;display:flex;align-items:flex-start;gap:8px}
+.drill-list li::before{content:'›';color:var(--warn);font-weight:700;flex-shrink:0}
+
+/* TOOL GRID */
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:10px}
+.tool-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.tool-card .ti{font-size:1.4rem;margin-bottom:6px}
+.tool-card .tn{font-size:.72rem;font-weight:600;color:var(--text);margin-bottom:3px}
+.tool-card .td{font-size:.65rem;color:var(--muted)}
+
+/* NAV BUTTONS */
+.btn-row{display:flex;gap:12px;margin-top:32px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border:none;border-radius:8px;font-size:.84rem;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn:hover{opacity:.85}
+.btn-back{background:var(--surface);color:#94a3b8;border:1px solid var(--border)}
+.btn-next{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+
+/* SVG */
+#ecosystem-svg{width:100%;max-width:560px;display:block;margin:0 auto}
+</style>
+</head>
+<body>
+
+<aside id="sidebar">
+  <div id="sidebar-header">
+    <h2>Visión Artificial</h2>
+    <p>15 módulos · CV → Sonido</p>
+  </div>
+  <div class="progress-ring">
+    <div>
+      <div class="ring-val" id="pct">0%<span>completado</span></div>
+    </div>
+    <div id="progress-bar"><div style="width:0%"></div></div>
+  </div>
+  <ul id="nav-list"></ul>
+</aside>
+
+<main id="main">
+
+<!-- ═══════════════ M0 BRIEFING ═══════════════ -->
+<section class="module active" id="m0">
+  <div class="module-tag">Módulo 0</div>
+  <h1 class="module-title">M0 · <span>Briefing</span></h1>
+  <p class="module-sub">Visión Artificial para el Arte · Módulo de orientación</p>
+
+  <div class="card card-a">
+    <div class="card-header">Ecosistema del Curso</div>
+    <div class="card-body">
+      <svg id="ecosystem-svg" viewBox="0 0 560 260" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0,8 3,0 6" fill="#06b6d4"/>
+          </marker>
+        </defs>
+        <rect x="10" y="100" width="100" height="36" rx="6" fill="#0d1320" stroke="#06b6d4" stroke-width="1.5"/>
+        <text x="60" y="123" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="700">CÁMARA</text>
+        <rect x="155" y="80" width="110" height="36" rx="6" fill="#0d1320" stroke="#a855f7" stroke-width="1.5"/>
+        <text x="210" y="103" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="700">OpenCV</text>
+        <rect x="155" y="135" width="110" height="36" rx="6" fill="#0d1320" stroke="#a855f7" stroke-width="1.5"/>
+        <text x="210" y="158" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="700">MediaPipe</text>
+        <rect x="315" y="100" width="110" height="36" rx="6" fill="#0d1320" stroke="#10b981" stroke-width="1.5"/>
+        <text x="370" y="118" text-anchor="middle" fill="#10b981" font-size="10" font-weight="700">1€ Filter</text>
+        <text x="370" y="131" text-anchor="middle" fill="#10b981" font-size="10">Smoothing</text>
+        <rect x="445" y="70" width="105" height="36" rx="6" fill="#0d1320" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="497" y="93" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="700">OSC/MIDI</text>
+        <rect x="445" y="155" width="105" height="36" rx="6" fill="#0d1320" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="497" y="178" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="700">Max/TD</text>
+        <line x1="110" y1="118" x2="153" y2="98" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="110" y1="118" x2="153" y2="153" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="265" y1="98" x2="313" y2="110" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="265" y1="153" x2="313" y2="125" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="425" y1="110" x2="443" y2="88" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="425" y1="118" x2="443" y2="173" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="60" y="240" text-anchor="middle" fill="#64748b" font-size="9">Captura</text>
+        <text x="210" y="240" text-anchor="middle" fill="#64748b" font-size="9">Detección CV</text>
+        <text x="370" y="240" text-anchor="middle" fill="#64748b" font-size="9">Estabilización</text>
+        <text x="497" y="240" text-anchor="middle" fill="#64748b" font-size="9">Control Musical</text>
+      </svg>
+
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">21</div><div class="metric-label">Landmarks Mano</div></div>
+        <div class="metric"><div class="metric-val">33</div><div class="metric-label">Landmarks Pose</div></div>
+        <div class="metric"><div class="metric-val">30fps</div><div class="metric-label">Target RT</div></div>
+        <div class="metric"><div class="metric-val">7-bit</div><div class="metric-label">MIDI Rango</div></div>
+        <div class="metric"><div class="metric-val">f32</div><div class="metric-label">OSC Precisión</div></div>
+        <div class="metric"><div class="metric-val">1€</div><div class="metric-label">Filter Latencia</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-f">
+    <div class="card-header">Stack Tecnológico</div>
+    <div class="card-body">
+      <div class="tool-grid">
+        <div class="tool-card"><div class="ti">📷</div><div class="tn">OpenCV</div><div class="td">Captura + proceso imagen</div></div>
+        <div class="tool-card"><div class="ti">🖐</div><div class="tn">MediaPipe</div><div class="td">Landmarks mano/pose</div></div>
+        <div class="tool-card"><div class="ti">🔵</div><div class="tn">python-osc</div><div class="td">Protocolo OSC UDP</div></div>
+        <div class="tool-card"><div class="ti">🎹</div><div class="tn">mido</div><div class="td">MIDI nativo Python</div></div>
+        <div class="tool-card"><div class="ti">🟩</div><div class="tn">Max/MSP</div><div class="td">Recepción + síntesis</div></div>
+        <div class="tool-card"><div class="ti">🔶</div><div class="tn">TouchDesigner</div><div class="td">CHOP visual + audio</div></div>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>Módulo</th><th>Tema</th><th>Output</th></tr></thead>
+    <tbody>
+      <tr><td>M1–M3</td><td>Fundamentos OpenCV</td><td>Pipeline base imagen</td></tr>
+      <tr><td>M4–M5</td><td>Optical Flow</td><td>Vectores movimiento</td></tr>
+      <tr><td>M6–M7</td><td>MediaPipe ML</td><td>Landmarks 2D/3D</td></tr>
+      <tr><td>M8</td><td>One Euro Filter</td><td>CV continuo suavizado</td></tr>
+      <tr><td>M9–M11</td><td>Protocolos + DAW</td><td>OSC/MIDI → Max/TD</td></tr>
+      <tr><td>M12–M13</td><td>Síntesis + ML gesto</td><td>Instrumento gestual</td></tr>
+      <tr><td>M14</td><td>HERO Final</td><td>Instrumento completo</td></tr>
+    </tbody>
+  </table>
+
+  <div class="btn-row">
+    <button class="btn btn-next" onclick="completeAndNext('m0','m1')">Siguiente ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════ M1 IMAGEN DIGITAL ═══════════════ -->
+<section class="module" id="m1">
+  <div class="module-tag">Módulo 1</div>
+  <h1 class="module-title">M1 · <span>Imagen Digital</span></h1>
+  <p class="module-sub">Pixels, canales BGR, tipos NumPy, operaciones básicas</p>
+
+  <div class="card card-a">
+    <div class="card-header">A · Núcleo Teórico Pareto</div>
+    <div class="card-body">
+      <h3>La imagen como array NumPy</h3>
+      <p>OpenCV representa imágenes como arrays NumPy de forma <code>(H, W, C)</code> con canales en orden <strong>BGR</strong> (no RGB). Entender la memoria contigua es crítico para performance: <code>img.flags['C_CONTIGUOUS']</code> debe ser True para llamadas a CUDA o C extensions.</p>
+      <div class="formula">dtype: uint8 → [0,255] | float32 → [0.0,1.0] | float64 → doble precisión</div>
+      <h4>Tipos de imagen</h4>
+      <ul>
+        <li><strong>uint8</strong>: estándar para display y almacenamiento. Overflow silencioso en aritmética.</li>
+        <li><strong>float32</strong>: necesario para operaciones matemáticas (normalizar con <code>/255.0</code>).</li>
+        <li><strong>int16</strong>: para diferencias de frames (puede ser negativo).</li>
+      </ul>
+      <h4>Operaciones fundamentales</h4>
+      <ul>
+        <li><code>cv2.resize(img, (w,h))</code> — interpolación INTER_AREA para reducir, INTER_CUBIC para ampliar.</li>
+        <li><code>img[y1:y2, x1:x2]</code> — crop sin copia (view NumPy, cuidado con modificaciones).</li>
+        <li><code>cv2.flip(img, 1)</code> — flip horizontal para efecto espejo (esencial en interfaces gestuales).</li>
+        <li><code>cv2.cvtColor(img, cv2.COLOR_BGR2RGB)</code> — conversión para matplotlib/MediaPipe.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-b">
+    <div class="card-header">B · Laboratorio Guiado</div>
+    <div class="card-body">
+      <details>
+        <summary>Lab 1.1 — Pipeline mínimo de captura</summary>
+        <p>
+<pre><code>import cv2
+import numpy as np
+
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+cap.set(cv2.CAP_PROP_FPS, 30)
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+
+    frame = cv2.flip(frame, 1)
+    b, g, r = cv2.split(frame)
+    frame_f = frame.astype(np.float32) / 255.0
+
+    h, w, c = frame.shape
+    cv2.putText(frame, f"{w}x{h} | {frame.dtype}",
+                (10, 25), cv2.FONT_HERSHEY_SIMPLEX,
+                0.6, (0, 255, 255), 1)
+
+    cv2.imshow("Frame", frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
+</code></pre>
+        </p>
+      </details>
+      <details>
+        <summary>Lab 1.2 — Análisis de histogram por canal</summary>
+        <p>
+<pre><code>import matplotlib.pyplot as plt
+
+def plot_histogram(img):
+    colors = ('b', 'g', 'r')
+    for i, col in enumerate(colors):
+        hist = cv2.calcHist([img], [i], None, [256], [0,256])
+        plt.plot(hist, color=col)
+    plt.xlim([0,256])
+    plt.title("Histograma BGR")
+    plt.show()
+
+ret, frame = cap.read()
+plot_histogram(frame)
+</code></pre>
+        </p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-c">
+    <div class="card-header">C · Reto HERO</div>
+    <div class="card-body">
+      <details>
+        <summary>Reto 1 — Thermocam: visualizar diferencia entre frames</summary>
+        <p>Captura dos frames consecutivos y visualiza la diferencia absoluta como mapa de calor. Aplica colormap COLORMAP_JET. El resultado debe mostrar solo las regiones con movimiento en color intenso. Entrega: función <code>motion_heatmap(frame1, frame2)</code> que retorna imagen coloreada.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-d">
+    <div class="card-header">D · Drills</div>
+    <div class="card-body">
+      <ul class="drill-list">
+        <li>EX 1.1 — Accede al pixel (y=100, x=200) de un frame y modifica solo el canal G a 255.</li>
+        <li>EX 1.2 — Convierte un frame BGR a escala de grises y luego a float32 normalizado.</li>
+        <li>EX 1.3 — Recorta la región de interés central (50% del frame) sin hacer copia del array.</li>
+        <li>EX 1.4 — Concatena horizontalmente el frame original con su versión en escala de grises 3-canal.</li>
+        <li>EX 1.5 — Mide el tiempo de <code>cv2.resize</code> con INTER_AREA vs INTER_NEAREST para 4K→480p.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">E · Espacio Feynman</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Qué forma tiene un frame de 480p en color leído por OpenCV y por qué el orden de canales es BGR en lugar de RGB?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>Un frame 480p tiene forma (480, 640, 3): alto × ancho × canales. OpenCV heredó el orden BGR de la era de los sistemas de captura de video analógicos y hardware legacy; los CCD originales mapeaban los canales de señal en ese orden. Hoy es una deuda técnica que se mantiene por compatibilidad. MediaPipe y matplotlib esperan RGB, por eso siempre hay que convertir con <code>cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)</code>.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-f">
+    <div class="card-header">F · Caja de Herramientas</div>
+    <div class="card-body">
+      <div class="tool-grid">
+        <div class="tool-card"><div class="ti">📷</div><div class="tn">VideoCapture</div><div class="td">Captura webcam/archivo</div></div>
+        <div class="tool-card"><div class="ti">🔀</div><div class="tn">cvtColor</div><div class="td">Conversión espacio color</div></div>
+        <div class="tool-card"><div class="ti">📐</div><div class="tn">resize</div><div class="td">Escalar interpolado</div></div>
+        <div class="tool-card"><div class="ti">🔢</div><div class="tn">np.float32</div><div class="td">Tipo aritmética CV</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-back" onclick="goTo('m0')">‹ Anterior</button>
+    <button class="btn btn-next" onclick="completeAndNext('m1','m2')">Completar y continuar ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════ M2 PREPROCESAMIENTO ═══════════════ -->
+<section class="module" id="m2">
+  <div class="module-tag">Módulo 2</div>
+  <h1 class="module-title">M2 · <span>Preprocesamiento</span></h1>
+  <p class="module-sub">Blur, threshold, morfología — limpieza de señal antes de detección</p>
+
+  <div class="card card-a">
+    <div class="card-header">A · Núcleo Teórico Pareto</div>
+    <div class="card-body">
+      <h3>Pipeline de preprocesamiento</h3>
+      <p>El preprocesamiento determina la calidad de todo lo que viene después. Los tres pasos canónicos son: <strong>suavizado</strong> (eliminar ruido), <strong>umbralización</strong> (binarizar para segmentación) y <strong>morfología</strong> (limpiar artefactos binarios).</p>
+      <h4>Suavizado (Blur)</h4>
+      <ul>
+        <li><strong>GaussianBlur</strong>: kernel (ksize, ksize) con ksize impar. Preserva bordes gradualmente. Sigma=0 → calculado automáticamente.</li>
+        <li><strong>MedianBlur</strong>: elimina ruido salt-and-pepper (artefactos de cámara). Kernel=5 suele ser suficiente.</li>
+        <li><strong>bilateralFilter</strong>: preserva bordes mientras suaviza texturas. Más lento, ideal para skin detection.</li>
+      </ul>
+      <h4>Umbralización</h4>
+      <div class="formula">Otsu: minimiza varianza intra-clase → threshold óptimo automático</div>
+      <ul>
+        <li><code>cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)</code></li>
+        <li><strong>adaptativeThreshold</strong>: para iluminación no uniforme. Window local calcula umbral propio.</li>
+      </ul>
+      <h4>Morfología</h4>
+      <ul>
+        <li><strong>Erosión</strong>: encoge objetos blancos, elimina ruido fino.</li>
+        <li><strong>Dilatación</strong>: expande objetos blancos, cierra huecos.</li>
+        <li><strong>Opening</strong> (erosión→dilatación): elimina ruido pequeño manteniendo formas grandes.</li>
+        <li><strong>Closing</strong> (dilatación→erosión): cierra huecos en objetos sólidos.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-b">
+    <div class="card-header">B · Laboratorio Guiado</div>
+    <div class="card-body">
+      <details>
+        <summary>Lab 2.1 — Pipeline completo de segmentación de mano</summary>
+        <p>
+<pre><code>import cv2
+import numpy as np
+
+def preprocess_for_hand(frame):
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (7, 7), 0)
+    _, thresh = cv2.threshold(
+        blurred, 0, 255,
+        cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
+    )
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    opened = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+    closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, kernel)
+    return closed
+
+cap = cv2.VideoCapture(0)
+while True:
+    ret, frame = cap.read()
+    frame = cv2.flip(frame, 1)
+    mask = preprocess_for_hand(frame)
+    cv2.imshow("Mask", mask)
+    cv2.imshow("Original", frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+cap.release()
+</code></pre>
+        </p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-c">
+    <div class="card-header">C · Reto HERO</div>
+    <div class="card-body">
+      <details>
+        <summary>Reto 2 — Skin detector robusto en espacio HSV</summary>
+        <p>Implementa un detector de piel en espacio HSV con <code>cv2.inRange</code> usando rangos H:[0-20], S:[30-150], V:[60-255]. Aplica morfología para limpiar. El resultado debe funcionar con iluminación variada. Mide el % de píxeles detectados como piel por frame.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-d">
+    <div class="card-header">D · Drills</div>
+    <div class="card-body">
+      <ul class="drill-list">
+        <li>EX 2.1 — Compara visualmente GaussianBlur k=3,7,15 sobre la misma imagen de cámara.</li>
+        <li>EX 2.2 — Aplica Otsu threshold a un frame con fondo no uniforme. ¿Funciona bien? ¿Por qué?</li>
+        <li>EX 2.3 — Implementa opening con kernel circular vs rectangular y compara resultados.</li>
+        <li>EX 2.4 — Mide tiempo de bilateralFilter vs GaussianBlur. ¿Cuánto más lento es bilateral?</li>
+        <li>EX 2.5 — Encadena 3 operaciones morfológicas y explica qué cambia en la máscara binaria.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">E · Espacio Feynman</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Por qué HSV es mejor que BGR para detección de piel, y qué operación morfológica elimina ruido pequeño sin romper objetos grandes?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>HSV separa la información de color (Hue) de la luminancia (Value). La piel humana tiene un rango de Hue estrecho (~0-20°) independientemente de la iluminación, mientras que Value varía mucho con la luz. En BGR, el mismo tono de piel tiene valores muy diferentes con iluminación distinta. La operación que elimina ruido pequeño sin romper objetos grandes es el <strong>Opening</strong> (erosión seguida de dilatación): la erosión elimina los objetos pequeños (ruido), y la dilatación posterior restaura el tamaño de los objetos grandes que sobrevivieron.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-f">
+    <div class="card-header">F · Caja de Herramientas</div>
+    <div class="card-body">
+      <div class="tool-grid">
+        <div class="tool-card"><div class="ti">🌫</div><div class="tn">GaussianBlur</div><div class="td">Suavizado ruido</div></div>
+        <div class="tool-card"><div class="ti">🎯</div><div class="tn">THRESH_OTSU</div><div class="td">Umbral automático</div></div>
+        <div class="tool-card"><div class="ti">⬛</div><div class="tn">morphologyEx</div><div class="td">Opening/Closing</div></div>
+        <div class="tool-card"><div class="ti">🎨</div><div class="tn">inRange HSV</div><div class="td">Segmentación color</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-back" onclick="goTo('m1')">‹ Anterior</button>
+    <button class="btn btn-next" onclick="completeAndNext('m2','m3')">Completar y continuar ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════ M3 CONTORNOS ═══════════════ -->
+<section class="module" id="m3">
+  <div class="module-tag">Módulo 3</div>
+  <h1 class="module-title">M3 · <span>Contornos y Formas</span></h1>
+  <p class="module-sub">findContours, approxPolyDP, convexHull, bounding boxes</p>
+
+  <div class="card card-a">
+    <div class="card-header">A · Núcleo Teórico Pareto</div>
+    <div class="card-body">
+      <h3>Análisis de contornos</h3>
+      <p>Los contornos son curvas continuas que unen puntos con la misma intensidad. Sobre una máscara binaria, representan los bordes de los objetos segmentados. Son la base para extraer descriptores de forma que luego se mapearán a parámetros musicales.</p>
+      <div class="formula">cv2.findContours(mask, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE)</div>
+      <ul>
+        <li><strong>RETR_EXTERNAL</strong>: solo contornos externos (ignora huecos interiores).</li>
+        <li><strong>CHAIN_APPROX_SIMPLE</strong>: comprime segmentos horizontales/verticales/diagonales, guardando solo extremos.</li>
+      </ul>
+      <h4>Descriptores de forma</h4>
+      <ul>
+        <li><code>cv2.contourArea(cnt)</code> → área en píxeles². Útil para volumen/densidad.</li>
+        <li><code>cv2.boundingRect(cnt)</code> → (x,y,w,h). Posición y tamaño.</li>
+        <li><code>cv2.convexHull(cnt)</code> → envolvente convexa. Defectos de convexidad = dedos extendidos.</li>
+        <li><code>cv2.approxPolyDP(cnt, epsilon, True)</code> → simplificación Douglas-Peucker.</li>
+        <li><code>cv2.moments(cnt)</code> → centroide: cx=M10/M00, cy=M01/M00.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-b">
+    <div class="card-header">B · Laboratorio Guiado</div>
+    <div class="card-body">
+      <details>
+        <summary>Lab 3.1 — Extracción de descriptores de mano desde contorno</summary>
+        <p>
+<pre><code>def analyze_hand_contour(mask):
+    contours, _ = cv2.findContours(
+        mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
+    if not contours:
+        return None
+
+    cnt = max(contours, key=cv2.contourArea)
+    area = cv2.contourArea(cnt)
+
+    if area < 5000:
+        return None
+
+    M = cv2.moments(cnt)
+    cx = int(M['m10'] / M['m00'])
+    cy = int(M['m01'] / M['m00'])
+
+    x, y, w, h = cv2.boundingRect(cnt)
+    aspect_ratio = w / h
+
+    hull = cv2.convexHull(cnt)
+    hull_area = cv2.contourArea(hull)
+    solidity = area / hull_area  # ~1.0 = puño, &lt;0.9 = dedos abiertos
+
+    return {
+        'centroid': (cx, cy),
+        'area': area,
+        'aspect_ratio': aspect_ratio,
+        'solidity': solidity,
+        'bbox': (x, y, w, h)
+    }
+</code></pre>
+        </p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-c">
+    <div class="card-header">C · Reto HERO</div>
+    <div class="card-body">
+      <details>
+        <summary>Reto 3 — Contar dedos extendidos con defectos de convexidad</summary>
+        <p>Usa <code>cv2.convexityDefects</code> para contar los defectos de convexidad mayores a un umbral de profundidad. Cada defecto entre dos dedos debe contar como 1 espacio interdígito. N defectos = N+1 dedos (aproximadamente). Muestra el conteo en pantalla en tiempo real.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-d">
+    <div class="card-header">D · Drills</div>
+    <div class="card-body">
+      <ul class="drill-list">
+        <li>EX 3.1 — Dibuja el bounding rect y el centroide sobre el contorno de la mano.</li>
+        <li>EX 3.2 — Calcula la solidez (área/área_hull) y clasifica: puño (&gt;0.9) vs mano abierta (&lt;0.8).</li>
+        <li>EX 3.3 — Simplifica el contorno con approxPolyDP y compara epsilon=3 vs epsilon=10.</li>
+        <li>EX 3.4 — Mapea el centroide normalizado (0–1 en X e Y) a nota MIDI y panning.</li>
+        <li>EX 3.5 — Filtra contornos por área mínima 3000px² para ignorar ruido ambiental.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">E · Espacio Feynman</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Qué es la solidez de un contorno, por qué funciona para detectar puño vs mano abierta, y qué parámetro de approxPolyDP controla la agresividad de la simplificación?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>La solidez es la razón entre el área del contorno y el área de su envolvente convexa (contourArea / hullArea). Un puño cerrado tiene contorno casi convexo (solidez ~0.95). Una mano abierta tiene hendiduras entre dedos que reducen el área del contorno pero no la del hull, bajando la solidez a ~0.6-0.8. Es una métrica elegante que no requiere ML para una clasificación básica. El parámetro que controla la agresividad de approxPolyDP es <strong>epsilon</strong>: distancia máxima permitida entre el contorno original y el aproximado; a mayor epsilon, más simplificación.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-f">
+    <div class="card-header">F · Caja de Herramientas</div>
+    <div class="card-body">
+      <div class="tool-grid">
+        <div class="tool-card"><div class="ti">📍</div><div class="tn">findContours</div><div class="td">Extrae bordes binarios</div></div>
+        <div class="tool-card"><div class="ti">🔲</div><div class="tn">boundingRect</div><div class="td">Caja contenedora</div></div>
+        <div class="tool-card"><div class="ti">🔵</div><div class="tn">convexHull</div><div class="td">Envolvente convexa</div></div>
+        <div class="tool-card"><div class="ti">⚖</div><div class="tn">moments</div><div class="td">Centroide + área</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-back" onclick="goTo('m2')">‹ Anterior</button>
+    <button class="btn btn-next" onclick="completeAndNext('m3','m4')">Completar y continuar ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════ M4 LK SPARSE OPTICAL FLOW ═══════════════ -->
+<section class="module" id="m4">
+  <div class="module-tag">Módulo 4</div>
+  <h1 class="module-title">M4 · <span>LK Sparse Optical Flow</span></h1>
+  <p class="module-sub">Lucas-Kanade, goodFeaturesToTrack, calcOpticalFlowPyrLK</p>
+
+  <div class="card card-a">
+    <div class="card-header">A · Núcleo Teórico Pareto</div>
+    <div class="card-body">
+      <h3>Optical flow sparse — Lucas-Kanade</h3>
+      <p>Lucas-Kanade asume que el flujo es constante dentro de una ventana local de píxeles y calcula el desplazamiento minimizando el error de intensidad entre frames. Solo se calcula en puntos de interés (esquinas), haciendo el método eficiente y robusto.</p>
+      <div class="formula">I_x·u + I_y·v = -I_t  (ecuación de restricción de flujo óptico)</div>
+      <p>Para múltiples píxeles en la ventana: sistema sobredeterminado → mínimos cuadrados. La solución existe cuando la matriz A^T·A es invertible (esquinas de Harris, no bordes).</p>
+      <h4>Pipeline LK en OpenCV</h4>
+      <ul>
+        <li><code>goodFeaturesToTrack</code> — detector Shi-Tomasi: maxCorners, qualityLevel, minDistance.</li>
+        <li><code>calcOpticalFlowPyrLK</code> — pirámide Gaussiana multi-escala: winSize, maxLevel.</li>
+        <li>El vector retornado <code>status</code> indica qué puntos se rastrearon con éxito (1) o perdieron (0).</li>
+        <li>Para reiniciar tracks perdidos: re-detectar cuando N puntos activos &lt; umbral.</li>
+      </ul>
+      <h4>Mapeo musical</h4>
+      <ul>
+        <li>Magnitud media del flujo → amplitud/volumen.</li>
+        <li>Dirección dominante (atan2) → filtro de color armónico.</li>
+        <li>Dispersión de velocidades → densidad granular.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-b">
+    <div class="card-header">B · Laboratorio Guiado</div>
+    <div class="card-body">
+      <details>
+        <summary>Lab 4.1 — Tracker LK con reinicio automático</summary>
+        <p>
+<pre><code>import cv2
+import numpy as np
+
+lk_params = dict(winSize=(15,15), maxLevel=3,
+                 criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+feat_params = dict(maxCorners=100, qualityLevel=0.3,
+                   minDistance=7, blockSize=7)
+
+cap = cv2.VideoCapture(0)
+ret, old_frame = cap.read()
+old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
+p0 = cv2.goodFeaturesToTrack(old_gray, mask=None, **feat_params)
+
+while True:
+    ret, frame = cap.read()
+    frame = cv2.flip(frame, 1)
+    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    if p0 is not None and len(p0) > 5:
+        p1, st, err = cv2.calcOpticalFlowPyrLK(old_gray, frame_gray, p0, None, **lk_params)
+        good_new = p1[st==1]
+        good_old = p0[st==1]
+
+        flow_vectors = good_new - good_old
+        magnitudes = np.linalg.norm(flow_vectors, axis=1)
+        mean_mag = float(np.mean(magnitudes))
+
+        for new, old in zip(good_new, good_old):
+            a, b = new.ravel().astype(int)
+            c, d = old.ravel().astype(int)
+            cv2.arrowedLine(frame, (c,d), (a,b), (0,255,255), 2)
+            cv2.circle(frame, (a,b), 3, (0,0,255), -1)
+
+        cv2.putText(frame, f"Flow: {mean_mag:.2f}px/f",
+                    (10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2)
+
+        if len(good_new) < 20:
+            p0 = cv2.goodFeaturesToTrack(frame_gray, mask=None, **feat_params)
+        else:
+            p0 = good_new.reshape(-1,1,2)
+    else:
+        p0 = cv2.goodFeaturesToTrack(frame_gray, mask=None, **feat_params)
+
+    old_gray = frame_gray.copy()
+    cv2.imshow("LK Flow", frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+cap.release()
+</code></pre>
+        </p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-c">
+    <div class="card-header">C · Reto HERO</div>
+    <div class="card-body">
+      <details>
+        <summary>Reto 4 — Theremin gestual con flujo LK</summary>
+        <p>Usa la magnitud media del flujo LK como control de volumen (0–127 MIDI CC7) y la dirección media del flujo como pitch (0–127 CC74). Envía ambos parámetros vía OSC a Max/MSP. La latencia debe ser menor a 50ms.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-d">
+    <div class="card-header">D · Drills</div>
+    <div class="card-body">
+      <ul class="drill-list">
+        <li>EX 4.1 — Varía qualityLevel de 0.1 a 0.9 y observa cómo cambia el número de puntos detectados.</li>
+        <li>EX 4.2 — Aumenta maxLevel de la pirámide de 1 a 5. ¿Cuándo mejora el tracking rápido?</li>
+        <li>EX 4.3 — Filtra solo los vectores de flujo con magnitud &gt; 2px/frame para ignorar microvibración.</li>
+        <li>EX 4.4 — Calcula la dirección media del flujo con atan2 y normaliza a [0, 2π].</li>
+        <li>EX 4.5 — Implementa reinicio por zona: detecta nuevos puntos solo en la mitad inferior del frame.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">E · Espacio Feynman</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Por qué Lucas-Kanade falla en bordes pero funciona bien en esquinas, y qué significa status==1 en la salida de calcOpticalFlowPyrLK?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>La ecuación de LK requiere que A^T·A sea invertible, lo que ocurre cuando hay variación de gradiente en dos direcciones. Un borde solo tiene gradiente en una dirección: la ecuación es subindeterminada (hay infinitas soluciones — el flujo paralelo al borde es invisible, "aperture problem"). Una esquina tiene gradiente en dos direcciones, haciendo A^T·A bien condicionada y el flujo recuperable unívocamente. <code>status==1</code> significa que el punto fue rastreado exitosamente entre frames (se encontró una buena correspondencia en la pirámide LK).</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-f">
+    <div class="card-header">F · Caja de Herramientas</div>
+    <div class="card-body">
+      <div class="tool-grid">
+        <div class="tool-card"><div class="ti">🔍</div><div class="tn">goodFeaturesToTrack</div><div class="td">Detector Shi-Tomasi</div></div>
+        <div class="tool-card"><div class="ti">➡</div><div class="tn">calcOpticalFlowPyrLK</div><div class="td">LK piramidal</div></div>
+        <div class="tool-card"><div class="ti">📐</div><div class="tn">np.linalg.norm</div><div class="td">Magnitud vectores</div></div>
+        <div class="tool-card"><div class="ti">🧭</div><div class="tn">np.arctan2</div><div class="td">Dirección flujo</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-back" onclick="goTo('m3')">‹ Anterior</button>
+    <button class="btn btn-next" onclick="completeAndNext('m4','m5')">Completar y continuar ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════ M5 FARNEBACK DENSE FLOW ═══════════════ -->
+<section class="module" id="m5">
+  <div class="module-tag">Módulo 5</div>
+  <h1 class="module-title">M5 · <span>Farneback Dense Flow</span></h1>
+  <p class="module-sub">calcOpticalFlowFarneback, visualización HSV, magnitud y dirección</p>
+
+  <div class="card card-a">
+    <div class="card-header">A · Núcleo Teórico Pareto</div>
+    <div class="card-body">
+      <h3>Flujo óptico denso — Farneback</h3>
+      <p>A diferencia de LK (sparse), Farneback calcula el vector de flujo para <strong>cada píxel</strong> del frame. Aproxima la imagen local con polinomiales cuadráticos y minimiza la diferencia entre frames. Produce un campo vectorial completo: ideal para capturar movimiento difuso, ondas y texturas en movimiento.</p>
+      <div class="formula">flow = cv2.calcOpticalFlowFarneback(prev_gray, gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)</div>
+      <p>Parámetros clave: <strong>pyr_scale=0.5</strong> (pirámide), <strong>levels=3</strong> (niveles), <strong>winsize=15</strong> (ventana local), <strong>poly_n=5</strong> (tamaño vecindad polinomial), <strong>poly_sigma=1.2</strong> (suavizado).</p>
+      <h4>Visualización HSV</h4>
+      <p>El campo de flujo 2D se visualiza asignando Hue=dirección (0-360°→0-180 en OpenCV) y Value=magnitud normalizada. Saturation=255 fijo. Esta codificación permite ver dirección y velocidad simultáneamente con color intuitivo.</p>
+      <h4>Descriptores globales</h4>
+      <ul>
+        <li><code>mag, ang = cv2.cartToPolar(flow[...,0], flow[...,1])</code></li>
+        <li>Magnitud media → intensidad de movimiento global.</li>
+        <li>Histograma de ángulos → dirección dominante del movimiento.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-b">
+    <div class="card-header">B · Laboratorio Guiado</div>
+    <div class="card-body">
+      <details>
+        <summary>Lab 5.1 — Visualización de flujo denso en tiempo real</summary>
+        <p>
+<pre><code>import cv2
+import numpy as np
+
+cap = cv2.VideoCapture(0)
+ret, old_frame = cap.read()
+old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
+hsv = np.zeros_like(old_frame)
+hsv[..., 1] = 255
+
+while True:
+    ret, frame = cap.read()
+    frame = cv2.flip(frame, 1)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    flow = cv2.calcOpticalFlowFarneback(
+        old_gray, gray, None,
+        0.5, 3, 15, 3, 5, 1.2, 0
+    )
+
+    mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
+    hsv[..., 0] = ang * 180 / np.pi / 2
+    hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
+
+    flow_rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+
+    mean_mag = float(np.mean(mag))
+    dominant_angle = float(np.median(ang[mag > np.percentile(mag, 75)]))
+
+    cv2.putText(frame, f"Mag:{mean_mag:.2f} Ang:{np.degrees(dominant_angle):.0f}°",
+                (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 1)
+
+    cv2.imshow("Dense Flow", flow_rgb)
+    cv2.imshow("Original", frame)
+    old_gray = gray
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+cap.release()
+</code></pre>
+        </p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-c">
+    <div class="card-header">C · Reto HERO</div>
+    <div class="card-body">
+      <details>
+        <summary>Reto 5 — Síntesis espectral dirigida por campo de flujo</summary>
+        <p>Divide el frame en una cuadrícula 4x4. Calcula la magnitud media de flujo en cada celda. Mapea cada celda a un bin de frecuencia de un oscilador (16 osciladores en total). La amplitud de cada oscilador es proporcional a la magnitud del flujo en esa celda. Envía 16 valores de amplitud vía OSC.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-d">
+    <div class="card-header">D · Drills</div>
+    <div class="card-body">
+      <ul class="drill-list">
+        <li>EX 5.1 — Varía winsize de 5 a 25 y observa el tradeoff entre suavizado y detalle.</li>
+        <li>EX 5.2 — Aplica umbral de magnitud: solo visualizar flujo donde mag &gt; percentil 90.</li>
+        <li>EX 5.3 — Calcula el histograma de ángulos (8 bins de 45°) y encuentra la dirección dominante.</li>
+        <li>EX 5.4 — Compara Farneback vs LK en velocidad: ¿cuántos fps pierde cada uno en 640x480?</li>
+        <li>EX 5.5 — Usa la magnitud en cuadrícula 3x3 para controlar 9 parámetros de síntesis granular.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">E · Espacio Feynman</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Cuándo usar flujo denso vs sparse para control musical, y qué codifica el canal Hue en la visualización HSV del flujo denso?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>Flujo denso (Farneback) captura todo el movimiento del frame; es ideal para performances donde el cuerpo entero es el instrumento o para síntesis dirigida por textura visual. LK sparse solo rastrea puntos de interés estables; es más preciso para movimientos de manos específicos y más rápido. Para un instrumento gestual con manos precisas: LK. Para "pintar con movimiento" con todo el cuerpo: Farneback. En la visualización HSV, el canal <strong>Hue</strong> codifica la dirección (ángulo) del vector de flujo, mientras que Value codifica la magnitud.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-f">
+    <div class="card-header">F · Caja de Herramientas</div>
+    <div class="card-body">
+      <div class="tool-grid">
+        <div class="tool-card"><div class="ti">🌊</div><div class="tn">Farneback</div><div class="td">Flujo denso por px</div></div>
+        <div class="tool-card"><div class="ti">🎨</div><div class="tn">HSV viz</div><div class="td">Color = dirección</div></div>
+        <div class="tool-card"><div class="ti">📐</div><div class="tn">cartToPolar</div><div class="td">Mag + ángulo</div></div>
+        <div class="tool-card"><div class="ti">📊</div><div class="tn">np.percentile</div><div class="td">Umbral adaptativo</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-back" onclick="goTo('m4')">‹ Anterior</button>
+    <button class="btn btn-next" onclick="completeAndNext('m5','m6')">Completar y continuar ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════ M6 MEDIAPIPE HANDS ═══════════════ -->
+<section class="module" id="m6">
+  <div class="module-tag">Módulo 6</div>
+  <h1 class="module-title">M6 · <span>MediaPipe Hands</span></h1>
+  <p class="module-sub">21 landmarks 3D, handedness, pinch detection, distancias normalizadas</p>
+
+  <div class="card card-a">
+    <div class="card-header">A · Núcleo Teórico Pareto</div>
+    <div class="card-body">
+      <h3>MediaPipe Hands — arquitectura</h3>
+      <p>MediaPipe Hands usa un pipeline de dos etapas: <strong>detector de palma</strong> (SSD) seguido de un <strong>estimador de landmarks</strong> (red de regresión directa). La detección de palma solo se ejecuta cuando no hay manos rastreadas; luego el estimador es mucho más eficiente al trabajar en la ROI de la palma detectada.</p>
+      <h4>Los 21 landmarks</h4>
+      <p>Cada landmark tiene coordenadas <code>(x, y, z)</code> normalizadas (0–1 en x,y respecto al frame; z es relativa a la muñeca). Los índices clave son:</p>
+      <ul>
+        <li>0=Muñeca, 4=Pulgar tip, 8=Índice tip, 12=Medio tip, 16=Anular tip, 20=Meñique tip.</li>
+        <li>Bases de dedos: 5=Índice MCP, 9=Medio MCP, 13=Anular MCP, 17=Meñique MCP.</li>
+      </ul>
+      <h4>Pinch detection</h4>
+      <div class="formula">pinch_dist = √((lm4.x-lm8.x)² + (lm4.y-lm8.y)²)</div>
+      <p>Distancia normalizada ≈ 0.05–0.08 = pinch cerrado. Mayor a 0.15 = abierto. Normalizar por distancia muñeca-índice MCP para invarianza a distancia cámara.</p>
+    </div>
+  </div>
+
+  <div class="card card-b">
+    <div class="card-header">B · Laboratorio Guiado</div>
+    <div class="card-body">
+      <details>
+        <summary>Lab 6.1 — Extractor de landmarks con pinch y apertura</summary>
+        <p>
+<pre><code>import cv2
+import mediapipe as mp
+import numpy as np
+
+mp_hands = mp.solutions.hands
+mp_draw = mp.solutions.drawing_utils
+
+def get_hand_features(landmarks, img_w, img_h):
+    lm = landmarks.landmark
+
+    tips = {
+        'thumb':  (lm[4].x,  lm[4].y),
+        'index':  (lm[8].x,  lm[8].y),
+        'middle': (lm[12].x, lm[12].y),
+        'ring':   (lm[16].x, lm[16].y),
+        'pinky':  (lm[20].x, lm[20].y),
+    }
+
+    dx = lm[4].x - lm[8].x
+    dy = lm[4].y - lm[8].y
+    pinch_dist = np.sqrt(dx**2 + dy**2)
+
+    ref_dx = lm[5].x - lm[0].x
+    ref_dy = lm[5].y - lm[0].y
+    ref_len = np.sqrt(ref_dx**2 + ref_dy**2) + 1e-6
+    pinch_norm = pinch_dist / ref_len
+
+    mcp_indices = [5, 9, 13, 17]
+    palm_x = np.mean([lm[i].x for i in mcp_indices])
+    palm_y = np.mean([lm[i].y for i in mcp_indices])
+
+    return {
+        'pinch_norm': float(pinch_norm),
+        'palm': (float(palm_x), float(palm_y)),
+        'tips': tips,
+        'index_tip_z': float(lm[8].z)
+    }
+
+cap = cv2.VideoCapture(0)
+with mp_hands.Hands(max_num_hands=2, min_detection_confidence=0.7,
+                    min_tracking_confidence=0.5) as hands:
+    while True:
+        ret, frame = cap.read()
+        frame = cv2.flip(frame, 1)
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = hands.process(rgb)
+
+        if results.multi_hand_landmarks:
+            for hand_lms in results.multi_hand_landmarks:
+                mp_draw.draw_landmarks(frame, hand_lms,
+                                       mp_hands.HAND_CONNECTIONS)
+                feats = get_hand_features(hand_lms, *frame.shape[:2][::-1])
+                pinch = feats['pinch_norm']
+                color = (0, 255, 0) if pinch &lt; 0.3 else (0, 0, 255)
+                cv2.putText(frame, f"Pinch: {pinch:.2f}",
+                            (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+
+        cv2.imshow("Hands", frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+cap.release()
+</code></pre>
+        </p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-c">
+    <div class="card-header">C · Reto HERO</div>
+    <div class="card-body">
+      <details>
+        <summary>Reto 6 — Instrumento de dos manos: mano izq = pitch, mano der = timbre</summary>
+        <p>Usa <code>handedness</code> para distinguir mano izquierda y derecha. La posición Y de la palma izquierda controla el pitch (C3–C6). La apertura de pinch de la mano derecha controla el cutoff de un filtro pasa-bajos (100Hz–8000Hz). Envía ambos valores vía OSC simultáneamente en cada frame.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-d">
+    <div class="card-header">D · Drills</div>
+    <div class="card-body">
+      <ul class="drill-list">
+        <li>EX 6.1 — Detecta si cada dedo está extendido comparando tip Y vs PIP Y (landmark 6,10,14,18).</li>
+        <li>EX 6.2 — Calcula el ángulo del dedo índice respecto a la vertical usando MCP y tip.</li>
+        <li>EX 6.3 — Implementa hysteresis en el pinch: evita oscilación rápida on/off con bandas de 0.25/0.35.</li>
+        <li>EX 6.4 — Usa la coordenada Z del índice tip para estimar profundidad y controlar reverb wet.</li>
+        <li>EX 6.5 — Normaliza la posición de palma (0–1) usando el bounding box de la mano, no el frame.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">E · Espacio Feynman</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Por qué se normaliza la distancia de pinch en lugar de usar píxeles absolutos, y qué landmark de MediaPipe Hands corresponde al tip del dedo medio?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>Si el usuario se aleja o acerca a la cámara, la mano ocupa menos o más píxeles. Una distancia de pinch en píxeles absolutos daría valores muy distintos según la distancia. Al normalizar por la longitud muñeca→MCP (que también escala con la distancia), se obtiene una métrica invariante: la misma apertura de dedos produce el mismo valor normalizado independientemente de si el usuario está a 30cm o 80cm de la cámara. El landmark que corresponde al tip del dedo medio es el <strong>Landmark 12</strong>.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-f">
+    <div class="card-header">F · Caja de Herramientas</div>
+    <div class="card-body">
+      <div class="tool-grid">
+        <div class="tool-card"><div class="ti">🖐</div><div class="tn">mp.Hands</div><div class="td">Pipeline MediaPipe</div></div>
+        <div class="tool-card"><div class="ti">📍</div><div class="tn">21 landmarks</div><div class="td">Esqueleto 3D mano</div></div>
+        <div class="tool-card"><div class="ti">🤏</div><div class="tn">pinch_norm</div><div class="td">Apertura normalizada</div></div>
+        <div class="tool-card"><div class="ti">🤲</div><div class="tn">handedness</div><div class="td">Izq/Der clasificación</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-back" onclick="goTo('m5')">‹ Anterior</button>
+    <button class="btn btn-next" onclick="completeAndNext('m6','m7')">Completar y continuar ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════ M7 MEDIAPIPE POSE ═══════════════ -->
+<section class="module" id="m7">
+  <div class="module-tag">Módulo 7</div>
+  <h1 class="module-title">M7 · <span>MediaPipe Pose</span></h1>
+  <p class="module-sub">33 landmarks corporales, ángulos articulares, reconocimiento de pose</p>
+
+  <div class="card card-a">
+    <div class="card-header">A · Núcleo Teórico Pareto</div>
+    <div class="card-body">
+      <h3>MediaPipe Pose — BlazePose</h3>
+      <p>BlazePose detecta 33 landmarks del cuerpo completo usando un detector de ROI de persona seguido de un estimador de pose. A diferencia de Hands, los landmarks incluyen 3D estimado en metros relativo a la cadera, no solo normalizado al frame.</p>
+      <h4>Landmarks clave para música</h4>
+      <ul>
+        <li>11=Hombro izq, 12=Hombro der, 13=Codo izq, 14=Codo der.</li>
+        <li>15=Muñeca izq, 16=Muñeca der, 23=Cadera izq, 24=Cadera der.</li>
+        <li>25=Rodilla izq, 26=Rodilla der, 27=Tobillo izq, 28=Tobillo der.</li>
+      </ul>
+      <h4>Cálculo de ángulo articular</h4>
+      <div class="formula">angle = arccos((AB·BC) / (|AB|·|BC|)) en grados</div>
+      <p>Ejemplo: ángulo del codo = ángulo entre vector (hombro→codo) y vector (codo→muñeca).</p>
+      <h4>Visibilidad</h4>
+      <p>Cada landmark tiene <code>visibility</code> [0–1]. Descartar landmarks con visibility &lt; 0.5 para evitar posiciones espurias cuando el cuerpo está parcialmente ocluido.</p>
+    </div>
+  </div>
+
+  <div class="card card-b">
+    <div class="card-header">B · Laboratorio Guiado</div>
+    <div class="card-body">
+      <details>
+        <summary>Lab 7.1 — Cálculo de ángulos articulares en tiempo real</summary>
+        <p>
+<pre><code>import cv2
+import mediapipe as mp
+import numpy as np
+
+mp_pose = mp.solutions.pose
+mp_draw = mp.solutions.drawing_utils
+
+def calc_angle(a, b, c):
+    a, b, c = np.array(a), np.array(b), np.array(c)
+    ba = a - b
+    bc = c - b
+    cosine = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc) + 1e-6)
+    return float(np.degrees(np.arccos(np.clip(cosine, -1.0, 1.0))))
+
+def get_pose_features(landmarks):
+    lm = landmarks.landmark
+
+    def pt(idx):
+        return [lm[idx].x, lm[idx].y]
+
+    def vis(idx):
+        return lm[idx].visibility
+
+    features = {}
+
+    if all(vis(i) > 0.5 for i in [11, 13, 15]):
+        features['elbow_L'] = calc_angle(pt(11), pt(13), pt(15))
+
+    if all(vis(i) > 0.5 for i in [12, 14, 16]):
+        features['elbow_R'] = calc_angle(pt(12), pt(14), pt(16))
+
+    if vis(15) > 0.5:
+        features['wrist_L_y'] = 1.0 - lm[15].y
+    if vis(16) > 0.5:
+        features['wrist_R_y'] = 1.0 - lm[16].y
+
+    if vis(15) > 0.5 and vis(16) > 0.5:
+        features['arm_span'] = abs(lm[15].x - lm[16].x)
+
+    return features
+
+cap = cv2.VideoCapture(0)
+with mp_pose.Pose(min_detection_confidence=0.7,
+                  min_tracking_confidence=0.5) as pose:
+    while True:
+        ret, frame = cap.read()
+        frame = cv2.flip(frame, 1)
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = pose.process(rgb)
+
+        if results.pose_landmarks:
+            mp_draw.draw_landmarks(frame, results.pose_landmarks,
+                                   mp_pose.POSE_CONNECTIONS)
+            feats = get_pose_features(results.pose_landmarks)
+            y = 30
+            for k, v in feats.items():
+                cv2.putText(frame, f"{k}: {v:.2f}",
+                            (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0,255,255), 1)
+                y += 22
+
+        cv2.imshow("Pose", frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+cap.release()
+</code></pre>
+        </p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-c">
+    <div class="card-header">C · Reto HERO</div>
+    <div class="card-body">
+      <details>
+        <summary>Reto 7 — Conductor virtual: ángulos de codos → tempo y dinámica</summary>
+        <p>Mapea el ángulo del codo derecho (0–180°) al tempo de un metrónomo (60–180 BPM). El ángulo del codo izquierdo controla la dinámica (pp–ff mapeado a CC11 Expression). Detecta el "downbeat" cuando el codo derecho pasa por &lt;90° de mayor a menor. Envía click MIDI en cada downbeat.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-d">
+    <div class="card-header">D · Drills</div>
+    <div class="card-body">
+      <ul class="drill-list">
+        <li>EX 7.1 — Filtra landmarks por visibility &lt; 0.6 y observa cómo mejora la estabilidad.</li>
+        <li>EX 7.2 — Calcula el ángulo de la cadera (cadera-rodilla-tobillo) para detectar sentado vs parado.</li>
+        <li>EX 7.3 — Detecta brazos cruzados: muñeca derecha X &lt; hombro izquierdo X y viceversa.</li>
+        <li>EX 7.4 — Normaliza arm_span por la distancia hombro-hombro para invarianza a distancia cámara.</li>
+        <li>EX 7.5 — Implementa un clasificador de 3 poses (brazos arriba/abajo/abiertos) con umbrales simples.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">E · Espacio Feynman</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Por qué el score de visibilidad es crítico en Pose y no tanto en Hands, y qué landmark corresponde a la muñeca derecha?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>En Hands, toda la mano suele estar visible en el frame con pocas oclusiones. En Pose, es muy común que partes del cuerpo estén fuera del encuadre o tapadas: sentado (piernas fuera), de lado (brazo trasero ocluido), con brazos cruzados. Sin filtrar por visibilidad, MediaPipe extrapola posiciones de landmarks ocultos que pueden ser completamente erróneas, generando saltos absurdos en los parámetros musicales. La visibilidad es la única señal de confianza disponible. El landmark correspondiente a la muñeca derecha es el <strong>Landmark 16</strong>.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-f">
+    <div class="card-header">F · Caja de Herramientas</div>
+    <div class="card-body">
+      <div class="tool-grid">
+        <div class="tool-card"><div class="ti">🧍</div><div class="tn">mp.Pose</div><div class="td">BlazePose pipeline</div></div>
+        <div class="tool-card"><div class="ti">📐</div><div class="tn">calc_angle()</div><div class="td">Ángulo articular</div></div>
+        <div class="tool-card"><div class="ti">👁</div><div class="tn">visibility</div><div class="td">Confianza landmark</div></div>
+        <div class="tool-card"><div class="ti">📏</div><div class="tn">33 landmarks</div><div class="td">Esqueleto completo</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-back" onclick="goTo('m6')">‹ Anterior</button>
+    <button class="btn btn-next" onclick="completeAndNext('m7','m8')">Completar y continuar ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════ M8 ONE EURO FILTER ═══════════════ -->
+<section class="module" id="m8">
+  <div class="module-tag">Módulo 8</div>
+  <h1 class="module-title">M8 · <span>One Euro Filter</span></h1>
+  <p class="module-sub">Suavizado adaptativo: mínima latencia en movimiento rápido, máximo filtrado en reposo</p>
+
+  <div class="card card-a">
+    <div class="card-header">A · Núcleo Teórico Pareto</div>
+    <div class="card-body">
+      <h3>One Euro Filter — motivación</h3>
+      <p>Los filtros paso-bajo convencionales tienen un tradeoff fundamental: más suavizado → más latencia. Para control musical esto es inaceptable. One Euro Filter resuelve esto adaptando la frecuencia de corte según la velocidad de la señal: cuando el movimiento es lento (alta jitter, poco movimiento), usa fc bajo (más suavizado). Cuando el movimiento es rápido (gesto expresivo), usa fc alto (mínima latencia).</p>
+      <div class="formula">ẑ_n = α·z_n + (1−α)·ẑ_{n-1}</div>
+      <div class="formula">α = 1 / (1 + τ·T_e)  donde τ = 1/(2π·f_c)</div>
+      <div class="formula">f_c = f_cmin + β·|dx̂/dt|</div>
+      <p>Parámetros: <strong>fcmin</strong> (frecuencia mínima ~1Hz), <strong>β</strong> (velocidad de adaptación ~0.007), <strong>dcutoff</strong> (corte para derivada ~1Hz).</p>
+      <h4>Implementación práctica</h4>
+      <p>Necesita dos filtros: uno para la señal (<code>x_filter</code>) y uno para su derivada (<code>dx_filter</code>). La derivada filtrada se usa para calcular fc adaptativo. Se aplica por coordenada (x, y separados) o por parámetro.</p>
+    </div>
+  </div>
+
+  <div class="card card-b">
+    <div class="card-header">B · Laboratorio Guiado</div>
+    <div class="card-body">
+      <details>
+        <summary>Lab 8.1 — Implementación One Euro Filter en Python</summary>
+        <p>
+<pre><code>import math
+
+class LowPassFilter:
+    def __init__(self, alpha=1.0):
+        self.alpha = alpha
+        self.y = None
+        self.s = None
+
+    def set_alpha(self, alpha):
+        self.alpha = alpha
+
+    def __call__(self, value):
+        if self.y is None:
+            self.y = value
+            self.s = value
+        else:
+            self.y = self.alpha * value + (1.0 - self.alpha) * self.s
+            self.s = self.y
+        return self.y
+
+class OneEuroFilter:
+    def __init__(self, freq, min_cutoff=1.0, beta=0.007, d_cutoff=1.0):
+        self.freq = freq
+        self.min_cutoff = min_cutoff
+        self.beta = beta
+        self.d_cutoff = d_cutoff
+        self.x_filter = LowPassFilter()
+        self.dx_filter = LowPassFilter()
+        self.last_value = None
+
+    def alpha(self, cutoff):
+        tau = 1.0 / (2.0 * math.pi * cutoff)
+        te = 1.0 / self.freq
+        return 1.0 / (1.0 + tau / te)
+
+    def __call__(self, x):
+        if self.last_value is None:
+            dx = 0.0
+        else:
+            dx = (x - self.last_value) * self.freq
+
+        self.last_value = x
+
+        edx = self.dx_filter.set_alpha(self.alpha(self.d_cutoff)) or self.dx_filter(dx)
+        cutoff = self.min_cutoff + self.beta * abs(edx)
+        self.x_filter.set_alpha(self.alpha(cutoff))
+        return self.x_filter(x)
+
+filter_x = OneEuroFilter(freq=30, min_cutoff=1.0, beta=0.007)
+filter_y = OneEuroFilter(freq=30, min_cutoff=1.0, beta=0.007)
+# En el loop: smooth_x = filter_x(raw_x) | smooth_y = filter_y(raw_y)
+</code></pre>
+        </p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-c">
+    <div class="card-header">C · Reto HERO</div>
+    <div class="card-body">
+      <details>
+        <summary>Reto 8 — Comparativa perceptual: sin filtro vs LP vs 1€</summary>
+        <p>Implementa tres versiones del controlador de pitch por posición Y: sin filtro, con LP de α=0.3, y con One Euro Filter. Visualiza las tres curvas simultáneamente en una ventana OpenCV. Graba 10 segundos de cada una haciendo el mismo gesto lento seguido de uno rápido. Compara el jitter y la latencia percibida.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-d">
+    <div class="card-header">D · Drills</div>
+    <div class="card-body">
+      <ul class="drill-list">
+        <li>EX 8.1 — Varía β de 0.001 a 0.1 y observa el tradeoff jitter/latencia en movimientos rápidos.</li>
+        <li>EX 8.2 — Prueba min_cutoff=0.5 vs 3.0: ¿cuándo hay demasiado lag en el reposo?</li>
+        <li>EX 8.3 — Aplica filtros 1€ independientes a todas las coordenadas del landmark 8 (x, y, z).</li>
+        <li>EX 8.4 — Implementa el filtro con detección de freq real (delta_time) en lugar de freq fija.</li>
+        <li>EX 8.5 — Compara la latencia de 1€ vs butter de scipy con corte a 5Hz en un gesto de 200ms.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">E · Espacio Feynman</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Por qué el parámetro β controla el balance jitter/latencia en One Euro Filter, y qué ocurre con la frecuencia de corte cuando el movimiento es muy rápido?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>β escala cuánto sube la frecuencia de corte cuando la velocidad (|edx|) aumenta. Con β alto, cualquier movimiento rápido sube mucho el fc → el filtro casi no filtra cuando hay velocidad → respuesta inmediata pero sin suavizado en gestos rápidos. Con β bajo, fc sube poco → el filtro siempre suaviza bastante → jitter reducido pero latencia apreciable en gestos expresivos. Cuando el movimiento es muy rápido, la frecuencia de corte <strong>aumenta</strong> (menos suavizado, mínima latencia), lo contrario de cuando está en reposo.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-f">
+    <div class="card-header">F · Caja de Herramientas</div>
+    <div class="card-body">
+      <div class="tool-grid">
+        <div class="tool-card"><div class="ti">🌡</div><div class="tn">OneEuroFilter</div><div class="td">Suavizado adaptativo</div></div>
+        <div class="tool-card"><div class="ti">⚡</div><div class="tn">β (beta)</div><div class="td">Velocidad adaptación</div></div>
+        <div class="tool-card"><div class="ti">🔻</div><div class="tn">fcmin</div><div class="td">Corte mínimo reposo</div></div>
+        <div class="tool-card"><div class="ti">📈</div><div class="tn">dx_filter</div><div class="td">Filtro derivada</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-back" onclick="goTo('m7')">‹ Anterior</button>
+    <button class="btn btn-next" onclick="completeAndNext('m8','m9')">Completar y continuar ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════ M9 OSC PROTOCOL ═══════════════ -->
+<section class="module" id="m9">
+  <div class="module-tag">Módulo 9</div>
+  <h1 class="module-title">M9 · <span>OSC Protocol</span></h1>
+  <p class="module-sub">python-osc, SimpleUDPClient, bundles, float32 vs MIDI 7-bit</p>
+
+  <div class="card card-a">
+    <div class="card-header">A · Núcleo Teórico Pareto</div>
+    <div class="card-body">
+      <h3>Open Sound Control (OSC)</h3>
+      <p>OSC es un protocolo de red para comunicación en tiempo real entre software musical. A diferencia de MIDI (serie, 7-bit), OSC usa UDP con mensajes arbitrariamente tipados y organizados en namespaces jerárquicos como URLs. Es el estándar de facto para control gestual en arte interactivo.</p>
+      <h4>Ventajas sobre MIDI</h4>
+      <ul>
+        <li><strong>Resolución</strong>: float32 (32 bits) vs MIDI 7-bit (128 valores).</li>
+        <li><strong>Flexibilidad</strong>: cualquier tipo de dato (int, float, string, blob).</li>
+        <li><strong>Namespacing</strong>: <code>/hand/left/pinch</code> vs CC arbitrarios.</li>
+        <li><strong>Bundles</strong>: múltiples mensajes con timestamp atómico.</li>
+      </ul>
+      <h4>Latencia UDP</h4>
+      <p>En localhost, UDP tiene latencia &lt;1ms. La latencia total del sistema es dominada por el procesamiento de video (~30ms a 30fps), no por la transmisión OSC.</p>
+      <div class="formula">python-osc: pip install python-osc</div>
+    </div>
+  </div>
+
+  <div class="card card-b">
+    <div class="card-header">B · Laboratorio Guiado</div>
+    <div class="card-body">
+      <details>
+        <summary>Lab 9.1 — Emisor OSC desde MediaPipe Hands</summary>
+        <p>
+<pre><code>from pythonosc import udp_client, osc_bundle_builder, osc_message_builder
+import time
+
+OSC_IP = "127.0.0.1"
+OSC_PORT = 7400
+client = udp_client.SimpleUDPClient(OSC_IP, OSC_PORT)
+
+def send_hand_osc(features, handedness="Right"):
+    side = handedness.lower()
+
+    builder = osc_bundle_builder.OscBundleBuilder(
+        osc_bundle_builder.IMMEDIATELY
+    )
+
+    msg = osc_message_builder.OscMessageBuilder(
+        address=f"/hand/{side}/palm"
+    )
+    msg.add_arg(float(features['palm'][0]))
+    msg.add_arg(float(features['palm'][1]))
+    builder.add_content(msg.build())
+
+    msg2 = osc_message_builder.OscMessageBuilder(
+        address=f"/hand/{side}/pinch"
+    )
+    msg2.add_arg(float(features['pinch_norm']))
+    builder.add_content(msg2.build())
+
+    client.send(builder.build())
+
+def send_simple(address, *values):
+    client.send_message(address, list(values))
+</code></pre>
+        </p>
+      </details>
+      <details>
+        <summary>Lab 9.2 — Receptor OSC en Python (para testing)</summary>
+        <p>
+<pre><code>from pythonosc import dispatcher, osc_server
+
+def handler_palm(address, x, y):
+    print(f"{address}: x={x:.3f} y={y:.3f}")
+
+def handler_pinch(address, val):
+    print(f"{address}: {val:.3f}")
+
+disp = dispatcher.Dispatcher()
+disp.map("/hand/*/palm", handler_palm)
+disp.map("/hand/*/pinch", handler_pinch)
+disp.set_default_handler(lambda addr, *args: print(f"?? {addr}: {args}"))
+
+server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 7400), disp)
+print("Escuchando en :7400 ...")
+server.serve_forever()
+</code></pre>
+        </p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-c">
+    <div class="card-header">C · Reto HERO</div>
+    <div class="card-body">
+      <details>
+        <summary>Reto 9 — Latency profiler: mide el RTT OSC end-to-end</summary>
+        <p>Implementa un sistema de medición de round-trip time: Python envía OSC con timestamp, Max/MSP (o receptor Python) lo reenvía de vuelta, Python mide el delta. Prueba con diferentes frecuencias de envío (10/30/60Hz) y tamaños de bundle. Reporta media y P95 de latencia.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-d">
+    <div class="card-header">D · Drills</div>
+    <div class="card-body">
+      <ul class="drill-list">
+        <li>EX 9.1 — Envía un mensaje OSC con 21 floats (todos landmarks de una mano) en un solo bundle.</li>
+        <li>EX 9.2 — Implementa throttling: envía OSC solo si algún valor cambió más de 0.01 respecto al anterior.</li>
+        <li>EX 9.3 — Usa wildcard dispatcher en el receptor: mapea <code>/hand/*/pinch</code> a un solo handler.</li>
+        <li>EX 9.4 — Prueba envío a IP remota en red local. ¿Aumenta la latencia? ¿Hay pérdida de paquetes?</li>
+        <li>EX 9.5 — Compara float32 OSC vs CC MIDI de 7-bit: visualiza la diferencia de resolución en 1000 valores.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">E · Espacio Feynman</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Por qué se usa UDP y no TCP para OSC en tiempo real, y cuántos valores discretos puede transmitir un CC MIDI de 7 bits comparado con OSC float32?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>TCP garantiza entrega y orden, pero a costa de retransmisiones y control de flujo que introducen latencia variable (jitter). Para audio en tiempo real, un paquete llegando 20ms tarde es peor que uno perdido: el músico ya tomó la siguiente acción. UDP "dispara y olvida": si un paquete se pierde, el siguiente con datos frescos llegará pronto sin esperar retransmisión. En cuanto a resolución, un CC MIDI de 7 bits transmite <strong>128 valores discretos</strong> (0–127), mientras que OSC float32 ofrece efectivamente ~16.7 millones de valores en el rango [0,1], lo que equivale a una resolución continua para cualquier parámetro musical.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-f">
+    <div class="card-header">F · Caja de Herramientas</div>
+    <div class="card-body">
+      <div class="tool-grid">
+        <div class="tool-card"><div class="ti">📡</div><div class="tn">python-osc</div><div class="td">Librería OSC UDP</div></div>
+        <div class="tool-card"><div class="ti">📦</div><div class="tn">OscBundle</div><div class="td">Mensajes atómicos</div></div>
+        <div class="tool-card"><div class="ti">🗂</div><div class="tn">Dispatcher</div><div class="td">Enrutamiento OSC</div></div>
+        <div class="tool-card"><div class="ti">🔢</div><div class="tn">float32</div><div class="td">Precisión continua</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-back" onclick="goTo('m8')">‹ Anterior</button>
+    <button class="btn btn-next" onclick="completeAndNext('m9','m10')">Completar y continuar ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════ M10 MIDI MAPPING ═══════════════ -->
+<section class="module" id="m10">
+  <div class="module-tag">Módulo 10</div>
+  <h1 class="module-title">M10 · <span>MIDI Mapping</span></h1>
+  <p class="module-sub">mido, note_on/off, CC, 7-bit, pitch bend, escalas musicales</p>
+
+  <div class="card card-a">
+    <div class="card-header">A · Núcleo Teórico Pareto</div>
+    <div class="card-body">
+      <h3>MIDI desde Python con mido</h3>
+      <p>MIDI es el protocolo estándar de la industria musical. Aunque limitado en resolución (7-bit = 128 valores), está soportado por todo el software musical. Para control gestual, MIDI es apropiado cuando el DAW destino no soporta OSC, o cuando se necesita interoperabilidad máxima.</p>
+      <h4>Mensajes clave</h4>
+      <ul>
+        <li><code>note_on(channel, note, velocity)</code> — iniciar nota. note=60 es C4 (MIDI middle C).</li>
+        <li><code>note_off(channel, note, velocity=0)</code> — parar nota.</li>
+        <li><code>control_change(channel, control, value)</code> — CC 0–127. CC7=volumen, CC74=cutoff, CC1=mod.</li>
+        <li><code>pitchwheel(channel, pitch)</code> — pitch bend: rango -8192 a +8191.</li>
+      </ul>
+      <h4>Mapeo gestual a nota</h4>
+      <div class="formula">note = int(np.interp(y_palm, [0,1], [48, 84]))  # C3–C6</div>
+      <p>Para escalas musicales: usar array de notas válidas y encontrar la más cercana con <code>np.argmin(np.abs(scale - raw_note))</code>.</p>
+    </div>
+  </div>
+
+  <div class="card card-b">
+    <div class="card-header">B · Laboratorio Guiado</div>
+    <div class="card-body">
+      <details>
+        <summary>Lab 10.1 — Theremin MIDI con sustain por posición</summary>
+        <p>
+<pre><code>import mido
+import numpy as np
+import time
+
+port = mido.open_output('Python MIDI Out', virtual=True)
+
+PENTATONIC = [0, 2, 4, 7, 9]  # semitones en pentatónica mayor
+BASE_OCT = 4
+
+def to_pentatonic(raw_note):
+    note_in_oct = raw_note % 12
+    octave = raw_note // 12
+    dists = [abs(note_in_oct - p) for p in PENTATONIC]
+    closest = PENTATONIC[np.argmin(dists)]
+    return octave * 12 + closest
+
+def send_note(note, velocity=80, duration=0.1):
+    port.send(mido.Message('note_on', note=note, velocity=velocity))
+    time.sleep(duration)
+    port.send(mido.Message('note_off', note=note))
+
+def send_cc(control, value):
+    clamped = max(0, min(127, int(value)))
+    port.send(mido.Message('control_change', control=control, value=clamped))
+</code></pre>
+        </p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-c">
+    <div class="card-header">C · Reto HERO</div>
+    <div class="card-body">
+      <details>
+        <summary>Reto 10 — Arpeggiator gestual con pentatónica y velocity por velocidad</summary>
+        <p>Mapea la posición Y de la palma a nota pentatónica. La velocidad del movimiento (magnitud del delta posición entre frames) controla la velocity (0–127). Implementa hysteresis para evitar re-triggering rápido: nueva nota solo si el delta de posición supera 0.05 normalizado. Envía note_off de la nota anterior antes de note_on de la nueva.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-d">
+    <div class="card-header">D · Drills</div>
+    <div class="card-body">
+      <ul class="drill-list">
+        <li>EX 10.1 — Lista todos los puertos MIDI disponibles con mido.get_output_names().</li>
+        <li>EX 10.2 — Implementa mapeo a escala menor natural en lugar de pentatónica.</li>
+        <li>EX 10.3 — Usa pitch bend para microtono: interpola entre notas enteras con el valor [−8192,+8191].</li>
+        <li>EX 10.4 — Implementa detección de "nota nueva" con histéresis de 2 semitones antes de re-trigger.</li>
+        <li>EX 10.5 — Envía MIDI Clock (24 ppqn) sincronizado con el frame rate para sync con DAW.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">E · Espacio Feynman</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Cuándo usar OSC y cuándo MIDI para control gestual, y cuál es el rango exacto del pitch bend MIDI?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>MIDI cuando: el software destino solo habla MIDI (sintetizadores hardware y software legacy), necesitas interop máxima, la resolución de 7-bit es suficiente. OSC cuando: necesitas precisión continua (pitch theremin, parámetros físicos de síntesis), quieres múltiples parámetros tipados en un solo mensaje, o el software destino es Max/MSP o TouchDesigner que soportan OSC nativamente. Para un instrumento profesional: envía ambos en paralelo. El rango exacto del pitch bend MIDI es de <strong>-8192 a +8191</strong> (14 bits, valor 0 = sin bend).</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-f">
+    <div class="card-header">F · Caja de Herramientas</div>
+    <div class="card-body">
+      <div class="tool-grid">
+        <div class="tool-card"><div class="ti">🎹</div><div class="tn">mido</div><div class="td">MIDI nativo Python</div></div>
+        <div class="tool-card"><div class="ti">🎵</div><div class="tn">note_on/off</div><div class="td">Triggering notas</div></div>
+        <div class="tool-card"><div class="ti">🎛</div><div class="tn">control_change</div><div class="td">CC automation</div></div>
+        <div class="tool-card"><div class="ti">🎼</div><div class="tn">Pentatónica</div><div class="td">Quantización musical</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-back" onclick="goTo('m9')">‹ Anterior</button>
+    <button class="btn btn-next" onclick="completeAndNext('m10','m11')">Completar y continuar ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════ M11 MAX / TOUCHDESIGNER ═══════════════ -->
+<section class="module" id="m11">
+  <div class="module-tag">Módulo 11</div>
+  <h1 class="module-title">M11 · <span>Max/MSP &amp; TouchDesigner</span></h1>
+  <p class="module-sub">Recepción OSC, patching paradigms, CHOP workflow, síntesis controlada</p>
+
+  <div class="card card-a">
+    <div class="card-header">A · Núcleo Teórico Pareto</div>
+    <div class="card-body">
+      <h3>Recepción OSC en Max/MSP</h3>
+      <p>En Max, el objeto <code>[udpreceive 7400]</code> recibe paquetes UDP en el puerto especificado. El objeto <code>[osc-route /hand/right/pinch]</code> filtra por dirección y extrae el valor. Los valores float llegan como mensajes Max estándar que pueden conectarse a cualquier objeto de síntesis.</p>
+      <h4>Cadena típica Max</h4>
+      <pre><code>[udpreceive 7400] → [osc-route /hand/right/pinch] → [scale 0 1 100 8000] → [filtercoeff~] → [biquad~]</code></pre>
+      <h3>TouchDesigner — CHOP workflow</h3>
+      <p>En TD, el nodo <code>OSC In CHOP</code> recibe canales OSC como streams de datos continuos. Los CHOPs (Channel Operators) permiten filtrar, transformar y mapear estos canales a parámetros de síntesis, video o DMX. El paradigma es dataflow: cada nodo procesa el stream en tiempo real.</p>
+      <h4>CHOP esenciales</h4>
+      <ul>
+        <li><strong>OSC In CHOP</strong>: recepción de mensajes OSC como canales.</li>
+        <li><strong>Filter CHOP</strong>: suavizado (equivalente al One Euro Filter en TD).</li>
+        <li><strong>Math CHOP</strong>: escalar, invertir, mapear rangos.</li>
+        <li><strong>Limit CHOP</strong>: clamping y quantización.</li>
+        <li><strong>Audio Oscillator CHOP</strong>: oscilador controlado por canal.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-b">
+    <div class="card-header">B · Laboratorio Guiado</div>
+    <div class="card-body">
+      <details>
+        <summary>Lab 11.1 — Patch Max mínimo: OSC → síntesis FM</summary>
+        <p>Objeto por objeto del patch: 1) <code>[udpreceive 7400]</code> — recibir paquetes. 2) <code>[osc-route /hand/right/palm]</code> — extraer posición palma (x, y). 3) <code>[unpack f f]</code> — separar x e y. 4) Para y: <code>[scale 0. 1. 200. 1200.]</code> → frecuencia carrier. 5) <code>[osc-route /hand/right/pinch]</code> → <code>[scale 0. 1. 0. 10.]</code> → ratio FM. 6) <code>[cycle~ 220]</code> modulator → <code>[*~ 110]</code> → <code>[+~ 440]</code> → <code>[cycle~]</code> carrier → <code>[dac~]</code>. La posición Y controla la frecuencia carrier, el pinch controla el índice de modulación FM.</p>
+      </details>
+      <details>
+        <summary>Lab 11.2 — TD: OSC In → Audio Oscillator CHOP</summary>
+        <p>En TouchDesigner: 1) Crear OSC In CHOP, port=7400. Canales: /hand/right/palm:1 (Y), /hand/right/pinch. 2) Filter CHOP → width=0.05s para suavizar. 3) Math CHOP → mapear canal palm Y de [0,1] a [200,1200]. 4) Audio Oscillator CHOP → conectar salida de Math al parámetro Frequency. 5) Audio Filter CHOP → conectar pinch mapeado [100,8000] al Cutoff. 6) Audio Device Out CHOP → salida a interfaz de audio.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-c">
+    <div class="card-header">C · Reto HERO</div>
+    <div class="card-body">
+      <details>
+        <summary>Reto 11 — Sistema completo: Python CV → Max → reverb espacial</summary>
+        <p>Pipeline completo: Python (MediaPipe + 1€ Filter) → OSC → Max. En Max: /palm → freq carrier, /pinch → índice FM, /elbow_angle → wet de reverb (Freeverb~). Añade voice stealing básico: máximo 4 voces simultáneas. El resultado debe ser playable como instrumento musical sin lag perceptible.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-d">
+    <div class="card-header">D · Drills</div>
+    <div class="card-body">
+      <ul class="drill-list">
+        <li>EX 11.1 — Crea un patch Max que reciba OSC y lo reenvíe como MIDI CC a un sintetizador externo.</li>
+        <li>EX 11.2 — En TD, usa un Lag CHOP para suavizar la señal OSC con constante de tiempo 0.1s.</li>
+        <li>EX 11.3 — Implementa slew rate limiter en Max con [line~] para evitar clicks en cambios bruscos de freq.</li>
+        <li>EX 11.4 — En TD, conecta el canal de pinch a la opacidad de un TOP visual simultáneamente al audio.</li>
+        <li>EX 11.5 — Añade un preset system en Max con [pattrstorage] que guarde 8 configuraciones de síntesis.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">E · Espacio Feynman</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Por qué es necesario [line~] al mapear OSC a parámetros de audio, y en TouchDesigner qué tipo de operador (OP) se usa para procesar datos de control en tiempo real?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>Los mensajes OSC llegan a ~30Hz (cada ~33ms), pero el audio se procesa a sample rate (44100Hz). Si conectas directamente un valor OSC al pitch de un oscilador, el parámetro salta abruptamente en cada mensaje → zipper noise (artefactos de modulación abrupta). [line~] interpola suavemente desde el valor anterior al nuevo en el tiempo especificado (ej: 20ms), eliminando los saltos. En TouchDesigner, el tipo de operador para procesar datos de control en tiempo real es el <strong>CHOP (Channel Operator)</strong>.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-f">
+    <div class="card-header">F · Caja de Herramientas</div>
+    <div class="card-body">
+      <div class="tool-grid">
+        <div class="tool-card"><div class="ti">🟩</div><div class="tn">udpreceive</div><div class="td">Recepción OSC Max</div></div>
+        <div class="tool-card"><div class="ti">🔶</div><div class="tn">OSC In CHOP</div><div class="td">OSC stream TD</div></div>
+        <div class="tool-card"><div class="ti">📉</div><div class="tn">line~</div><div class="td">Interpolación audio</div></div>
+        <div class="tool-card"><div class="ti">🎚</div><div class="tn">Filter CHOP</div><div class="td">Suavizado TD</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-back" onclick="goTo('m10')">‹ Anterior</button>
+    <button class="btn btn-next" onclick="completeAndNext('m11','m12')">Completar y continuar ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════ M12 SÍNTESIS GRANULAR ═══════════════ -->
+<section class="module" id="m12">
+  <div class="module-tag">Módulo 12</div>
+  <h1 class="module-title">M12 · <span>Síntesis Granular</span></h1>
+  <p class="module-sub">Granos, ADSR, pitch shift, densidad — control por parámetros gestuales</p>
+
+  <div class="card card-a">
+    <div class="card-header">A · Núcleo Teórico Pareto</div>
+    <div class="card-body">
+      <h3>Síntesis granular</h3>
+      <p>La síntesis granular descompone el sonido en micro-eventos (granos) de 1–100ms, cada uno con su propio pitch, amplitud y posición en un buffer de muestra. Al controlar densidad (granos/segundo), tamaño, posición de lectura y dispersión, se obtienen texturas sonoras imposibles en síntesis convencional.</p>
+      <h4>Parámetros controlables por gesto</h4>
+      <ul>
+        <li><strong>Densidad</strong> (granos/s): magnitud del flujo óptico → más movimiento = más granos.</li>
+        <li><strong>Pitch ratio</strong>: posición Y de palma → transponer granos arriba/abajo.</li>
+        <li><strong>Posición de lectura</strong> (position): posición X de palma → punto de lectura en buffer.</li>
+        <li><strong>Dispersión de posición</strong>: solidez del contorno → puño = granos concentrados, abierta = dispersos.</li>
+        <li><strong>Tamaño de grano</strong>: ángulo codo → granos cortos (crispy) a largos (smooth).</li>
+      </ul>
+      <h4>Envolvente de grano</h4>
+      <div class="formula">Hann window: w(n) = 0.5·(1 − cos(2πn/(N−1)))</div>
+      <p>La ventana de Hann elimina clicks en los bordes del grano. Sin envolvente, los granos producen artefactos de corte abrupto.</p>
+    </div>
+  </div>
+
+  <div class="card card-b">
+    <div class="card-header">B · Laboratorio Guiado</div>
+    <div class="card-body">
+      <details>
+        <summary>Lab 12.1 — Granulador básico en Python con scipy</summary>
+        <p>
+<pre><code>import numpy as np
+import soundfile as sf
+import sounddevice as sd
+from scipy.signal import windows
+
+def granular_synth(buffer, sr=44100, density=20, grain_size_ms=50,
+                   position=0.5, pitch_ratio=1.0, spread=0.1):
+    grain_samples = int(sr * grain_size_ms / 1000)
+    buf_len = len(buffer)
+    output_len = sr  # 1 segundo de output
+
+    output = np.zeros(output_len, dtype=np.float32)
+    hann = windows.hann(grain_samples).astype(np.float32)
+
+    n_grains = int(density)
+    for i in range(n_grains):
+        pos = position + np.random.uniform(-spread, spread)
+        pos = np.clip(pos, 0.0, 1.0)
+        start = int(pos * (buf_len - grain_samples))
+        start = max(0, min(start, buf_len - grain_samples))
+
+        grain = buffer[start:start + grain_samples].copy()
+
+        if pitch_ratio != 1.0:
+            indices = np.arange(0, grain_samples, pitch_ratio)
+            indices = indices[indices &lt; grain_samples].astype(int)
+            grain_pitched = grain[indices]
+            if len(grain_pitched) &lt; grain_samples:
+                grain_pitched = np.pad(grain_pitched,
+                                       (0, grain_samples - len(grain_pitched)))
+            grain = grain_pitched[:grain_samples]
+
+        grain *= hann
+
+        t_start = int(i * output_len / n_grains)
+        t_end = min(t_start + grain_samples, output_len)
+        output[t_start:t_end] += grain[:t_end - t_start]
+
+    max_val = np.max(np.abs(output))
+    if max_val > 0:
+        output /= max_val * 1.2
+
+    return output
+</code></pre>
+        </p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-c">
+    <div class="card-header">C · Reto HERO</div>
+    <div class="card-body">
+      <details>
+        <summary>Reto 12 — Granulador en tiempo real controlado por MediaPipe</summary>
+        <p>Integra el granulador con el pipeline MediaPipe. Palm X → position, Palm Y → pitch_ratio (0.5–2.0), magnitud flujo LK → density (5–50 granos/s), solidez del contorno → spread. Usa un buffer de audio pregrabado (voz, instrumento). Output en tiempo real con sounddevice. Latencia máxima permitida: 100ms.</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-d">
+    <div class="card-header">D · Drills</div>
+    <div class="card-body">
+      <ul class="drill-list">
+        <li>EX 12.1 — Compara ventana rectangular vs Hann vs Tukey en un grano. ¿Cuánto click hay en cada caso?</li>
+        <li>EX 12.2 — Implementa 4 granos simultáneos con posiciones distintas (chorus granular).</li>
+        <li>EX 12.3 — Mapea ángulo de codo a grain_size_ms de 10ms (percusivo) a 200ms (atmosférico).</li>
+        <li>EX 12.4 — Añade random detune: cada grano tiene pitch_ratio ± random(0.02) para espesor.</li>
+        <li>EX 12.5 — Prueba con diferentes buffers de audio: ¿qué tipo de material suena más interesante con granular?</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">E · Espacio Feynman</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Por qué la ventana Hann elimina los clicks entre granos, y qué parámetro gestual es más natural para controlar la densidad de textura?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>Un grano sin envolvente comienza y termina con valores abruptos que pueden estar lejos de cero → discontinuidad en la señal de audio → click audible. La ventana Hann tiene forma de coseno: comienza y termina suavemente en cero, independientemente del contenido del grano. Al multiplicar el grano por esta ventana, los bordes siempre hacen fade-in y fade-out sin click. Para controlar la densidad granular, el parámetro más natural es la <strong>magnitud del flujo óptico</strong> (velocidad de movimiento): más movimiento = más granos = textura más densa; el intérprete inmóvil produce silencio casi total.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-f">
+    <div class="card-header">F · Caja de Herramientas</div>
+    <div class="card-body">
+      <div class="tool-grid">
+        <div class="tool-card"><div class="ti">🌾</div><div class="tn">Grano Hann</div><div class="td">Envolvente sin click</div></div>
+        <div class="tool-card"><div class="ti">🎚</div><div class="tn">density</div><div class="td">Granos por segundo</div></div>
+        <div class="tool-card"><div class="ti">📍</div><div class="tn">position</div><div class="td">Punto lectura buffer</div></div>
+        <div class="tool-card"><div class="ti">🎵</div><div class="tn">pitch_ratio</div><div class="td">Transposición grano</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-back" onclick="goTo('m11')">‹ Anterior</button>
+    <button class="btn btn-next" onclick="completeAndNext('m12','m13')">Completar y continuar ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════ M13 CLASIFICADORES DE GESTOS ═══════════════ -->
+<section class="module" id="m13">
+  <div class="module-tag">Módulo 13</div>
+  <h1 class="module-title">M13 · <span>Clasificadores de Gestos</span></h1>
+  <p class="module-sub">k-NN, DTW, features de landmarks, reconocimiento en tiempo real</p>
+
+  <div class="card card-a">
+    <div class="card-header">A · Núcleo Teórico Pareto</div>
+    <div class="card-body">
+      <h3>Clasificación de gestos estáticos y dinámicos</h3>
+      <p>Para gestos estáticos (poses de mano), el feature vector de landmarks normalizados alimenta directamente un clasificador k-NN o SVM. Para gestos dinámicos (secuencias temporales), DTW (Dynamic Time Warping) mide similaridad entre trayectorias de longitud variable.</p>
+      <h4>Feature engineering para landmarks</h4>
+      <ul>
+        <li><strong>Distancias relativas</strong>: distancias inter-landmark normalizadas por longitud de referencia. Invariantes a escala y posición.</li>
+        <li><strong>Ángulos</strong>: ángulos entre segmentos de dedos. Invariantes a rotación en el plano.</li>
+        <li><strong>Coordenadas relativas a palma</strong>: landmark_i − centroide_palma. Invariante a traslación.</li>
+      </ul>
+      <div class="formula">feature_vec = [lm[i].x - cx, lm[i].y - cy for i in range(21)] → 42 features</div>
+      <h4>k-NN para gestos estáticos</h4>
+      <p>Con k=3–5 vecinos y feature vector de 42 dimensiones, k-NN clasifica gestos estáticos con &gt;95% accuracy en condiciones controladas. No requiere entrenamiento extenso: 10–20 ejemplos por clase son suficientes.</p>
+      <h4>DTW para gestos dinámicos</h4>
+      <div class="formula">DTW(A,B) = min alineamiento temporal de dos secuencias de landmarks</div>
+    </div>
+  </div>
+
+  <div class="card card-b">
+    <div class="card-header">B · Laboratorio Guiado</div>
+    <div class="card-body">
+      <details>
+        <summary>Lab 13.1 — Clasificador k-NN de gestos de mano</summary>
+        <p>
+<pre><code>import numpy as np
+from sklearn.neighbors import KNeighborsClassifier
+import pickle
+
+def extract_features(landmarks):
+    lm = landmarks.landmark
+    cx = np.mean([lm[i].x for i in [5,9,13,17]])
+    cy = np.mean([lm[i].y for i in [5,9,13,17]])
+    ref = np.sqrt((lm[5].x-lm[0].x)**2 + (lm[5].y-lm[0].y)**2) + 1e-6
+
+    features = []
+    for i in range(21):
+        features.append((lm[i].x - cx) / ref)
+        features.append((lm[i].y - cy) / ref)
+
+    return np.array(features, dtype=np.float32)
+
+class GestureClassifier:
+    def __init__(self, k=3):
+        self.clf = KNeighborsClassifier(n_neighbors=k, metric='euclidean')
+        self.X_train = []
+        self.y_train = []
+        self.trained = False
+
+    def add_sample(self, landmarks, label):
+        feat = extract_features(landmarks)
+        self.X_train.append(feat)
+        self.y_train.append(label)
+
+    def train(self):
+        if len(self.X_train) >= 3:
+            self.clf.fit(self.X_train, self.y_train)
+            self.trained = True
+
+    def predict(self, landmarks, threshold=0.6):
+        if not self.trained:
+            return None, 0.0
+        feat = extract_features(landmarks)
+        proba = self.clf.predict_proba([feat])[0]
+        max_proba = np.max(proba)
+        if max_proba &lt; threshold:
+            return "unknown", max_proba
+        pred = self.clf.classes_[np.argmax(proba)]
+        return pred, max_proba
+
+    def save(self, path):
+        with open(path, 'wb') as f:
+            pickle.dump({'clf': self.clf, 'trained': self.trained}, f)
+</code></pre>
+        </p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-c">
+    <div class="card-header">C · Reto HERO</div>
+    <div class="card-body">
+      <details>
+        <summary>Reto 13 — Sistema de 6 gestos → 6 instrumentos</summary>
+        <p>Graba 30 ejemplos de cada uno de estos 6 gestos: puño, mano abierta, peace ✌, OK 👌, apuntar ☝, rock 🤘. Entrena el k-NN. En tiempo real, el gesto detectado selecciona el instrumento activo (drum, bass, lead, pad, arpegio, efectos). Cada gesto activa un canal MIDI diferente. Confidence &lt; 0.7 → mantener instrumento actual (no cambio).</p>
+      </details>
+    </div>
+  </div>
+
+  <div class="card card-d">
+    <div class="card-header">D · Drills</div>
+    <div class="card-body">
+      <ul class="drill-list">
+        <li>EX 13.1 — Compara features de 42 coordenadas vs 10 distancias clave. ¿Cuál da mejor accuracy?</li>
+        <li>EX 13.2 — Implementa un sistema de grabación interactivo: tecla 1-6 graba gesto a la clase correspondiente.</li>
+        <li>EX 13.3 — Añade suavizado temporal: el gesto predicho solo cambia si se mantiene N=5 frames consecutivos.</li>
+        <li>EX 13.4 — Visualiza la matriz de confusión con matplotlib tras la evaluación en test.</li>
+        <li>EX 13.5 — Implementa DTW básico para detectar el gesto dinámico "agitar mano" (waving).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">E · Espacio Feynman</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Por qué normalizar los landmarks al centroide de la palma antes de clasificar, y para qué tipo de gesto es preferible DTW sobre k-NN estático?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>Sin normalizar, el k-NN ve posiciones absolutas distintas como gestos diferentes aunque la forma de la mano sea idéntica (si el usuario mueve la mano por el frame). Al restar el centroide de la palma y dividir por la longitud de referencia, todas las posiciones son relativas a la mano misma: el mismo gesto da el mismo feature vector independientemente de posición y distancia a la cámara. DTW es preferible sobre k-NN estático para <strong>gestos dinámicos</strong> como "agitar", "círculo" o "deslizar" — secuencias temporales de longitud variable que no se pueden representar como un solo vector de pose.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-f">
+    <div class="card-header">F · Caja de Herramientas</div>
+    <div class="card-body">
+      <div class="tool-grid">
+        <div class="tool-card"><div class="ti">🔢</div><div class="tn">k-NN</div><div class="td">Clasificador por vecinos</div></div>
+        <div class="tool-card"><div class="ti">📐</div><div class="tn">extract_features</div><div class="td">42-dim landmark vec</div></div>
+        <div class="tool-card"><div class="ti">⏱</div><div class="tn">DTW</div><div class="td">Gestos dinámicos</div></div>
+        <div class="tool-card"><div class="ti">🎯</div><div class="tn">threshold</div><div class="td">Confianza mínima</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-back" onclick="goTo('m12')">‹ Anterior</button>
+    <button class="btn btn-next" onclick="completeAndNext('m13','m14')">Completar y continuar ›</button>
+  </div>
+</section>
+
+<!-- ═══════════════ M14 HERO FINAL ═══════════════ -->
+<section class="module" id="m14">
+  <div class="module-tag">Módulo 14 · HERO</div>
+  <h1 class="module-title">M14 · <span>HERO — Instrumento Visual Completo</span></h1>
+  <p class="module-sub">Proyecto final integrador · Pipeline completo Cámara → Audio</p>
+
+  <div class="card card-c">
+    <div class="card-header">Rúbrica de Evaluación</div>
+    <div class="card-body">
+      <p>Construye un instrumento musical completo controlado exclusivamente por visión artificial. El sistema debe funcionar en tiempo real (&lt;100ms latencia total), ser playable musicalmente, y combinar al menos 3 técnicas del curso.</p>
+      <table class="hero-rubric">
+        <thead>
+          <tr><th>Criterio</th><th>Descripción</th><th>Pts</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Pipeline CV completo</strong></td><td>OpenCV + MediaPipe integrados y estables a 30fps</td><td>25</td></tr>
+          <tr><td><strong>One Euro Filter</strong></td><td>Suavizado adaptativo en todos los parámetros de control</td><td>20</td></tr>
+          <tr><td><strong>Protocolo de comunicación</strong></td><td>OSC o MIDI funcional con latencia medida &lt;100ms</td><td>20</td></tr>
+          <tr><td><strong>Síntesis musical</strong></td><td>Al menos 2 parámetros de síntesis controlados independientemente</td><td>20</td></tr>
+          <tr><td><strong>Clasificador de gestos</strong></td><td>Mínimo 4 gestos → 4 comportamientos musicales distintos</td><td>10</td></tr>
+          <tr><td><strong>Documentación</strong></td><td>Diagrama de señal + video demo de 2 minutos + README</td><td>5</td></tr>
+          <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">Feynman 1 — Arquitectura del sistema</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Cuál es la fuente de latencia dominante en un sistema de control gestual a 30fps, y cómo afecta a las decisiones de diseño del pipeline?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>La latencia dominante es el <strong>tiempo de procesamiento de un frame de video (~33ms a 30fps)</strong>. La transmisión UDP de OSC añade &lt;1ms en localhost. El One Euro Filter añade latencia variable pero típicamente &lt;5ms. Esta dominancia del frame time implica que optimizar el procesamiento por frame (MediaPipe, conversiones de color, cálculo de features) tiene mayor impacto que optimizar el protocolo de comunicación. Trabajar a 60fps reduciría la latencia de frame a ~16ms, duplicando la responsividad del sistema.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">Feynman 2 — Decisiones de filtrado</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Qué problema resuelve usar bundles OSC en lugar de mensajes individuales, y cómo balancearías β y fcmin de One Euro Filter para un theremin vs un sistema de texturas ambientales?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>Los bundles OSC garantizan <strong>atomicidad temporal</strong>: todos los parámetros del mismo frame llegan juntos al receptor, evitando que Max/MSP procese combinaciones incoherentes donde palm_x del frame N llega con pinch del frame N-1. Para un theremin (respuesta inmediata necesaria): β alto (~0.05), fcmin moderado (~1Hz). Para texturas ambientales (estabilidad prioritaria sobre respuesta): β bajo (~0.001), fcmin bajo (~0.5Hz) para máximo suavizado en reposo.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">Feynman 3 — Musicalidad del instrumento</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Por qué es importante quantizar el pitch a una escala musical en un instrumento gestual, y qué mapeos gestuales resultan más intuitivos musicalmente?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>El control gestual tiene jitter inherente (pequeñas fluctuaciones de posición incluso en reposo). Sin quantización, ese jitter haría el pitch sonar constantemente "desafinado". La quantización a escala (pentatónica, diatónica) convierte el ruido en notas válidas. Los mapeos más intuitivos respetan metáforas físicas: altura de la mano → pitch (arriba = agudo, como en el theremin), velocidad de movimiento → intensidad/densidad, apertura de la mano → apertura espectral del timbre. Estos mapeos son inmediatamente comprensibles para músicos y audiencias sin entrenamiento previo.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">Feynman 4 — Clasificación de gestos</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">¿Cuántos ejemplos de entrenamiento por gesto son suficientes para k-NN con landmarks normalizados, y cómo evaluarías la robustez del clasificador?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p><strong>10–30 ejemplos por gesto</strong> dan buen rendimiento para un solo usuario con landmarks normalizados: el feature space de 42 dimensiones es suficientemente discriminativo para gestos distintos (puño, mano abierta, peace, etc.). Para evaluar robustez: (1) leave-one-out cross-validation sobre las muestras propias, (2) probar con distintos niveles de iluminación, (3) probar con un segundo usuario para detectar si el clasificador está sobre-ajustado a la mano del creador. Los gestos más difíciles de distinguir suelen ser los que comparten configuración de dedos similares (OK vs índice solo).</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-e">
+    <div class="card-header">Feynman 5 — Síntesis granular gestual</div>
+    <div class="card-body">
+      <div class="quiz-block">
+        <h4>Pregunta Feynman</h4>
+        <p class="quiz-q">En un granulador controlado por flujo óptico, ¿qué ocurre musicalmente cuando el intérprete se queda inmóvil?</p>
+        <details>
+          <summary>Ver respuesta</summary>
+          <p>Cuando el intérprete se queda inmóvil, el flujo óptico cae a cero o casi cero. Si el parámetro <strong>density</strong> (granos/segundo) está mapeado a la magnitud del flujo, la densidad cae al mínimo configurado → textura muy sparse o silencio casi total. Esto crea una dramaturgia natural: el movimiento produce sonido, el reposo produce silencio o microsonidos. Es una de las metáforas más potentes del control gestual: el músico "da vida" al instrumento con su movimiento, y la inmovilidad es una elección expresiva de silencio, no un fallo del sistema.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-back" onclick="goTo('m13')">‹ Anterior</button>
+    <button class="btn btn-next" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_vision_artificial_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Briefing'},
+    {id:'m1',  label:'M1 · Imagen Digital'},
+    {id:'m2',  label:'M2 · Preprocesamiento'},
+    {id:'m3',  label:'M3 · Contornos'},
+    {id:'m4',  label:'M4 · LK Sparse Flow'},
+    {id:'m5',  label:'M5 · Farneback Dense'},
+    {id:'m6',  label:'M6 · MediaPipe Hands'},
+    {id:'m7',  label:'M7 · MediaPipe Pose'},
+    {id:'m8',  label:'M8 · One Euro Filter'},
+    {id:'m9',  label:'M9 · OSC Protocol'},
+    {id:'m10', label:'M10 · MIDI Mapping'},
+    {id:'m11', label:'M11 · Max / TouchDesigner'},
+    {id:'m12', label:'M12 · Síntesis Granular'},
+    {id:'m13', label:'M13 · Clasificadores Gestos'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"done":[],"current":"m0"}');
+
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function buildNav(){
+    const list = document.getElementById('nav-list');
+    list.innerHTML = '';
+    MODULES.forEach(function(m){
+      const li = document.createElement('li');
+      li.className = 'nav-item' +
+        (state.done.includes(m.id) ? ' done' : '') +
+        (state.current === m.id ? ' active' : '');
+      li.innerHTML = '<span class="nav-dot"></span><span class="nav-label">' + m.label + '</span>';
+      li.addEventListener('click', function(){ goTo(m.id); });
+      list.appendChild(li);
+    });
+  }
+
+  function updateProgress(){
+    const pct = Math.round(state.done.length / MODULES.length * 100);
+    document.getElementById('pct').childNodes[0].textContent = pct + '%';
+    document.querySelector('#progress-bar div').style.width = pct + '%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(function(s){ s.classList.remove('active'); });
+    const sec = document.getElementById(id);
+    if(sec) sec.classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    updateProgress();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)){
+      state.done.push(current);
+    }
+    if(next){
+      goTo(next);
+    } else {
+      save();
+      buildNav();
+      updateProgress();
+    }
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ingeniería de Audio en Tiempo Real y Plugins JUCE C++ — v3</title>
+<style>
+:root {
+  --bg:#0f172a; --surface:#1e293b; --surface2:#334155;
+  --accent:#f59e0b; --accent2:#fbbf24; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#334155;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'JetBrains Mono','Fira Code',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(245,158,11,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#0d1117;padding:2px 6px;border-radius:4px}
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+.formula{background:rgba(245,158,11,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(0,0,0,.15);border-radius:6px;line-height:1.6}
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>JUCE C++ Audio Plugins</h2>
+    <p>Ingeniería de Audio en Tiempo Real</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introducción</div>
+    <div class="module-title">Ecosistema Audio Real-Time y JUCE</div>
+    <div class="module-sub">Pipeline completo: DAW host → AudioProcessor → DSP/APVTS → GUI → Plugin distribuido</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 150" width="100%" font-family="'JetBrains Mono',monospace" font-size="11">
+      <defs>
+        <marker id="ar3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#f59e0b"/>
+        </marker>
+      </defs>
+      <rect x="5"   y="50" width="110" height="50" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="60"  y="72" text-anchor="middle" fill="#f59e0b" font-weight="bold">DAW Host</text>
+      <text x="60"  y="88" text-anchor="middle" fill="#94a3b8">Reaper/Logic</text>
+      <rect x="145" y="50" width="120" height="50" rx="8" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="205" y="72" text-anchor="middle" fill="#06b6d4" font-weight="bold">AudioProcessor</text>
+      <text x="205" y="88" text-anchor="middle" fill="#94a3b8">prepareToPlay()</text>
+      <rect x="300" y="10" width="120" height="45" rx="8" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+      <text x="360" y="30" text-anchor="middle" fill="#10b981" font-weight="bold">DSP Chain</text>
+      <text x="360" y="46" text-anchor="middle" fill="#94a3b8">processBlock()</text>
+      <rect x="300" y="95" width="120" height="45" rx="8" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="360" y="114" text-anchor="middle" fill="#a855f7" font-weight="bold">APVTS</text>
+      <text x="360" y="130" text-anchor="middle" fill="#94a3b8">atomic params</text>
+      <rect x="460" y="50" width="120" height="50" rx="8" fill="#1e293b" stroke="#ef4444" stroke-width="1.5"/>
+      <text x="520" y="72" text-anchor="middle" fill="#ef4444" font-weight="bold">GUI/Editor</text>
+      <text x="520" y="88" text-anchor="middle" fill="#94a3b8">Component/WebView</text>
+      <rect x="615" y="50" width="110" height="50" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="670" y="72" text-anchor="middle" fill="#f59e0b" font-weight="bold">Plugin</text>
+      <text x="670" y="88" text-anchor="middle" fill="#94a3b8">VST3/AU/CLAP</text>
+      <line x1="115" y1="75" x2="143" y2="75" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#ar3)"/>
+      <line x1="265" y1="65" x2="298" y2="35" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#ar3)"/>
+      <line x1="265" y1="85" x2="298" y2="115" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#ar3)"/>
+      <line x1="420" y1="32" x2="458" y2="65" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#ar3)"/>
+      <line x1="420" y1="118" x2="458" y2="85" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#ar3)"/>
+      <line x1="580" y1="75" x2="613" y2="75" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#ar3)"/>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">64–2048</div><div class="metric-label">muestras por buffer típico</div></div>
+    <div class="metric"><div class="metric-val">~1.5ms</div><div class="metric-label">latencia buffer 64 @ 44.1kHz</div></div>
+    <div class="metric"><div class="metric-val">0x8040</div><div class="metric-label">MXCSR FTZ+DAZ (denormals)</div></div>
+    <div class="metric"><div class="metric-val">0</div><div class="metric-label">malloc/new/mutex en audio thread</div></div>
+    <div class="metric"><div class="metric-val">SPSC</div><div class="metric-label">Single Producer Single Consumer queue</div></div>
+    <div class="metric"><div class="metric-val">atomic</div><div class="metric-label">std::atomic&lt;float&gt; para params</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa: JUCE vs Alternativas</h3>
+    <table>
+      <tr><th>Framework</th><th>Lenguaje</th><th>Formatos</th><th>GUI</th><th>Licencia</th></tr>
+      <tr><td><strong>JUCE 8</strong></td><td>C++17</td><td>VST3/AU/AAX/CLAP/LV2</td><td>Component + WebView2</td><td>GPL / Commercial</td></tr>
+      <tr><td>iPlug2</td><td>C++14</td><td>VST2/VST3/AU/AAX</td><td>IGraphics</td><td>MIT</td></tr>
+      <tr><td>DPF</td><td>C++11</td><td>LADSPA/LV2/VST/CLAP</td><td>DGL (OpenGL)</td><td>ISC/MIT</td></tr>
+      <tr><td>Cmajor/SOUL</td><td>DSL propio</td><td>Todas (transpila)</td><td>No (solo DSP)</td><td>Apache 2.0</td></tr>
+      <tr><td>Max/MSP gen~</td><td>Visual</td><td>Compilación a C</td><td>Max</td><td>Comercial</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Fundamentos</div>
+    <div class="module-title">Hard Real-Time: La Dicotomía de los Hilos</div>
+    <div class="module-sub">Audio thread vs. UI/Main thread: reglas absolutas de vida o muerte para el audio</div>
+  </div>
+
+  <div class="formula">t_deadline = N_samples / sample_rate  (ej: 64/44100 ≈ 1.45 ms)</div>
+
+  <div class="card">
+    <h3>Reglas del Audio Thread</h3>
+    <p>Un sistema <strong>hard real-time</strong> garantiza que el trabajo se completa antes de un deadline absoluto. Si el audio thread excede este tiempo → glitch de audio (dropout, xrun). No hay segundo intento.</p>
+    <div class="warn-box"><strong>PROHIBIDO en processBlock:</strong> new / delete / malloc / free, std::mutex / lock_guard, I/O de disco o red, std::cout / logging bloqueante, system calls que bloquean, funciones matemáticas en números desnormalizados sin FTZ.</div>
+    <table>
+      <tr><th>Hilo</th><th>Prioridad OS</th><th>Puede hacer</th><th>No puede hacer</th></tr>
+      <tr><td>Audio Thread</td><td>Real-time (SCHED_FIFO)</td><td>DSP, atomic read, SPSC consume</td><td>malloc, mutex, I/O, GUI</td></tr>
+      <tr><td>Main/UI Thread</td><td>Normal</td><td>GUI, new/delete, I/O, red</td><td>processBlock directo</td></tr>
+      <tr><td>Timer Thread</td><td>Normal</td><td>Polling parameters, metering</td><td>Audio processing</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>AudioProcessor mínimo seguro</h3>
+    <pre>class SafeAudioProcessor : public juce::AudioProcessor
+{
+public:
+    void prepareToPlay (double sampleRate, int samplesPerBlock) override
+    {
+        // Aqui si podemos alocar
+        spec.sampleRate = sampleRate;
+        spec.maximumBlockSize = (juce::uint32) samplesPerBlock;
+        spec.numChannels = (juce::uint32) getTotalNumOutputChannels();
+        workBuffer.setSize (2, samplesPerBlock);
+        chain.prepare (spec);
+    }
+
+    void processBlock (juce::AudioBuffer&lt;float&gt;& buffer,
+                       juce::MidiBuffer& midiMessages) override
+    {
+        juce::ScopedNoDenormals noDenormals;
+        const float gain = gainParam.load (std::memory_order_relaxed); // atomic, lock-free
+        auto block = juce::dsp::AudioBlock&lt;float&gt; (buffer);
+        auto ctx   = juce::dsp::ProcessContextReplacing&lt;float&gt; (block);
+        chain.process (ctx);
+        for (int ch = 0; ch &lt; buffer.getNumChannels(); ++ch)
+            buffer.applyGainRamp (ch, 0, buffer.getNumSamples(), prevGain, gain);
+        prevGain = gain;
+        // NUNCA: new float[1024]; std::lock_guard lock(mutex); std::cout &lt;&lt; gain;
+    }
+
+private:
+    std::atomic&lt;float&gt; gainParam { 1.0f };
+    float prevGain { 1.0f };
+    juce::dsp::ProcessSpec spec;
+    using Chain = juce::dsp::ProcessorChain&lt;juce::dsp::Gain&lt;float&gt;&gt;;
+    Chain chain;
+    juce::AudioBuffer&lt;float&gt; workBuffer;
+};</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q1 · Priority Inversion</h4>
+    <p class="quiz-q">¿Por qué usar std::mutex en el audio thread puede causar un dropout incluso si nadie más está esperando el mutex en ese momento?</p>
+    <details><summary>Ver respuesta</summary><p>Priority inversion: si un thread de baja prioridad adquirió el mutex antes de que el audio thread lo necesite, el scheduler puede no desalojarlo rápidamente. El audio thread de alta prioridad queda bloqueado esperando que el thread de baja prioridad libere el mutex — tiempo completamente indeterminado que puede superar el deadline de 1.45ms.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Concurrencia</div>
+    <div class="module-title">Los 7 Pecados del Audio Thread y SPSC Queues</div>
+    <div class="module-sub">Comunicación lock-free entre threads: Single Producer Single Consumer ring buffer</div>
+  </div>
+
+  <div class="formula">Head = write index (producer avanza)
+Tail = read index  (consumer avanza)
+Available = (head - tail + capacity) % capacity</div>
+
+  <div class="card">
+    <h3>Casos de uso SPSC</h3>
+    <table>
+      <tr><th>Caso de uso</th><th>Dirección</th><th>Ejemplo</th></tr>
+      <tr><td>Parameter change</td><td>UI → Audio</td><td>Slider movido → nuevo gain en processBlock</td></tr>
+      <tr><td>Metering</td><td>Audio → UI</td><td>RMS calculado en processBlock → VU meter</td></tr>
+      <tr><td>MIDI events</td><td>Audio → UI</td><td>Note detected → highlight en piano roll</td></tr>
+      <tr><td>Preset recall</td><td>UI → Audio</td><td>Load preset → update todos los params</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>SPSC Lock-Free Ring Buffer</h3>
+    <pre>template&lt;typename T, std::size_t Capacity&gt;
+class SPSCQueue
+{
+    static_assert ((Capacity & (Capacity - 1)) == 0,
+                   "Capacity debe ser potencia de 2");
+public:
+    bool push (const T& item)  // UI Thread (producer)
+    {
+        const auto head = head_.load (std::memory_order_relaxed);
+        const auto next = (head + 1) & mask_;
+        if (next == tail_.load (std::memory_order_acquire)) return false;
+        buffer_[head] = item;
+        head_.store (next, std::memory_order_release);
+        return true;
+    }
+
+    std::optional&lt;T&gt; pop()  // Audio Thread (consumer)
+    {
+        const auto tail = tail_.load (std::memory_order_relaxed);
+        if (tail == head_.load (std::memory_order_acquire)) return std::nullopt;
+        T item = buffer_[tail];
+        tail_.store ((tail + 1) & mask_, std::memory_order_release);
+        return item;
+    }
+
+private:
+    static constexpr std::size_t mask_ = Capacity - 1;
+    std::array&lt;T, Capacity&gt; buffer_ {};
+    alignas(64) std::atomic&lt;std::size_t&gt; head_ { 0 }; // cache-line aligned
+    alignas(64) std::atomic&lt;std::size_t&gt; tail_ { 0 };
+};</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q2 · Acquire-Release</h4>
+    <p class="quiz-q">En un SPSC queue, ¿por qué el head usa memory_order_release en el push y el consumidor usa memory_order_acquire para leerlo?</p>
+    <details><summary>Ver respuesta</summary><p>Release garantiza que todas las escrituras previas al head (el dato en buffer_[head]) sean visibles antes de que el head avance. Acquire garantiza que el consumidor vea esas escrituras cuando lee el head actualizado — forma la "sincronización acquire-release". Sin esta pareja, el compilador o la CPU podría reordenar las operaciones y el consumidor leería datos no inicializados.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Parámetros</div>
+    <div class="module-title">APVTS — AudioProcessorValueTreeState</div>
+    <div class="module-sub">Sistema de gestión de parámetros: sync GUI↔DSP, persistencia y automatización DAW</div>
+  </div>
+
+  <div class="card">
+    <h3>¿Qué ofrece APVTS?</h3>
+    <p>APVTS es el sistema estándar de JUCE para manejar parámetros de plugin. Proporciona: sincronización automática GUI ↔ DSP thread-safe via std::atomic&lt;float&gt;, serialización a XML para preset/recall, integración con la automatización del DAW y undo/redo automático en el host.</p>
+    <p style="margin-top:10px;"><strong>Acceso seguro en audio thread:</strong> getRawParameterValue("gain") devuelve un puntero a std::atomic&lt;float&gt; — guardar el puntero en el constructor y reutilizarlo en processBlock es O(1) y completamente lock-free.</p>
+  </div>
+
+  <div class="card">
+    <h3>Plugin completo con APVTS</h3>
+    <pre>static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+    layout.add (std::make_unique&lt;juce::AudioParameterFloat&gt; (
+        juce::ParameterID { "gain", 1 }, "Gain",
+        juce::NormalisableRange&lt;float&gt; (-60.0f, 12.0f, 0.01f, 0.5f), 0.0f,
+        juce::AudioParameterFloatAttributes{}.withLabel ("dB")));
+    layout.add (std::make_unique&lt;juce::AudioParameterFloat&gt; (
+        juce::ParameterID { "cutoff", 1 }, "Cutoff Frequency",
+        juce::NormalisableRange&lt;float&gt; (20.0f, 20000.0f, 1.0f, 0.3f), 1000.0f,
+        juce::AudioParameterFloatAttributes{}.withLabel ("Hz")));
+    layout.add (std::make_unique&lt;juce::AudioParameterBool&gt; (
+        juce::ParameterID { "bypass", 1 }, "Bypass", false));
+    return layout;
+}
+
+// En el constructor: guardar punteros una sola vez (O(1) en processBlock)
+gainParam_   = apvts.getRawParameterValue ("gain");
+cutoffParam_ = apvts.getRawParameterValue ("cutoff");
+bypassParam_ = apvts.getRawParameterValue ("bypass");
+
+// En processBlock: lectura atomic lock-free
+const float gainDb   = gainParam_->load  (std::memory_order_relaxed);
+const float cutoffHz = cutoffParam_->load (std::memory_order_relaxed);
+const bool  bypass   = bypassParam_->load (std::memory_order_relaxed) > 0.5f;</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q3 · getRawParameterValue</h4>
+    <p class="quiz-q">¿Por qué se guarda el puntero devuelto por getRawParameterValue() en el constructor y se reutiliza en processBlock, en lugar de llamar a getRawParameterValue() en cada bloque?</p>
+    <details><summary>Ver respuesta</summary><p>getRawParameterValue() hace búsqueda por string en un mapa interno, que es O(n) y podría internamente alocar memoria o adquirir un lock. Guardar el puntero al inicio da acceso O(1) y completamente lock-free en el audio thread. Llamarlo en cada bloque sería una violación de las reglas de RT safety.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Algoritmos</div>
+    <div class="module-title">Newton-Raphson para Ecuaciones Implícitas</div>
+    <div class="module-sub">Solución iterativa para modelos de saturación analógica no-lineales</div>
+  </div>
+
+  <div class="formula">out = tanh(in − k · out)  [ecuación implícita]
+f(out) = out − tanh(in − k · out)
+f'(out) = 1 + k · (1 − tanh²(in − k · out))
+out_{n+1} = out_n − f(out_n) / f'(out_n)</div>
+
+  <div class="card">
+    <h3>Modelo de saturación con Newton-Raphson en JUCE</h3>
+    <pre>class ImplicitSaturation
+{
+public:
+    explicit ImplicitSaturation (float k = 0.8f) : k_ (k) {}
+
+    float processSample (float in) noexcept
+    {
+        float out = prevOut_;  // warm start: señales continuas → convergencia 1-2 iter.
+
+        for (int iter = 0; iter &lt; maxIter_; ++iter)
+        {
+            const float arg     = in - k_ * out;
+            const float tanhArg = std::tanh (arg);
+            const float f       = out - tanhArg;
+            const float fprime  = 1.0f + k_ * (1.0f - tanhArg * tanhArg);
+            const float delta   = f / fprime;
+            out                -= delta;
+            if (std::abs (delta) &lt; tolerance_) break;
+        }
+        prevOut_ = out;
+        return out;
+    }
+
+    void processBlock (float* samples, int numSamples) noexcept
+    {
+        for (int i = 0; i &lt; numSamples; ++i)
+            samples[i] = processSample (samples[i]);
+    }
+
+    void reset() noexcept { prevOut_ = 0.0f; }
+
+private:
+    float k_ = 0.8f, prevOut_ = 0.0f, tolerance_ = 1e-7f;
+    int   maxIter_ = 10;
+};</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q4 · Warm Start</h4>
+    <p class="quiz-q">¿Por qué inicializar Newton-Raphson con el resultado anterior (warm start) mejora la convergencia en audio? ¿Cuántas iteraciones se ahorran típicamente?</p>
+    <details><summary>Ver respuesta</summary><p>Las señales de audio son continuas: la muestra actual es cercana a la anterior. El warm start comienza cerca de la solución y Newton-Raphson converge en 1-2 iteraciones en lugar de 5-7 desde cero. Esto reduce el coste computacional en ~60-75% para señales de audio típicas, crucial para cumplir el deadline del audio thread.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Optimización</div>
+    <div class="module-title">Números Desnormalizados y ScopedNoDenormals</div>
+    <div class="module-sub">FTZ/DAZ: eliminar el cuello de botella más silencioso del DSP</div>
+  </div>
+
+  <div class="formula">FTZ (Flush To Zero):  bit 15 de MXCSR — convierte resultados desnorm. a 0
+DAZ (Denormals Are Zero): bit 6 de MXCSR — trata inputs denorm. como 0
+MXCSR |= 0x8040  →  activa ambos (FTZ + DAZ)</div>
+
+  <div class="card">
+    <h3>¿Por qué los IIR generan denormals?</h3>
+    <p>Los números desnormalizados (subnormals) son IEEE 754 de magnitud &lt;2.2×10⁻³⁸. La FPU los procesa hasta 100× más lento. En DSP, aparecen en filtros IIR cuando la señal decae a cero: las realimentaciones producen valores extremadamente pequeños. Los FIR no tienen este problema porque son feedforward, sin realimentación acumulativa.</p>
+    <pre>// RAII para gestión de MXCSR
+class ScopedFTZandDAZ
+{
+public:
+    ScopedFTZandDAZ() noexcept { oldMXCSR_ = _mm_getcsr(); _mm_setcsr (oldMXCSR_ | 0x8040u); }
+    ~ScopedFTZandDAZ() noexcept { _mm_setcsr (oldMXCSR_); }
+    ScopedFTZandDAZ (const ScopedFTZandDAZ&) = delete;
+private:
+    unsigned int oldMXCSR_;
+};
+
+// JUCE 8 provee juce::ScopedNoDenormals — equivalente al patrón anterior:
+void processBlock (juce::AudioBuffer&lt;float&gt;& buffer, juce::MidiBuffer& midi) override
+{
+    juce::ScopedNoDenormals noDenormals;  // Activa FTZ+DAZ — se restaura al salir del scope
+    // ... DSP aqui
+}
+
+// Alternativa: DC offset trick en puntos de realimentacion
+// feedback += 1e-25f;  // previene que los valores caigan al rango subnormal</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q5 · FTZ y Threads</h4>
+    <p class="quiz-q">Un reverberador sigue produciendo glitches a pesar de tener ScopedNoDenormals en processBlock. ¿Cuál es la causa más probable y cómo se soluciona?</p>
+    <details><summary>Ver respuesta</summary><p>ScopedNoDenormals opera sobre el registro MXCSR de la CPU del thread actual. Si el reverberador usa threads adicionales (thread pool para convolución), esos hilos tienen su propio MXCSR no afectado. Solución: aplicar ScopedNoDenormals en cada hilo que procesa audio, o usar el DC-offset trick en los puntos de realimentación del reverberador.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Build System</div>
+    <div class="module-title">CMake vs Projucer</div>
+    <div class="module-sub">Sistemas de build para plugins JUCE: configuración moderna y CI/CD</div>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa</h3>
+    <table>
+      <tr><th>Característica</th><th>CMake (juce_add_plugin)</th><th>Projucer</th></tr>
+      <tr><td>Integración CI/CD</td><td>Nativa (GitHub Actions)</td><td>Requiere Projucer GUI</td></tr>
+      <tr><td>Dependencias</td><td>FetchContent / vcpkg</td><td>Manual</td></tr>
+      <tr><td>IDE support</td><td>CLion, VSCode, Xcode</td><td>Solo proyectos Projucer</td></tr>
+      <tr><td>Multi-format build</td><td>VST3+AU+CLAP en un comando</td><td>Con config manual</td></tr>
+      <tr><td>Curva de aprendizaje</td><td>Media (CMake)</td><td>Baja (GUI)</td></tr>
+      <tr><td>Recomendado JUCE 8</td><td>Sí (documentación oficial)</td><td>Legacy support</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>CMakeLists.txt completo para plugin VST3/AU</h3>
+    <pre>cmake_minimum_required(VERSION 3.22)
+project(MyAudioPlugin VERSION 1.0.0)
+set(CMAKE_CXX_STANDARD 17)
+
+include(FetchContent)
+FetchContent_Declare(JUCE
+    GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
+    GIT_TAG        8.0.2
+    GIT_SHALLOW    TRUE)   # sin historial completo: clone ~30s vs 10min
+FetchContent_MakeAvailable(JUCE)
+
+juce_add_plugin(MyPlugin
+    FORMATS                 VST3 AU Standalone
+    PLUGIN_NAME             "My Plugin"
+    PLUGIN_MANUFACTURER_CODE Myco
+    PLUGIN_CODE             Mp01
+    IS_SYNTH                FALSE
+    NEEDS_MIDI_INPUT        FALSE
+    COPY_PLUGIN_AFTER_BUILD TRUE
+    VST3_CATEGORIES         "Fx" "Dynamics"
+    PRODUCT_NAME            "MyPlugin"
+    VERSION                 "1.0.0")
+
+target_sources(MyPlugin PRIVATE src/PluginProcessor.cpp src/PluginEditor.cpp)
+
+target_link_libraries(MyPlugin
+    PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_gui_extra
+    PUBLIC  juce::juce_recommended_config_flags juce::juce_recommended_lto_flags)</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q6 · GIT_SHALLOW TRUE</h4>
+    <p class="quiz-q">¿Por qué es preferible usar GIT_SHALLOW TRUE en FetchContent para JUCE, especialmente en CI/CD?</p>
+    <details><summary>Ver respuesta</summary><p>Descarga solo el commit especificado sin todo el historial de git, reduciendo el tiempo de clone de ~10 minutos (historial completo de JUCE con miles de commits) a ~30 segundos. En CI/CD donde cada run descarga las dependencias desde cero, esto es crítico para mantener los pipelines de build rápidos y los costes de cómputo bajos.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Inicialización</div>
+    <div class="module-title">prepareToPlay y dsp::ProcessSpec</div>
+    <div class="module-sub">El único lugar seguro donde puedes alocar memoria en un plugin JUCE</div>
+  </div>
+
+  <div class="formula">ProcessSpec { sampleRate, maximumBlockSize, numChannels }</div>
+
+  <div class="card">
+    <h3>prepareToPlay — zona segura de alocación</h3>
+    <p>prepareToPlay() es llamado por el host <strong>antes</strong> del streaming de audio, siempre desde el main thread. Es el único lugar seguro para: alocar buffers, preparar cadenas DSP, inicializar variables de estado (filtros, delay lines) y pre-calcular tablas LUT.</p>
+    <pre>void prepareToPlay (double sampleRate, int samplesPerBlock) override
+{
+    sr_ = sampleRate;
+    juce::dsp::ProcessSpec spec;
+    spec.sampleRate       = sampleRate;
+    spec.maximumBlockSize = (juce::uint32) samplesPerBlock;
+    spec.numChannels      = (juce::uint32) getTotalNumOutputChannels();
+
+    chain_.prepare (spec);
+
+    // Pre-alocar delay line (para reverb/echo)
+    const int maxDelaySamples = (int) (sampleRate * 2.0);
+    delayLine_.resize (maxDelaySamples + samplesPerBlock, 0.0f);
+
+    // Pre-calcular tabla de seno (LUT) — evita std::sin en processBlock
+    const int LUT_SIZE = 2048;
+    sinTable_.resize (LUT_SIZE);
+    for (int i = 0; i &lt; LUT_SIZE; ++i)
+        sinTable_[i] = std::sin (2.0 * juce::MathConstants&lt;double&gt;::pi * i / LUT_SIZE);
+
+    // SmoothedValue: 20ms ramp para parámetros (evita zipper noise)
+    gainSmooth_.reset (sampleRate, 0.02);
+    gainSmooth_.setCurrentAndTargetValue (1.0f);
+
+    chain_.reset();
+    DBG ("prepareToPlay: sr=" &lt;&lt; sampleRate &lt;&lt; " blockSize=" &lt;&lt; samplesPerBlock);
+}</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q7 · getTailLengthSeconds</h4>
+    <p class="quiz-q">¿Por qué getTailLengthSeconds() debe retornar 2.0 si tienes un delay de hasta 2 segundos en el plugin?</p>
+    <details><summary>Ver respuesta</summary><p>Informa al host cuánto tiempo debe seguir llamando a processBlock después de que el usuario detenga la reproducción. La delay line contiene audio residual que debe vaciarse (tail) para que no se corte abruptamente. Sin este valor, el host puede detener el procesamiento prematuramente y el usuario escuchará el audio truncado.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · DSP Avanzado</div>
+    <div class="module-title">processBlock — Patrones de DSP Avanzado</div>
+    <div class="module-sub">Procesamiento muestra-a-muestra vs por bloque: SmoothedValue, SIMD y vectorización</div>
+  </div>
+
+  <div class="card">
+    <h3>Patrones de procesamiento</h3>
+    <table>
+      <tr><th>Patrón</th><th>Cuándo usar</th><th>Ventajas</th><th>Limitaciones</th></tr>
+      <tr><td>Sample-by-sample</td><td>Algoritmos con estado (IIR, NR)</td><td>Máxima flexibilidad</td><td>No vectorizable fácilmente</td></tr>
+      <tr><td>Block processing</td><td>Convolución, FFT, procesamiento lineal</td><td>SIMD natural, cache friendly</td><td>No funciona con feedback</td></tr>
+      <tr><td>juce::dsp chain</td><td>Efectos estándar (EQ, gain, comp)</td><td>API limpia, optimizado</td><td>Menos flexibilidad</td></tr>
+      <tr><td>SmoothedValue</td><td>Parámetros que cambian con tiempo</td><td>Elimina zipper noise</td><td>Pequeña latencia en respuesta</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>processBlock con SmoothedValue y metering</h3>
+    <pre>void processBlock (juce::AudioBuffer&lt;float&gt;& buffer, juce::MidiBuffer& midi) override
+{
+    juce::ScopedNoDenormals noDenormals;
+    const int numChannels = buffer.getNumChannels();
+    const int numSamples  = buffer.getNumSamples();
+
+    const float gainTarget = gainParam_->load (std::memory_order_relaxed);
+    gainSmooth_.setTargetValue (gainTarget);
+
+    if (bypassParam_->load() > 0.5f) return;
+
+    if (gainSmooth_.isSmoothing())
+    {
+        // Muestra-a-muestra durante transicion (necesario para ramp lineal)
+        for (int s = 0; s &lt; numSamples; ++s)
+        {
+            const float g = gainSmooth_.getNextValue();
+            for (int ch = 0; ch &lt; numChannels; ++ch)
+                buffer.getWritePointer(ch)[s] *= g;
+        }
+    }
+    else
+    {
+        // Por bloque cuando estable (SIMD friendly — juce usa AVX/SSE internamente)
+        buffer.applyGain (gainSmooth_.getCurrentValue());
+    }
+
+    // Metering: calcular RMS y enviar a UI via SPSC lock-free
+    float rmsSum = 0.0f;
+    for (int ch = 0; ch &lt; numChannels; ++ch) {
+        auto* data = buffer.getReadPointer (ch);
+        for (int s = 0; s &lt; numSamples; ++s) rmsSum += data[s] * data[s];
+    }
+    const float rms = std::sqrt (rmsSum / (numSamples * numChannels));
+    meterQueue_.push ({ rms, rms, std::abs(buffer.getMagnitude(0,numSamples)) });
+}</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q8 · SmoothedValue</h4>
+    <p class="quiz-q">¿Por qué SmoothedValue procesa muestra-a-muestra cuando está en transición, pero puede cambiar a por-bloque cuando está estable?</p>
+    <details><summary>Ver respuesta</summary><p>Durante la transición, cada muestra necesita un valor diferente del parámetro (rampa lineal o exponencial). Cuando es estable, todas las muestras usan el mismo valor, lo que permite multiplicación por bloque optimizada con SIMD — buffer.applyGain() usa FloatVectorOperations con AVX/SSE internamente, procesando 8 floats por instrucción.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · GUI ↔ DSP</div>
+    <div class="module-title">beginChangeGesture y Automatización DAW</div>
+    <div class="module-sub">Comunicación correcta entre editor y processor para que el DAW registre la automatización</div>
+  </div>
+
+  <div class="formula">beginChangeGesture("param_id")  → notifica: "usuario empieza interacción"
+  setValueNotifyingHost(value)  → actualiza param + notifica host
+endChangeGesture("param_id")    → notifica: "usuario soltó el control"</div>
+
+  <div class="card">
+    <h3>Plugin Editor con APVTS attachments</h3>
+    <pre>class PluginEditor : public juce::AudioProcessorEditor, private juce::Timer
+{
+public:
+    explicit PluginEditor (GainFilterProcessor& proc)
+        : AudioProcessorEditor (proc), processor_ (proc)
+    {
+        gainSlider_.setSliderStyle (juce::Slider::RotaryKnob);
+        gainSlider_.setRange (-60.0, 12.0, 0.01);
+
+        // SliderAttachment maneja beginChangeGesture/endChangeGesture automaticamente
+        gainAttach_ = std::make_unique&lt;juce::AudioProcessorValueTreeState::SliderAttachment&gt;(
+            processor_.apvts, "gain", gainSlider_);
+        bypassAttach_ = std::make_unique&lt;juce::AudioProcessorValueTreeState::ButtonAttachment&gt;(
+            processor_.apvts, "bypass", bypassButton_);
+
+        addAndMakeVisible (gainSlider_);
+        setSize (300, 200);
+        startTimerHz (24);  // 24 FPS para actualizacion VU
+    }
+
+    void timerCallback() override
+    {
+        // Drenar la cola de metering lock-free
+        while (auto data = processor_.meterQueue_.pop())
+            vuLevel_ = data->rmsL;
+        repaint();
+    }
+
+private:
+    GainFilterProcessor& processor_;
+    juce::Slider gainSlider_;
+    juce::ToggleButton bypassButton_ { "Bypass" };
+    float vuLevel_ = 0.0f;
+    std::unique_ptr&lt;juce::AudioProcessorValueTreeState::SliderAttachment&gt; gainAttach_;
+    std::unique_ptr&lt;juce::AudioProcessorValueTreeState::ButtonAttachment&gt; bypassAttach_;
+};</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q9 · endChangeGesture</h4>
+    <p class="quiz-q">¿Qué problema ocurre si nunca llamas a endChangeGesture() después de un beginChangeGesture()? ¿Por qué SliderAttachment es preferible?</p>
+    <details><summary>Ver respuesta</summary><p>El host (DAW) mantiene abierto el "grab" del parámetro indefinidamente: en algunos DAWs esto bloquea la automatización de otros parámetros o impide que el host procese el evento de soltar el control en la grabación de automatización. SliderAttachment es preferible porque maneja automáticamente este protocolo completo, eliminando la posibilidad de dejar el gesture abierto por error.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Profiling</div>
+    <div class="module-title">Profiling — VTune e Instruments</div>
+    <div class="module-sub">Medir primero, optimizar después: encontrar el cuello de botella real en el audio thread</div>
+  </div>
+
+  <div class="card">
+    <h3>Herramientas de profiling</h3>
+    <table>
+      <tr><th>Herramienta</th><th>Plataforma</th><th>Tipo</th><th>Mejor para</th></tr>
+      <tr><td>Intel VTune</td><td>Windows/Linux</td><td>Hardware counters</td><td>CPU hotspots, cache misses, vectorización</td></tr>
+      <tr><td>Instruments (Xcode)</td><td>macOS</td><td>Sampling + tracing</td><td>CPU Time Profiler, allocations, leaks</td></tr>
+      <tr><td>Tracy Profiler</td><td>Cross-platform</td><td>Frame profiler</td><td>Latencia por frame, zones marcadas</td></tr>
+      <tr><td>Perfetto</td><td>Linux/Android</td><td>Trace events</td><td>System-level tracing</td></tr>
+      <tr><td>JUCE AudioDeviceManager stats</td><td>Cross-platform</td><td>Built-in</td><td>CPU usage del audio thread</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>RAII Profiler ligero para audio thread</h3>
+    <pre>class AudioProfiler
+{
+public:
+    struct Stats {
+        std::atomic&lt;double&gt; totalUs  { 0.0 };
+        std::atomic&lt;long&gt;   callCount{ 0 };
+        std::atomic&lt;double&gt; maxUs    { 0.0 };
+        double averageUs() const {
+            auto count = callCount.load();
+            return count > 0 ? totalUs.load() / count : 0.0;
+        }
+    };
+
+    class ScopedTimer {
+    public:
+        explicit ScopedTimer (Stats& stats)
+            : stats_ (stats), start_ (std::chrono::high_resolution_clock::now()) {}
+        ~ScopedTimer() {
+            auto end = std::chrono::high_resolution_clock::now();
+            double us = std::chrono::duration&lt;double, std::micro&gt; (end - start_).count();
+            stats_.totalUs.fetch_add (us, std::memory_order_relaxed);
+            stats_.callCount.fetch_add (1, std::memory_order_relaxed);
+            double prev = stats_.maxUs.load (std::memory_order_relaxed);
+            while (us > prev && !stats_.maxUs.compare_exchange_weak (prev, us,
+                       std::memory_order_relaxed)) {}
+        }
+    private:
+        Stats& stats_;
+        std::chrono::time_point&lt;std::chrono::high_resolution_clock&gt; start_;
+    };
+
+    Stats saturationStats, filterStats, meterStats;
+};</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q10 · compare_exchange_weak</h4>
+    <p class="quiz-q">¿Por qué usar compare_exchange_weak para actualizar el máximo en el profiler atómico, en lugar de un simple store?</p>
+    <details><summary>Ver respuesta</summary><p>El patrón load-compare-store tiene un race condition: entre el load y el store, otro thread puede cambiar el valor. compare_exchange_weak hace la comparación y el store atómicamente, garantizando que solo se actualiza si el valor no cambió. El bucle while reintentar si _weak falla espuriamente (permitido en ARMv8 y similares para mejor rendimiento que la versión strong).</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Cadenas DSP</div>
+    <div class="module-title">juce::dsp ProcessorChain</div>
+    <div class="module-sub">Cadenas DSP composables: EQ paramétrico, compresor y convolution reverb</div>
+  </div>
+
+  <div class="card">
+    <h3>ProcessorChain tipado en tiempo de compilación</h3>
+    <pre>// Cadena: Compressor → EQ (3 bandas) → Gain → Limiter
+using Chain = juce::dsp::ProcessorChain&lt;
+    juce::dsp::Compressor&lt;float&gt;,
+    juce::dsp::EQ&lt;float&gt;,
+    juce::dsp::Gain&lt;float&gt;,
+    juce::dsp::Limiter&lt;float&gt;
+&gt;;
+// chain.get&lt;0&gt;() = compressor,  chain.get&lt;1&gt;() = EQ, ...
+
+// EQ Parametrico 3 bandas
+class ParametricEQ {
+    using Filter = juce::dsp::ProcessorDuplicator&lt;
+        juce::dsp::IIR::Filter&lt;float&gt;,
+        juce::dsp::IIR::Coefficients&lt;float&gt;&gt;;
+    using Chain = juce::dsp::ProcessorChain&lt;Filter, Filter, Filter&gt;;
+    void updateCoefficients() {
+        *chain_.get&lt;0&gt;().state = *juce::dsp::IIR::Coefficients&lt;float&gt;::makeLowShelf(
+            sr_, lowFreq_, lowQ_, juce::Decibels::decibelsToGain (lowGain_));
+        *chain_.get&lt;1&gt;().state = *juce::dsp::IIR::Coefficients&lt;float&gt;::makePeakFilter(
+            sr_, midFreq_, midQ_, juce::Decibels::decibelsToGain (midGain_));
+        *chain_.get&lt;2&gt;().state = *juce::dsp::IIR::Coefficients&lt;float&gt;::makeHighShelf(
+            sr_, hiFreq_, hiQ_, juce::Decibels::decibelsToGain (hiGain_));
+    }
+};
+
+// Convolution Reverb con cambio de IR en tiempo real sin glitches:
+// La carga del nuevo IR ocurre en background thread con IR preparado en buffer doble;
+// el audio thread continúa con el IR anterior hasta que el nuevo está listo,
+// luego hace un crossfade lock-free.
+conv_.loadImpulseResponse (irFile,
+    juce::dsp::Convolution::Stereo::yes,
+    juce::dsp::Convolution::Trim::yes,
+    0, juce::dsp::Convolution::Normalise::yes);</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q11 · Convolution RT-safe</h4>
+    <p class="quiz-q">juce::dsp::Convolution permite cambiar el IR en tiempo real sin glitches. ¿Cómo lo logra siendo que cargar un IR implica malloc?</p>
+    <details><summary>Ver respuesta</summary><p>La carga del nuevo IR ocurre en un background thread con el IR preparado en un buffer doble. El audio thread continúa con el IR anterior hasta que el nuevo está listo, luego hace un crossfade lock-free. El swap del puntero al IR activo es una operación atómica — nunca hay malloc en el audio thread.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · GUI Moderna</div>
+    <div class="module-title">WebView2 — React en GUI de Plugin (JUCE 8)</div>
+    <div class="module-sub">Interfaces modernas con HTML/CSS/React embebido en el plugin vía WebView2/WKWebView</div>
+  </div>
+
+  <div class="card">
+    <h3>Ventajas y comunicación JS ↔ C++</h3>
+    <table>
+      <tr><th>Ventaja</th><th>Descripción</th></tr>
+      <tr><td>UI moderna</td><td>CSS animations, flexbox, gradients sin código JUCE</td></tr>
+      <tr><td>Hot reload</td><td>Servir desde localhost durante desarrollo</td></tr>
+      <tr><td>Ecosistema JS</td><td>D3.js para visualizaciones, Three.js para 3D</td></tr>
+      <tr><td>Diseñadores</td><td>No necesitan aprender JUCE Component API</td></tr>
+    </table>
+    <p style="margin-top:10px;">Comunicación: JS → C++ via emitEvent() / sendMessage() | C++ → JS via evaluateJavascript()</p>
+    <div class="warn-box"><strong>Principal desventaja:</strong> WebView2 es un runtime externo. En Windows requiere que el usuario tenga Edge/WebView2 instalado. En macOS, WKWebView depende de la versión del OS del usuario, lo que puede causar incompatibilidades entre versiones de macOS.</div>
+  </div>
+
+  <div class="card">
+    <h3>WebPluginEditor con JUCE 8</h3>
+    <pre>class WebPluginEditor : public juce::AudioProcessorEditor
+{
+public:
+    explicit WebPluginEditor (GainFilterProcessor& proc)
+        : AudioProcessorEditor (proc), processor_ (proc),
+          webView_ (juce::WebBrowserComponent::Options{}
+                        .withResourceProvider ([this] (const auto& url) {
+                            return getResource (url); },
+                            juce::Origin { "https://localhost" })
+                        .withNativeIntegrationEnabled())
+    {
+        addAndMakeVisible (webView_);
+        setSize (600, 400);
+        webView_.goToURL ("https://localhost/index.html");
+        webView_.setMessageHandler ([this] (const juce::String& msg) {
+            handleJSMessage (msg);
+        });
+    }
+
+private:
+    void handleJSMessage (const juce::String& jsonStr) {
+        auto json = juce::JSON::parse (jsonStr);
+        if (json["type"].toString() == "paramChange") {
+            auto* p = processor_.apvts.getParameter (json["param"].toString());
+            if (p != nullptr) {
+                p->beginChangeGesture();
+                p->setValueNotifyingHost (p->convertTo0to1 ((float) json["value"]));
+                p->endChangeGesture();
+            }
+        }
+    }
+
+    GainFilterProcessor& processor_;
+    juce::WebBrowserComponent webView_;
+};</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q12 · WebView2 limitaciones</h4>
+    <p class="quiz-q">¿Cuál es la principal desventaja del enfoque WebView2 para la GUI del plugin y cómo afecta la distribución del plugin?</p>
+    <details><summary>Ver respuesta</summary><p>WebView2 es un runtime externo no incluido en el plugin: en Windows requiere que el usuario tenga Edge/WebView2 instalado (aunque en Windows 11 viene por defecto). En macOS WKWebView está en el sistema pero su versión depende del OS del usuario. Esto puede causar incompatibilidades con CSS/JS features modernas en versiones antiguas de macOS, complicando el soporte y las pruebas de compatibilidad.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · DSLs</div>
+    <div class="module-title">Cmajor y SOUL — DSLs para Audio</div>
+    <div class="module-sub">Domain-Specific Languages para DSP: alto nivel con rendimiento de bajo nivel</div>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa Cmajor vs C++ JUCE</h3>
+    <table>
+      <tr><th>Característica</th><th>Cmajor</th><th>SOUL (legacy)</th><th>C++ JUCE</th></tr>
+      <tr><td>Paradigma</td><td>Grafo de procesadores</td><td>Grafo de procesadores</td><td>Orientado a objetos</td></tr>
+      <tr><td>Target</td><td>WASM, LLVM, C++, plugin</td><td>LLVM IR → plugin</td><td>Nativo</td></tr>
+      <tr><td>Seguridad RT</td><td>Forzada por diseño</td><td>Forzada por diseño</td><td>Manual</td></tr>
+      <tr><td>Hot reload</td><td>En Cmajor Studio</td><td>Limitado</td><td>No</td></tr>
+      <tr><td>Ecosistema</td><td>Activo (2024)</td><td>Archivado (2023)</td><td>Maduro</td></tr>
+    </table>
+    <p style="margin-top:10px;">El compilador de Cmajor analiza estáticamente todo el código del grafo y rechaza en tiempo de compilación cualquier construcción que pueda causar allocaciones de heap, llamadas bloqueantes o excepciones — imposible de garantizar en C++.</p>
+  </div>
+
+  <div class="card">
+    <h3>Plugin Cmajor</h3>
+    <pre>processor GainProcessor
+{
+    input  stream float&lt;2&gt; audioIn;
+    output stream float&lt;2&gt; audioOut;
+    input value float gainDb [[ name: "Gain", min: -60, max: 12, init: 0, unit: "dB" ]];
+    input event  bool  bypass [[ name: "Bypass", init: false ]];
+
+    float currentGain = 1.0f;
+    bool  isBypassed  = false;
+
+    event gainDb (float v) { currentGain = soul::dBtoGain (v); }
+    event bypass (bool v)  { isBypassed = v; }
+
+    void main()
+    {
+        loop
+        {
+            if (isBypassed) audioOut &lt;- audioIn;
+            else audioOut &lt;- float&lt;2&gt; (audioIn[0] * currentGain, audioIn[1] * currentGain);
+            advance();
+        }
+    }
+}</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q13 · Seguridad RT en Cmajor</h4>
+    <p class="quiz-q">¿Para qué tipo de proyecto elegirías Cmajor sobre C++/JUCE y por qué garantiza la seguridad en tiempo real por diseño?</p>
+    <details><summary>Ver respuesta</summary><p>Cmajor es ideal para: (1) prototipar DSP rápidamente con garantías RT automáticas, (2) algoritmos que necesitan ejecutarse en múltiples targets (plugin nativo, WebAssembly, hardware embebido) desde un solo código fuente. La seguridad RT es forzada porque el compilador analiza estáticamente todo el grafo y rechaza en tiempo de compilación cualquier construcción que pueda causar allocaciones de heap o llamadas bloqueantes — algo que C++ deja al programador.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto Final — Plugin VST3/AU Completo</div>
+    <div class="module-sub">Construye, valida y distribuye un plugin de efectos de audio profesional</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica del Proyecto HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>RT Safety (sin violaciones)</td><td>No malloc/mutex en processBlock; verificado con JUCE_ENABLE_ALLOCATION_HOOKS</td><td>25</td></tr>
+        <tr><td>APVTS + automatización DAW</td><td>≥3 parámetros, begin/endChangeGesture correctos, preset recall funcional</td><td>20</td></tr>
+        <tr><td>DSP sin aliasing ni denormals</td><td>ScopedNoDenormals, SmoothedValue, sin zipper noise</td><td>20</td></tr>
+        <tr><td>Build CMake multi-formato</td><td>VST3 + AU/Standalone compilados, PluginVal pasa sin errores</td><td>15</td></tr>
+        <tr><td>Profiling del audio thread</td><td>Reporte de CPU% en buffer 64 @ 44.1kHz, ≤30% del budget</td><td>10</td></tr>
+        <tr><td>GUI + tests unitarios</td><td>Editor con APVTS attachments, ≥5 tests Catch2 de DSP</td><td>10</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman — Explica sin notas</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · RT Violation</h4>
+      <p class="quiz-q">El siguiente processBlock llama a makeLowPass() cada bloque. ¿Qué problema introduce y cómo se soluciona correctamente?</p>
+      <details><summary>Ver respuesta</summary><p>makeLowPass() aloca memoria con new (devuelve ReferenceCountedObjectPtr) — malloc en el audio thread es una RT violation que puede causar glitches. Solución: pre-calcular los coeficientes en prepareToPlay o solo cuando el cutoff cambia significativamente (comparar con lastCutoff_), y en processBlock solo copiar los coeficientes pre-calculados: *filter_.state = precomputedCoeffs_.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · Newton-Raphson convergencia</h4>
+      <p class="quiz-q">Para out = tanh(in − 0.9·out) con in=2.0, ¿cuántas iteraciones Newton-Raphson son necesarias para error &lt;1e-7 con y sin warm start?</p>
+      <details><summary>Ver respuesta</summary><p>Con warm start (prevOut ≈ out actual): 2-3 iteraciones, porque el error inicial es ~1e-4 y Newton cuadrático converge rápido. Sin warm start (desde 0): 5-7 iteraciones, el error inicial puede ser ~0.5. Newton-Raphson tiene convergencia cuadrática: el error se eleva al cuadrado en cada iteración. Con k=0.9, la función sí converge siempre (|k| &lt; 1 garantiza convergencia global).</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · MXCSR y threads adicionales</h4>
+      <p class="quiz-q">Un reverberador con ScopedNoDenormals sigue produciendo glitches por denormals. ¿Cuál es la causa exacta y qué dos soluciones existen?</p>
+      <details><summary>Ver respuesta</summary><p>ScopedNoDenormals opera sobre el registro MXCSR de la CPU del thread actual. Si el reverberador usa threads adicionales (thread pool para convolución particionada), esos hilos tienen su propio MXCSR sin FTZ/DAZ activo. Solución 1: aplicar ScopedNoDenormals en cada hilo que procesa audio. Solución 2: usar el DC-offset trick en los puntos de realimentación: feedback += 1e-25f; previene que los valores caigan al rango subnormal sin afectar el audio.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · APVTS y undo/redo</h4>
+      <p class="quiz-q">Un usuario reporta que la automatización se graba correctamente pero al hacer "undo" en el DAW, el parámetro no vuelve a su valor anterior. ¿Cuál es la causa?</p>
+      <details><summary>Ver respuesta</summary><p>El plugin está actualizando el parámetro directamente con getRawParameterValue()->store() en el UI thread en lugar de usar setValueNotifyingHost(). El host no recibe la notificación y no puede registrar el cambio en su sistema de undo. Siempre usar param->setValueNotifyingHost() para cambios iniciados por el usuario, precedido de beginChangeGesture() y seguido de endChangeGesture().</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · Cmajor vs C++</h4>
+      <p class="quiz-q">¿Por qué los DSLs como Cmajor pueden garantizar la seguridad en tiempo real por diseño, mientras que C++ no puede garantizarla nunca estáticamente?</p>
+      <details><summary>Ver respuesta</summary><p>El compilador de Cmajor analiza estáticamente todo el grafo de procesadores y rechaza en tiempo de compilación cualquier construcción que pueda causar allocaciones de heap, llamadas de sistema bloqueantes o excepciones. En C++, estas son decisiones del programador en tiempo de ejecución: new, std::mutex, system calls pueden aparecer en cualquier función llamada desde processBlock y el compilador no las rechaza. La garantía de Cmajor es estructural, no convencional.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_juce_audio_plugins_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Ecosistema JUCE'},
+    {id:'m1',  label:'M1 · Hard Real-Time'},
+    {id:'m2',  label:'M2 · SPSC Queues'},
+    {id:'m3',  label:'M3 · APVTS'},
+    {id:'m4',  label:'M4 · Newton-Raphson'},
+    {id:'m5',  label:'M5 · Denormals / FTZ'},
+    {id:'m6',  label:'M6 · CMake vs Projucer'},
+    {id:'m7',  label:'M7 · prepareToPlay'},
+    {id:'m8',  label:'M8 · processBlock'},
+    {id:'m9',  label:'M9 · GUI ↔ DSP'},
+    {id:'m10', label:'M10 · Profiling'},
+    {id:'m11', label:'M11 · ProcessorChain'},
+    {id:'m12', label:'M12 · WebView2 / React'},
+    {id:'m13', label:'M13 · Cmajor / SOUL'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+  function save(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
+  function buildNav(){
+    const nav=document.getElementById('nav-list'); nav.innerHTML='';
+    MODULES.forEach(m=>{
+      const el=document.createElement('div');
+      el.className='nav-item'+(state.done.includes(m.id)?' done':'')+(state.current===m.id?' active':'');
+      el.innerHTML=`<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick=()=>goTo(m.id); nav.appendChild(el);
+    }); updateProgress();
+  }
+  function updateProgress(){
+    const pct=Math.round((state.done.length/MODULES.length)*100);
+    document.getElementById('pct').textContent=pct+'%';
+    document.getElementById('progress-bar').style.width=pct+'%';
+  }
+  window.goTo=function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current=id; save(); buildNav(); window.scrollTo(0,0);
+  };
+  window.completeAndNext=function(current,next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save(); if(next) goTo(next); else buildNav();
+  };
+  buildNav(); goTo(state.current);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Write(/Users/jmateog13/Desktop/lifeOS/MOOCs/*)",
+      "Edit(/Users/jmateog13/Desktop/lifeOS/MOOCs/*)",
+      "Read(/Users/jmateog13/Desktop/lifeOS/MOOCs/*)",
+      "Bash(python3 *)",
+      "Bash(cat *)",
+      "Bash(echo *)",
+      "Bash(mkdir *)"
+    ]
+  },
+  "env": {
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "100000"
+  }
+}

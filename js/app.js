@@ -1,24 +1,142 @@
 // IMPORTS REMOVED FOR LOCAL FILE COMPATIBILITY
 
 // --- CORE LOGIC ---
-// --- CORE LOGIC ---
 // ECONOMY 2.0: chronos = POINTS (PTS) | wallet = REAL MONEY (€)
 let chronos = parseFloat(localStorage.getItem('poly_chronos')) || 0;
 let wallet = parseFloat(localStorage.getItem('poly_wallet')) || 0.00;
 let stats = JSON.parse(localStorage.getItem('poly_stats')) || {};
 let timerInt, timeLeft, isOvertime = false, xpMult = 1, currentTaskName = "";
 
+// --- DAILY MINIMUM ---
+function initDailyMinimum() {
+    const today = new Date().toDateString();
+    let dm = JSON.parse(localStorage.getItem('poly_daily_min')) || {};
+
+    if (dm.date !== today) {
+        const inv = window.inventory || [];
+        const shuffled = [...inv].sort(() => Math.random() - 0.5);
+        dm = { date: today, tasks: shuffled.slice(0, 2).map(i => i.name), completed: [] };
+        localStorage.setItem('poly_daily_min', JSON.stringify(dm));
+    }
+    renderDailyMinimum(dm);
+}
+
+function renderDailyMinimum(dm) {
+    const container = document.getElementById('daily-min-tasks');
+    const progress = document.getElementById('daily-min-progress');
+    if (!container) return;
+
+    const done = dm.completed.length;
+    const total = dm.tasks.length;
+    if (progress) progress.textContent = `${done}/${total}`;
+
+    if (done >= total && total > 0) {
+        container.innerHTML = '<div class="day-cleared">✅ DÍA ASEGURADO — RACHA PROTEGIDA</div>';
+        return;
+    }
+
+    container.innerHTML = '';
+    dm.tasks.forEach(taskName => {
+        const isDone = dm.completed.includes(taskName);
+        const div = document.createElement('div');
+        div.className = `daily-task${isDone ? ' done' : ''}`;
+        div.innerHTML = `<span class="daily-check">${isDone ? '✅' : '◻'}</span><span>${taskName}</span>`;
+        if (!isDone) div.onclick = () => startTask(taskName, 20, 1);
+        container.appendChild(div);
+    });
+}
+
+function checkDailyComplete(taskName) {
+    const today = new Date().toDateString();
+    let dm = JSON.parse(localStorage.getItem('poly_daily_min')) || {};
+    if (dm.date !== today || !dm.tasks) return;
+
+    if (dm.tasks.includes(taskName) && !dm.completed.includes(taskName)) {
+        dm.completed.push(taskName);
+        localStorage.setItem('poly_daily_min', JSON.stringify(dm));
+        renderDailyMinimum(dm);
+        if (dm.tasks.every(t => dm.completed.includes(t))) {
+            showNotification('✅ DAILY MINIMUM DONE! DÍA ASEGURADO', 'gold');
+        }
+    }
+}
+
+// --- WEEKLY FOCUS ---
+function getWeekNumber(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+function initWeeklyFocus() {
+    const now = new Date();
+    const week = getWeekNumber(now);
+    const year = now.getFullYear();
+
+    let wf = JSON.parse(localStorage.getItem('poly_weekly_focus')) || {};
+
+    if (wf.week !== week || wf.year !== year) {
+        const cats = ['tech', 'music', 'studio', 'maker', 'mind'];
+        const available = cats.filter(c => c !== wf.cat);
+        wf = { week, year, cat: available[Math.floor(Math.random() * available.length)] };
+        localStorage.setItem('poly_weekly_focus', JSON.stringify(wf));
+    }
+    renderWeeklyFocus(wf);
+}
+
+function renderWeeklyFocus(wf) {
+    const CAT_LABELS = {
+        tech: '💻 TECH & IA', music: '🎹 MÚSICA', studio: '🎛️ STUDIO',
+        maker: '🛠️ MAKER', mind: '🌍 MIND'
+    };
+
+    const banner = document.getElementById('weekly-focus-banner');
+    if (banner) {
+        banner.innerHTML = `⚡ WEEKLY FOCUS: <span class="focus-cat">${CAT_LABELS[wf.cat]}</span><span class="focus-bonus">+50% PTS</span>`;
+    }
+
+    document.querySelectorAll('h2[data-cat]').forEach(h => {
+        const existing = h.querySelector('.focus-badge');
+        if (existing) existing.remove();
+        h.classList.toggle('focus-active', h.dataset.cat === wf.cat);
+        if (h.dataset.cat === wf.cat) {
+            const badge = document.createElement('span');
+            badge.className = 'focus-badge';
+            badge.textContent = '⚡ FOCUS +50%';
+            h.appendChild(badge);
+        }
+    });
+}
+
+function getWeeklyFocusCat() {
+    return (JSON.parse(localStorage.getItem('poly_weekly_focus')) || {}).cat || null;
+}
+
+// --- TOGGLE CATEGORIES ---
+function toggleCategories() {
+    const section = document.getElementById('categories-section');
+    const btn = document.getElementById('toggle-categories-btn');
+    if (!section || !btn) return;
+
+    const isHidden = section.style.display === 'none';
+    section.style.display = isHidden ? 'block' : 'none';
+    btn.textContent = isHidden ? '▲ OCULTAR MISIONES' : '▼ BROWSE ALL MISSIONS';
+}
+
 function init() {
     renderGrid();
     updateHUD();
-    updateHUD();
     checkLevel(false);
     checkStreak();
+    initDailyMinimum();
+    initWeeklyFocus();
 
     // Bind globals for interaction (since module scope is private)
     window.startVital = startVital;
     window.startTask = startTask;
-    window.stopTimer = stopTimer; // Restored
+    window.stopTimer = stopTimer;
     window.goOvertime = goOvertime;
     window.spinWheel = spinWheel;
     window.recordSocial = recordSocial;
@@ -27,6 +145,7 @@ function init() {
     window.openCapricho = openCapricho;
     window.closeCapricho = closeCapricho;
     window.buyCapricho = buyCapricho;
+    window.toggleCategories = toggleCategories;
 }
 
 
@@ -571,8 +690,23 @@ function alarm() {
 
     // 4. SAVE & UPDATE
     checkStreak();
-    checkLevel(true); // Checks achievements, plays sound, saves data
-    updateHUD(); // Updates UI and saves to localStorage
+    checkLevel(true);
+    updateHUD();
+
+    // 4b. WEEKLY FOCUS BONUS
+    const focusCat = getWeeklyFocusCat();
+    if (focusCat) {
+        const taskData = (window.inventory || []).find(i => i.name === currentTaskName);
+        if (taskData && taskData.cat === focusCat) {
+            const bonus = Math.floor(reward * 0.5);
+            chronos += bonus;
+            updateHUD();
+            showNotification(`⚡ FOCUS BONUS +${bonus} PTS`, 'purple');
+        }
+    }
+
+    // 4c. DAILY MINIMUM CHECK
+    checkDailyComplete(currentTaskName);
 
     // 5. VICTORY SCREEN
     showVictory(currentTaskName, reward);
@@ -638,6 +772,15 @@ function updateTimerVis(msg, totalDuration) {
 
 // --- RANDOMIZER PHYSICS ---
 function spinWheel() {
+    // Expand categories if hidden so the spin animation is visible
+    const section = document.getElementById('categories-section');
+    const toggleBtn = document.getElementById('toggle-categories-btn');
+    if (section && section.style.display === 'none') {
+        section.style.display = 'block';
+        if (toggleBtn) toggleBtn.textContent = '▲ OCULTAR MISIONES';
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     const btns = document.querySelectorAll('.skill-btn');
     if (btns.length === 0) return;
 

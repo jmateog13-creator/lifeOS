@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acústica Virtual & Ray Tracing Sonoro — MOOC v3</title>
+<style>
+:root {
+  --bg:#0f172a; --surface:#1e293b; --surface2:#334155;
+  --accent:#06b6d4; --accent2:#22d3ee; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#334155;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'Fira Code',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+/* SIDEBAR */
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* MAIN */
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+/* CODE */
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#0d1117;padding:2px 6px;border-radius:4px}
+/* SVG ECOSYSTEM */
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+/* FORMULA */
+.formula{background:rgba(6,182,212,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+/* METRICS GRID */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:22px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+/* WARN BOX */
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+/* HERO */
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(6,182,212,.07);border-radius:6px;line-height:1.6}
+/* BTN */
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+/* HIGHLIGHT */
+.hl-green{color:var(--green)} .hl-red{color:var(--red)} .hl-blue{color:var(--blue)} .hl-amber{color:var(--warn)} .hl-cyan{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>Acústica Virtual & Ray Tracing Sonoro</h2>
+    <p>15 módulos · Reverb &amp; Espacialización</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Briefing</div>
+    <div class="module-title">Ecosistema de Acústica Virtual</div>
+    <div class="module-sub">Simulación de sala, HRTF, oclusión y motores de audio</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 560 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:560px;display:block;margin:0 auto">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#06b6d4"/>
+        </marker>
+      </defs>
+      <rect x="5" y="110" width="90" height="36" rx="6" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="50" y="133" text-anchor="middle" fill="#06b6d4" font-size="10" font-weight="700" font-family="Inter,sans-serif">SALA</text>
+      <rect x="140" y="70" width="100" height="36" rx="6" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="190" y="93" text-anchor="middle" fill="#a855f7" font-size="10" font-weight="700" font-family="Inter,sans-serif">ISM</text>
+      <rect x="140" y="150" width="100" height="36" rx="6" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="190" y="168" text-anchor="middle" fill="#a855f7" font-size="10" font-weight="700" font-family="Inter,sans-serif">FDN/Conv</text>
+      <rect x="290" y="90" width="100" height="36" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+      <text x="340" y="108" text-anchor="middle" fill="#10b981" font-size="10" font-weight="700" font-family="Inter,sans-serif">HRTF SH</text>
+      <text x="340" y="120" text-anchor="middle" fill="#10b981" font-size="10" font-family="Inter,sans-serif">Espacialización</text>
+      <rect x="290" y="150" width="100" height="36" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+      <text x="340" y="168" text-anchor="middle" fill="#10b981" font-size="10" font-weight="700" font-family="Inter,sans-serif">Oclusión</text>
+      <rect x="440" y="110" width="110" height="36" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="495" y="128" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="700" font-family="Inter,sans-serif">Wwise</text>
+      <text x="495" y="140" text-anchor="middle" fill="#f59e0b" font-size="10" font-family="Inter,sans-serif">Steam/Unreal</text>
+      <line x1="95" y1="128" x2="138" y2="95" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="95" y1="128" x2="138" y2="168" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="240" y1="88" x2="288" y2="100" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="240" y1="168" x2="288" y2="168" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="390" y1="108" x2="438" y2="120" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="390" y1="168" x2="438" y2="138" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr)"/>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">fs</div><div class="metric-label">Schroeder Freq</div></div>
+    <div class="metric"><div class="metric-val">RT60</div><div class="metric-label">Tiempo Reverberación</div></div>
+    <div class="metric"><div class="metric-val">SH</div><div class="metric-label">Spherical Harmonics</div></div>
+    <div class="metric"><div class="metric-val">ISM</div><div class="metric-label">Image Source Method</div></div>
+    <div class="metric"><div class="metric-val">FDN</div><div class="metric-label">Feedback Delay Network</div></div>
+    <div class="metric"><div class="metric-val">HRTF</div><div class="metric-label">Head-Related TF</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Stack Tecnológico</h3>
+    <table>
+      <thead><tr><th>Módulo</th><th>Tema</th><th>Herramienta clave</th></tr></thead>
+      <tbody>
+        <tr><td>M1</td><td>Acústica de sala — fundamentos</td><td>Schroeder, Sabine</td></tr>
+        <tr><td>M2–M4</td><td>Simulación de reverberación</td><td>ISM, FDN, NUPOLS</td></tr>
+        <tr><td>M5–M7</td><td>Espacialización 3D</td><td>HRTF, SH, ML</td></tr>
+        <tr><td>M8–M10</td><td>Middleware &amp; motores</td><td>Wwise, Unreal, CRY</td></tr>
+        <tr><td>M11–M12</td><td>Implementación nativa</td><td>C++, Rust, Csound</td></tr>
+        <tr><td>M13–M14</td><td>Validación &amp; HERO</td><td>Spaces, medición</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Acústica de Sala</div>
+    <div class="module-title">Frecuencia de Schroeder</div>
+    <div class="module-sub">Modos propios, zona de baja frecuencia, transición a campo difuso</div>
+  </div>
+
+  <div class="card">
+    <h3>La frecuencia de Schroeder: umbral de campo difuso</h3>
+    <p>Por debajo de la frecuencia de Schroeder (fs), el campo sonoro de una sala está dominado por modos propios discretos: frecuencias resonantes que dependen de la geometría. Por encima, los modos se solapan suficientemente para formar un campo difuso estadístico, donde el tratamiento wave-based (FDTD) puede reemplazarse por ray tracing y modelos energéticos.</p>
+    <div class="formula">f_s = 2000 · √(RT60 / V)  [Hz]</div>
+    <p>Donde RT60 es el tiempo de reverberación en segundos y V el volumen en m³. Sala de conciertos (V=15000m³, RT60=2s): fs ≈ 23Hz. Sala de control (V=50m³, RT60=0.3s): fs ≈ 49Hz.</p>
+    <h3>Modos propios de una sala rectangular</h3>
+    <div class="formula">f_{lmn} = (c/2) · √((l/Lx)² + (m/Ly)² + (n/Lz)²)  [Hz]</div>
+    <p>l, m, n = índices del modo (enteros no negativos, no todos cero). c = velocidad del sonido (≈344 m/s). Los modos axiales (solo un índice ≠0) son los más fuertes; tangenciales y oblicuos son más débiles.</p>
+    <ul>
+      <li><strong>Sabine</strong>: RT60 = 0.161·V/A. Válido para ᾱ &lt; 0.2 (salas muy reverberantes).</li>
+      <li><strong>Eyring</strong>: RT60 = −0.161·V/(S·ln(1−ᾱ)). Más preciso para ᾱ altos.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Lab 1.1 — Calcular modos y fs de una sala rectangular</h3>
+    <details>
+      <summary>Ver código Python</summary>
+<pre>import numpy as np
+import matplotlib.pyplot as plt
+
+def room_modes(Lx, Ly, Lz, c=344, max_freq=500):
+    modes = []
+    max_l = int(2 * max_freq * Lx / c) + 1
+    max_m = int(2 * max_freq * Ly / c) + 1
+    max_n = int(2 * max_freq * Lz / c) + 1
+    for l in range(max_l + 1):
+        for m in range(max_m + 1):
+            for n in range(max_n + 1):
+                if l == m == n == 0:
+                    continue
+                f = (c / 2) * np.sqrt(
+                    (l/Lx)**2 + (m/Ly)**2 + (n/Lz)**2
+                )
+                if f &lt;= max_freq:
+                    n_zeros = sum(1 for x in [l,m,n] if x == 0)
+                    mode_type = ['Oblicuo','Tangencial','Tangencial','Axial'][n_zeros]
+                    modes.append({'f': f, 'l': l, 'm': m, 'n': n, 'type': mode_type})
+    return sorted(modes, key=lambda x: x['f'])
+
+def schroeder_frequency(rt60, V):
+    return 2000 * np.sqrt(rt60 / V)
+
+Lx, Ly, Lz = 7.0, 5.0, 3.0
+V = Lx * Ly * Lz
+S = 2 * (Lx*Ly + Lx*Lz + Ly*Lz)
+rt60 = 0.161 * V / (0.25 * S)
+fs = schroeder_frequency(rt60, V)
+print(f"RT60: {rt60:.2f}s  |  fs: {fs:.1f}Hz")
+modes = room_modes(Lx, Ly, Lz)
+for m in modes[:5]:
+    print(f"  ({m['l']},{m['m']},{m['n']}) = {m['f']:.1f}Hz [{m['type']}]")</pre>
+    </details>
+    <p><strong>Reto</strong>: Diseñar una sala con distribución de modos óptima buscando proporciones de Bolt (1:1.1–1.4 a 1:1.5–2.5). Minimizar la varianza del espaciado entre modos consecutivos.</p>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul>
+      <li>EX 1.1 — Calcula fs para: (a) catedral V=30000m³ RT60=5s, (b) baño V=8m³ RT60=0.8s.</li>
+      <li>EX 1.2 — Compara RT60 de Sabine vs Eyring para ᾱ=0.1, 0.3, 0.6. ¿Cuándo divergen más?</li>
+      <li>EX 1.3 — Calcula los 10 primeros modos de tu sala de trabajo. ¿Alguno coincide con una nota musical?</li>
+      <li>EX 1.4 — Para una sala 5×4×3m, ¿cuántos modos hay entre 80Hz y 200Hz? ¿Hay aglomeraciones?</li>
+      <li>EX 1.5 — Implementa la fórmula de Eyring y compara RT60 con Sabine para varios valores de ᾱ.</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman — Modos axiales</h4>
+    <p class="quiz-q">¿Por qué los modos axiales son más problemáticos que los oblicuos?</p>
+    <details><summary>Ver respuesta</summary><p>Los modos axiales (solo una dimensión implicada) tienen la mayor energía y el menor factor de pérdidas relativo. Solo "rebotan" entre dos paredes paralelas y solo encuentran material absorbente en esas dos superficies. Los modos tangenciales afectan 4 superficies, los oblicuos las 6. A igual coeficiente de absorción, los modos axiales tienen más tiempo para decaer y crean coloración tonal más severa. En un cubo perfecto, los primeros modos en las tres dimensiones son iguales → triple refuerzo en una sola frecuencia → resonancia devastadora para mezcla.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Quiz rápido</h4>
+    <p class="quiz-q">¿Qué ocurre con la frecuencia de Schroeder si duplicas el RT60 manteniendo el volumen constante?</p>
+    <details><summary>Ver respuesta</summary><p>fs aumenta un factor √2 (≈1.41x). La fórmula es fs = 2000·√(RT60/V). Si RT60 se duplica, el argumento de la raíz se duplica, por lo que fs se multiplica por √2. No se duplica (eso requeriría RT60×4) ni se cuadruplica.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← M0</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Simulación</div>
+    <div class="module-title">Image Source Method</div>
+    <div class="module-sub">Reflexiones especulares, complejidad O(N^m), pyroomacoustics</div>
+  </div>
+
+  <div class="card">
+    <h3>ISM: reflexiones como fuentes imagen</h3>
+    <p>El Image Source Method modela las reflexiones especulares de una sala como si vinieran de fuentes virtuales: la imagen de la fuente real reflejada en cada pared. Las reflexiones de orden N corresponden a las imágenes de imágenes, recursivamente.</p>
+    <div class="formula">Complejidad: O(N^m) — N paredes, m = orden de reflexión</div>
+    <p>Para una caja rectangular (6 paredes) hasta orden 3: 6 + 30 + 126 = 162 fuentes imagen. Para orden 10: &gt;60 millones. El ISM es exacto (reflexiones especulares) pero prohibitivo para órdenes altos. Práctico hasta orden 6-8 para geometrías simples.</p>
+    <ul>
+      <li>Direct sound: primera llegada, sin reflexiones.</li>
+      <li>Early reflections (ER): &lt;50ms, dan sensación de espacio.</li>
+      <li>Late reverberation (&gt;50ms): campo difuso estadístico.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Lab 2.1 — RIR con pyroomacoustics</h3>
+    <details>
+      <summary>Ver código Python</summary>
+<pre>import pyroomacoustics as pra
+import numpy as np
+import soundfile as sf
+
+def compute_rir(room_dim, source_pos, mic_pos,
+                absorption=0.3, order=6, sr=44100):
+    materials = pra.Material(absorption)
+    room = pra.ShoeBox(
+        room_dim, fs=sr, materials=materials,
+        max_order=order, ray_tracing=False, air_absorption=True
+    )
+    room.add_source(source_pos)
+    mic_array = np.array(mic_pos).reshape(3, 1)
+    room.add_microphone(mic_array)
+    room.simulate()
+    rir = room.rir[0][0]
+    return rir
+
+room_dim = [12, 8, 4]
+source = [6, 4, 2]
+mic = [3, 2, 1.5]
+sr = 44100
+rir = compute_rir(room_dim, source, mic, absorption=0.15, order=8)
+
+from pyroomacoustics.experimental import measure_rt60
+rt60 = measure_rt60(rir, fs=sr, decay_db=60)
+print(f"RT60 medido: {rt60*1000:.0f}ms")
+
+dry, _ = sf.read('dry_speech.wav')
+if dry.ndim > 1:
+    dry = dry[:, 0]
+wet = np.convolve(dry, rir)[:len(dry)]
+sf.write('wet_convolved.wav', wet / np.max(np.abs(wet)), sr)</pre>
+    </details>
+    <p><strong>Reto</strong>: Comparar ISM vs ray tracing para sala con absorción no uniforme (suelo=parquet α=0.05, techo=baldosas α=0.6, paredes laterales=hormigón α=0.02). Comparar RT60, EDT y forma de la cola de reverberación.</p>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul>
+      <li>EX 2.1 — Genera RIRs para 5 posiciones de micrófono distintas. ¿Cómo cambia el RT60 con la posición?</li>
+      <li>EX 2.2 — Varía el orden de reflexión de 1 a 10. ¿A partir de qué orden la RIR converge?</li>
+      <li>EX 2.3 — Calcula la direct-to-reverberant ratio (DRR) de las RIRs generadas.</li>
+      <li>EX 2.4 — Genera una RIR con y sin absorción de aire. ¿Qué frecuencias atenúa el aire?</li>
+      <li>EX 2.5 — Mide el EDT (Early Decay Time) de 3 RIRs distintas usando la curva de Schroeder.</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman — ISM y órdenes altos</h4>
+    <p class="quiz-q">¿Por qué ISM se vuelve prohibitivo para órdenes altos pero sigue siendo útil?</p>
+    <details><summary>Ver respuesta</summary><p>ISM es O(N^m): para 6 paredes y orden 10, hay 6^10 ≈ 60 millones de fuentes imagen, muchas inaccesibles. Sin embargo, ISM es exacto para reflexiones especulares de baja frecuencia donde la longitud de onda es comparable a la geometría: exactamente en la zona donde la teoría geométrica (ray tracing) no es válida. Por eso se usa híbrido: ISM para reflexiones tempranas (orden bajo) + ray tracing estadístico para la cola tardía.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Quiz rápido</h4>
+    <p class="quiz-q">¿Qué representa la "direct-to-reverberant ratio" (DRR) en acústica de sala?</p>
+    <details><summary>Ver respuesta</summary><p>La DRR es la energía del sonido directo respecto a la energía reverberante total. Un DRR alto indica que el oyente está cerca de la fuente (sonido directo domina); uno bajo indica que la reverberación domina. Es fundamental para percibir la distancia de una fuente sonora: cerebros y sistemas de audio lo usan como clave de distancia.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← M1</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Simulación</div>
+    <div class="module-title">FDN — Feedback Delay Network</div>
+    <div class="module-sub">Matriz de retroalimentación ortogonal, densidad de ecos, diseño de reverb</div>
+  </div>
+
+  <div class="card">
+    <h3>FDN: reverb artificial de alta calidad</h3>
+    <p>El Feedback Delay Network es la arquitectura de reverberación artificial más usada en procesadores profesionales (Lexicon, Bricasti). Consiste en N líneas de retardo retroalimentadas a través de una matriz de mezcla ortogonal para preservar la energía y evitar la coloración tonal.</p>
+    <div class="formula">x[n] = Σ_k A_{ik} · g_k · x_k[n − d_k] + b_i · u[n]</div>
+    <p>A = matriz ortogonal de mezcla. d_k = longitudes de retardo (en muestras). g_k = ganancias de feedback. b_i = vector de entrada.</p>
+    <ul>
+      <li><strong>Hadamard</strong>: matrices de tamaño potencia de 2 (N=4,8,16,32). Muy eficiente computacionalmente.</li>
+      <li><strong>Householder</strong>: H = I - 2vv^T, v unitario. Generalización flexible.</li>
+      <li>Longitudes de retardo: primos relativos, distribuidos en rango [d_min, d_max].</li>
+      <li>Ganancias de feedback: g_k = 10^(−3d_k/(fs·RT60)). Garantizan RT60 objetivo.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Lab 3.1 — FDN de 8 canales con matriz Hadamard</h3>
+    <details>
+      <summary>Ver código Python</summary>
+<pre>import numpy as np
+from scipy.linalg import hadamard
+
+def design_fdn(N=8, rt60=2.0, sr=44100):
+    H = hadamard(N).astype(float) / np.sqrt(N)
+    from sympy import primerange
+    d_min = int(sr * 0.005)
+    d_max = int(sr * 0.050)
+    primes = list(primerange(d_min, d_max + 1))
+    indices = np.round(np.linspace(0, len(primes)-1, N)).astype(int)
+    delays = [primes[i] for i in indices]
+    gains = np.array([10**(-3.0 * d / (sr * rt60)) for d in delays])
+    return {'delays': delays, 'gains': gains, 'A': H, 'N': N}
+
+class FDN:
+    def __init__(self, design):
+        self.N = design['N']
+        self.delays = design['delays']
+        self.gains = design['gains']
+        self.A = design['A']
+        self.buffers = [np.zeros(d) for d in self.delays]
+        self.ptrs = [0] * self.N
+        self.b = np.ones(self.N) / np.sqrt(self.N)
+        self.c = np.ones(self.N) / np.sqrt(self.N)
+
+    def process_sample(self, x):
+        s = np.array([self.buffers[k][self.ptrs[k]] for k in range(self.N)])
+        mixed = self.A @ (self.gains * s)
+        for k in range(self.N):
+            self.buffers[k][self.ptrs[k]] = mixed[k] + self.b[k] * x
+            self.ptrs[k] = (self.ptrs[k] + 1) % self.delays[k]
+        return float(np.dot(self.c, s))
+
+    def process_block(self, input_signal):
+        output = np.zeros(len(input_signal))
+        for i, x in enumerate(input_signal):
+            output[i] = self.process_sample(x)
+        return output
+
+design = design_fdn(N=8, rt60=1.5, sr=44100)
+fdn = FDN(design)
+impulse = np.zeros(44100 * 3)
+impulse[0] = 1.0
+rir_fdn = fdn.process_block(impulse)
+print(f"Delays: {design['delays']}")</pre>
+    </details>
+    <p><strong>Reto</strong>: FDN con filtros por canal para emular absorción dependiente de frecuencia. Diseña ganancias para RT60_LF=3s y RT60_HF=1s. Verifica midiendo RT60 en bandas de octava.</p>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul>
+      <li>EX 3.1 — Verifica que la matriz Hadamard normalizada es ortogonal: H·H^T ≈ I.</li>
+      <li>EX 3.2 — Experimenta con N=4 vs N=16 canales. ¿Cuándo la cola de reverb suena "granular"?</li>
+      <li>EX 3.3 — Cambia las longitudes de retardo a valores no-primos. ¿Aparecen coloraciones tonales?</li>
+      <li>EX 3.4 — Mide el RT60 de la RIR del FDN. ¿Coincide con el target?</li>
+      <li>EX 3.5 — Implementa pre-delay: añadir un retardo fijo de 20ms antes de la entrada al FDN.</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman — Matriz ortogonal en FDN</h4>
+    <p class="quiz-q">¿Por qué la matriz de mezcla del FDN debe ser ortogonal?</p>
+    <details><summary>Ver respuesta</summary><p>Si la matriz no es ortogonal (|det| ≠ 1), no preserva la norma (energía) de los vectores que transforma. Una matriz con |det| &lt; 1 reduce la energía en cada iteración → la reverberación decae más rápido de lo diseñado. Una con |det| &gt; 1 → inestabilidad. La ortogonalidad garantiza que toda la energía se disipa solo a través de las ganancias g_k, que son los únicos parámetros que controlan el RT60. Además, la mezcla completa en cada iteración maximiza la densidad de ecos y evita coloración tonal.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Quiz rápido</h4>
+    <p class="quiz-q">¿Cuál es la propiedad matemática clave de la matriz de mezcla en un FDN bien diseñado?</p>
+    <details><summary>Ver respuesta</summary><p>Debe ser ortogonal: A·A^T = I. Esto garantiza que |det(A)| = 1, preservando exactamente la energía en cada ciclo de mezcla. La ortogonalidad es la única propiedad que asegura estabilidad, control de RT60 y mezcla uniforme simultáneamente.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← M2</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Simulación</div>
+    <div class="module-title">NUPOLS — Convolución Particionada</div>
+    <div class="module-sub">Convolución en bloques, latencia mínima, UPOLS/NUPOLS, implementación eficiente</div>
+  </div>
+
+  <div class="card">
+    <h3>El problema de la convolución de RIRs largas</h3>
+    <p>Una RIR de 2 segundos a 44.1kHz tiene 88200 muestras. La convolución directa (O(N²)) sería prohibitiva en tiempo real. La convolución vía FFT (overlap-add/overlap-save) reduce la complejidad a O(N·log N), pero introduce latencia igual al tamaño del bloque.</p>
+    <div class="formula">UPOLS: Uniform Partitioned OLS — todos los bloques del mismo tamaño L</div>
+    <div class="formula">NUPOLS: Non-Uniform — primer bloque L₀ mínimo, resto crecen geométricamente</div>
+    <ul>
+      <li>UPOLS con L=128: latencia 3ms, CPU alta (muchas FFTs pequeñas).</li>
+      <li>NUPOLS: latencia ≈ L₀ (igual a bloque de audio), CPU reducida para cola larga.</li>
+      <li>En práctica: L₀=64 samples (1.5ms a 44.1kHz), bloques posteriores doblan tamaño (128, 256, 512...).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Lab 4.1 — UPOLS: convolución particionada uniforme</h3>
+    <details>
+      <summary>Ver código Python</summary>
+<pre>import numpy as np
+from scipy.fft import rfft, irfft
+
+def upols_convolve(signal, h, block_size=512):
+    L = block_size
+    fft_size = 2 * L
+    n_partitions = int(np.ceil(len(h) / L))
+    H_partitions = []
+    for i in range(n_partitions):
+        h_part = h[i*L:(i+1)*L]
+        h_part = np.pad(h_part, (0, fft_size - len(h_part)))
+        H_partitions.append(rfft(h_part))
+    fdl = [np.zeros(fft_size//2 + 1, dtype=complex)] * n_partitions
+    fdl_ptr = 0
+    output = np.zeros(len(signal) + len(h) - 1)
+    n_blocks = int(np.ceil(len(signal) / L))
+    for b in range(n_blocks):
+        x_block = signal[b*L:(b+1)*L]
+        x_block = np.pad(x_block, (0, L - len(x_block)))
+        X = rfft(np.concatenate([x_block, np.zeros(L)]))
+        fdl[fdl_ptr] = X
+        Y = np.zeros(fft_size//2 + 1, dtype=complex)
+        for i in range(n_partitions):
+            idx = (fdl_ptr - i) % n_partitions
+            Y += fdl[idx] * H_partitions[i]
+        y_time = irfft(Y)
+        out_start = b * L
+        output[out_start:out_start + L] += y_time[:L]
+        output[out_start + L:out_start + 2*L] += y_time[L:]
+        fdl_ptr = (fdl_ptr + 1) % n_partitions
+    return output[:len(signal)]
+
+sr = 44100
+t_rir = np.linspace(0, 2, 2*sr)
+h = np.exp(-3 * t_rir) * np.random.randn(len(t_rir)) * 0.1
+h[0] = 1.0
+signal = np.random.randn(sr * 5)
+output = upols_convolve(signal, h, block_size=512)
+print(f"Input: {len(signal)} samples, Output: {len(output)} samples")</pre>
+    </details>
+    <p><strong>Reto</strong>: Implementar NUPOLS con bloques L₀=64, L₁=128, L₂=256, L₃=512... Medir CPU time de UPOLS vs NUPOLS para una RIR de 2s. ¿Cuánto CPU ahorra NUPOLS?</p>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul>
+      <li>EX 4.1 — Compara la convolución directa vs UPOLS en tiempo de CPU para RIR de 0.1s, 1s, 5s.</li>
+      <li>EX 4.2 — Verifica que la salida de UPOLS es igual a np.convolve(signal, h) dentro de tolerancia numérica.</li>
+      <li>EX 4.3 — Mide la latencia de UPOLS con block_size = 64, 256, 1024 samples.</li>
+      <li>EX 4.4 — Implementa UPOLS con doble precisión (float64) y compara artifacts vs float32.</li>
+      <li>EX 4.5 — Convoluciona una señal de 30s con una RIR real de 3s en tiempo real (simula procesamiento por bloques).</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman — Por qué FFT reduce O(N²) a O(N·log N)</h4>
+    <p class="quiz-q">¿Por qué la convolución directa es O(N²) pero la FFT la reduce a O(N·log N)?</p>
+    <details><summary>Ver respuesta</summary><p>En convolución directa, para calcular cada muestra de salida se necesita multiplicar la señal con todos los N coeficientes de la RIR: N operaciones por muestra × N muestras = O(N²). La FFT convierte la convolución en multiplicación elemento a elemento en el dominio de frecuencia: 2 FFTs (O(N·log N) cada una) + N multiplicaciones complejas + 1 IFFT = O(N·log N) total. Para una RIR de 88200 samples: N² ≈ 7.8×10⁹ vs N·log N ≈ 1.5×10⁶ — una reducción de 5000x.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Quiz rápido</h4>
+    <p class="quiz-q">¿Qué ventaja tiene NUPOLS sobre UPOLS para convolución en tiempo real?</p>
+    <details><summary>Ver respuesta</summary><p>NUPOLS mantiene latencia mínima (igual al primer bloque L₀) con menor CPU total. El primer bloque es corto para procesar la parte perceptualmente crítica (sonido directo + early reflections) con baja latencia; los bloques posteriores son más grandes y se procesan en hilos separados con latencia permitida, amortizando el costo de FFT de la cola tardía.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← M3</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Espacialización</div>
+    <div class="module-title">Oclusión &amp; Difracción</div>
+    <div class="module-sub">Keller edge diffraction, modelos de oclusión, ray tracing con obstáculos</div>
+  </div>
+
+  <div class="card">
+    <h3>Cuando un rayo choca con un obstáculo</h3>
+    <p>El ray tracing geométrico asume propagación rectilínea: si hay un obstáculo entre fuente y receptor, el sonido se bloquea completamente. Físicamente, el sonido se difracta alrededor de los bordes. La <strong>teoría de difracción de Keller</strong> (GTD/UTD) extiende la óptica geométrica añadiendo rayos difractados.</p>
+    <div class="formula">p_diffracted = D(θ, θ') · p_incident · e^{-jkr} / √r</div>
+    <p>D(θ, θ') = coeficiente de difracción (función del ángulo de incidencia θ y observación θ', y del ángulo de cuña n). Para una cuña de 90°: n = 2. Para arista de 270° interior: n = 2/3.</p>
+    <ul>
+      <li><strong>Occlusion factor</strong>: 0 = completamente bloqueado, 1 = directo libre. Interpolado por rayos de sombra.</li>
+      <li><strong>Portal acoustics</strong>: modelar puertas/ventanas como zonas de transmisión con filtro de corte.</li>
+      <li><strong>Low-pass filtering</strong>: una pared bloquea HF pero transmite LF. Filtro LP cuyo fc depende del material y grosor.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Lab 5.1 — Modelo de oclusión con filtro de material</h3>
+    <details>
+      <summary>Ver código Python</summary>
+<pre>import numpy as np
+from scipy.signal import butter, filtfilt
+
+def apply_occlusion_filter(audio, occlusion_factor, sr=44100,
+                            wall_material='concrete'):
+    fc_map = {
+        'concrete': 200,
+        'drywall': 800,
+        'glass': 3000,
+    }
+    fc = fc_map.get(wall_material, 500)
+    attenuation_db = (1 - occlusion_factor) * -40
+    attenuation_lin = 10 ** (attenuation_db / 20)
+    if occlusion_factor &lt; 0.99:
+        nyq = sr / 2
+        b, a = butter(2, fc / nyq, btype='low')
+        filtered = filtfilt(b, a, audio)
+    else:
+        filtered = audio.copy()
+    return filtered * attenuation_lin
+
+sr = 44100
+t = np.linspace(0, 1, sr)
+speech = np.sin(2*np.pi*440*t) + 0.5*np.sin(2*np.pi*880*t)
+occluded = apply_occlusion_filter(speech, 0.1, sr, 'concrete')
+print(f"Atenuación media: {20*np.log10(np.std(occluded)/np.std(speech)+1e-8):.1f}dB")</pre>
+    </details>
+    <p><strong>Reto</strong>: Simula oclusión dinámica — un obstáculo de 2m de anchura se desplaza entre fuente y oyente a 0.5m/s. Para cada frame (10ms), calcula el factor de oclusión y aplica el filtro dinámicamente. Genera audio completo de 5 segundos.</p>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul>
+      <li>EX 5.1 — Implementa un raycast 2D simple para detectar si un obstáculo rectangular bloquea línea fuente-oyente.</li>
+      <li>EX 5.2 — Modela la difracción como un segundo canal: directo (bloqueado) + difractado (atenuado ~6dB + retrasado).</li>
+      <li>EX 5.3 — Compara el efecto perceptivo de oclusión con y sin filtro de material.</li>
+      <li>EX 5.4 — Implementa "portal acoustics": el sonido pasa por una apertura de 1m × 2m en una pared.</li>
+      <li>EX 5.5 — Mide la diferencia de SPL (dB) a través de 3 materiales: vidrio, yeso, hormigón de 20cm.</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman — Por qué el grave penetra mejor las paredes</h4>
+    <p class="quiz-q">¿Por qué el sonido grave penetra mejor las paredes que el agudo?</p>
+    <details><summary>Ver respuesta</summary><p>La transmisión a través de una pared depende de la impedancia de la pared. A bajas frecuencias, el movimiento de la pared está controlado por su masa (ley de masa: TL aumenta 6dB por octava con la frecuencia). Esto significa que las frecuencias bajas mueven la pared más fácilmente y transmiten más energía. Adicionalmente, la difracción es proporcional a λ/d: las ondas largas (graves) difractan más alrededor de los bordes del obstáculo que las ondas cortas (agudos).</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Quiz rápido</h4>
+    <p class="quiz-q">¿Qué tipo de filtro modela mejor el efecto de una pared de hormigón en oclusión de audio para juegos?</p>
+    <details><summary>Ver respuesta</summary><p>Filtro pasa-bajos con fc muy bajo (100-300Hz) + atenuación fuerte. El hormigón tiene muy alta masa, atenúa fuertemente todas las frecuencias pero transmite algo de los graves. La fc baja captura que casi solo pasan las frecuencias más graves, y la atenuación fuerte refleja la alta impedancia del material.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← M4</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Espacialización</div>
+    <div class="module-title">HRTF &amp; Armónicos Esféricos</div>
+    <div class="module-sub">Head-Related Transfer Function, representación SH, espacialización 3D</div>
+  </div>
+
+  <div class="card">
+    <h3>HRTF: cómo el cuerpo filtra el espacio</h3>
+    <p>La Head-Related Transfer Function (HRTF) codifica las modificaciones espectrales y temporales que el torso, cabeza y pabellón auricular imprimen al sonido que llega desde una dirección específica (azimut θ, elevación φ).</p>
+    <div class="formula">HRTF(θ,φ,f) = P_ear(θ,φ,f) / P_free_field(f)</div>
+    <p>Los Armónicos Esféricos Y_l^m(θ,φ) forman una base ortonormal completa para funciones en la esfera. Expandir la HRTF en SH permite compresión eficiente y renderizado con Ambisonics.</p>
+    <div class="formula">H(θ,φ,f) = Σ_{l=0}^{L} Σ_{m=-l}^{l} ĥ_l^m(f) · Y_l^m(θ,φ)</div>
+    <p>Orden L: L=4 → (L+1)²=25 coeficientes. L=7 → 64 coeficientes. En práctica: L=4 para Ambisonics de 4to orden.</p>
+  </div>
+
+  <div class="card">
+    <h3>Lab 6.1 — Espacialización binaural con HRTF de CIPIC/SOFA</h3>
+    <details>
+      <summary>Ver código Python</summary>
+<pre>import numpy as np
+from scipy.signal import fftconvolve
+
+def load_hrtf_sofa(sofa_path, target_azimuth, target_elevation):
+    import sofar
+    hrtf = sofar.read_sofa(sofa_path)
+    positions = hrtf.SourcePosition
+    az = positions[:, 0]
+    el = positions[:, 1]
+    dist = np.sqrt((az - target_azimuth)**2 + (el - target_elevation)**2)
+    idx = np.argmin(dist)
+    hrir_left  = hrtf.Data_IR[idx, 0, :]
+    hrir_right = hrtf.Data_IR[idx, 1, :]
+    sr = hrtf.Data_SamplingRate
+    return hrir_left, hrir_right, float(sr)
+
+def spatialize(mono_audio, hrir_left, hrir_right):
+    left  = fftconvolve(mono_audio, hrir_left)[:len(mono_audio)]
+    right = fftconvolve(mono_audio, hrir_right)[:len(mono_audio)]
+    stereo = np.stack([left, right], axis=1).astype(np.float32)
+    max_val = np.max(np.abs(stereo))
+    if max_val > 0:
+        stereo /= max_val
+    return stereo
+
+def synthetic_hrtf(azimuth_deg, sr=44100, head_radius=0.085):
+    c = 344.0
+    az_rad = np.radians(azimuth_deg)
+    itd = head_radius / c * (np.sin(az_rad) + az_rad)
+    itd_samples = int(abs(itd) * sr)
+    duration = 512
+    hrir_base = np.zeros(duration)
+    hrir_base[0] = 1.0
+    if azimuth_deg > 0:
+        hrir_left  = np.roll(hrir_base, itd_samples)
+        hrir_right = hrir_base
+    else:
+        hrir_left  = hrir_base
+        hrir_right = np.roll(hrir_base, itd_samples)
+    return hrir_left, hrir_right
+
+sr = 44100
+t = np.linspace(0, 1, sr)
+mono = np.sin(2*np.pi*440*t).astype(np.float32)
+hrir_L, hrir_R = synthetic_hrtf(90, sr)
+stereo = spatialize(mono, hrir_L, hrir_R)
+print(f"Binaural stereo: {stereo.shape}")</pre>
+    </details>
+    <p><strong>Reto</strong>: Fuente sonora en movimiento circular (0°→360°) en 4 segundos. Para cada frame de 10ms, selecciona la HRTF del azimut más cercano e interpola linealmente entre los dos más próximos. Genera audio binaural completo.</p>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul>
+      <li>EX 6.1 — Calcula el ITD para azimut 0°, 30°, 60°, 90°. Compara con datos CIPIC.</li>
+      <li>EX 6.2 — Implementa los primeros 4 armónicos esféricos Y_0^0, Y_1^{-1}, Y_1^0, Y_1^1.</li>
+      <li>EX 6.3 — Escucha el mismo audio espacializado en 0°, 90°, 180°, 270°. ¿Puedes distinguir adelante de atrás?</li>
+      <li>EX 6.4 — Compara espacialización con HRIRs de elevación 0° vs 45°. ¿Cambia la ilusión de altura?</li>
+      <li>EX 6.5 — Implementa early-reflection HRTF: convolucionar las primeras reflexiones con HRTFs de sus ángulos.</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman — Front-back confusion con HRTF genérica</h4>
+    <p class="quiz-q">¿Por qué es difícil distinguir sonidos delante vs atrás con HRTF genérica?</p>
+    <details><summary>Ver respuesta</summary><p>El pabellón auricular crea filtros espectrales ("pinna notches") distintos para adelante/atrás que son altamente individualizados: dependen de la forma exacta de tu oreja. Con una HRTF genérica, las pinna notches no coinciden con las de tu morfología: tu cerebro no reconoce los patrones espectrales como señales de localización válidas y hay ambigüedad frontal/trasera (front-back confusion problem). Las HRTFs personalizadas eliminan esto pero requieren medición individual.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Quiz rápido</h4>
+    <p class="quiz-q">¿Qué parámetro de los armónicos esféricos controla la resolución angular de la HRTF representada?</p>
+    <details><summary>Ver respuesta</summary><p>El orden L máximo de la expansión SH. A mayor L, más coeficientes (L+1)² y mayor resolución angular. L=1 (4 coeficientes) tiene poca resolución; L=7 (64 coeficientes) puede representar detalles finos de la HRTF. En práctica, L=4 es suficiente para Ambisonics pero puede perder detalles de pinna notches altas.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← M5</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Espacialización</div>
+    <div class="module-title">HRTFformer — ML para HRTF</div>
+    <div class="module-sub">Transformers para HRTF, personalización, Token Scaling, predicción desde antropometría</div>
+  </div>
+
+  <div class="card">
+    <h3>El problema de la HRTF individual</h3>
+    <p>Medir la HRTF individual requiere una cámara anecoica, micrófonos en el canal auditivo y 1-2 horas de grabación. Los modelos ML aprenden a predecir la HRTF desde medidas antropométricas (ancho de cabeza, altura de oreja, posición del pabellón, etc.) o imágenes 2D de la oreja.</p>
+    <p>HRTFformer usa un Transformer encoder con <strong>Token Scaling</strong>: los tokens de entrada se escalan por el espectro de frecuencia de interés, permitiendo al modelo aprender cuáles medidas son relevantes en cada banda frecuencial.</p>
+    <div class="formula">Token Scaling: z_k = f_k · Embed(anthropometry_k)</div>
+    <ul>
+      <li><strong>CIPIC</strong>: 45 sujetos, 1250 direcciones, 17 medidas antropométricas.</li>
+      <li><strong>LISTEN</strong>: 51 sujetos, IRCAM. <strong>3D3A</strong>: 65 sujetos, Princeton.</li>
+      <li>Error típico: LSD ≈ 6-8 dB. HRTFformer: LSD ≈ 4.2 dB.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Lab 7.1 — Predicción de HRTF con Transformer</h3>
+    <details>
+      <summary>Ver código Python/PyTorch</summary>
+<pre>import torch
+import torch.nn as nn
+
+class HRTFTransformer(nn.Module):
+    def __init__(self, n_anthro=17, d_model=64, n_heads=4,
+                 n_layers=3, n_freqs=128, n_sh=25):
+        super().__init__()
+        self.token_embed = nn.Linear(1, d_model)
+        self.freq_scales = nn.Parameter(torch.ones(n_freqs, n_anthro))
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model, nhead=n_heads,
+            dim_feedforward=256, dropout=0.1, batch_first=True
+        )
+        self.transformer = nn.TransformerEncoder(encoder_layer, n_layers)
+        self.head = nn.Linear(d_model * n_anthro, n_freqs * n_sh)
+        self.n_freqs = n_freqs
+        self.n_sh = n_sh
+
+    def forward(self, x, freq_idx=None):
+        batch_size = x.size(0)
+        if freq_idx is not None:
+            x = x * self.freq_scales[freq_idx]
+        tokens = self.token_embed(x.unsqueeze(-1))
+        z = self.transformer(tokens)
+        z_flat = z.reshape(batch_size, -1)
+        out = self.head(z_flat)
+        return out.view(batch_size, self.n_freqs, self.n_sh)
+
+model = HRTFTransformer()
+print(f"Parámetros: {sum(p.numel() for p in model.parameters()):,}")
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+criterion = nn.MSELoss()
+for epoch in range(5):
+    x = torch.randn(16, 17)
+    y_true = torch.randn(16, 128, 25)
+    y_pred = model(x)
+    loss = criterion(y_pred, y_true)
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    if epoch % 2 == 0:
+        print(f"Epoch {epoch}, Loss: {loss.item():.4f}")</pre>
+    </details>
+    <p><strong>Reto</strong>: Usando el dataset CIPIC, entrenar con 40 sujetos y evaluar en 5 de test. Calcular LSD = √(1/K · Σ (20log10(|H_pred/H_true|))²). Comparar con baseline (media de entrenamiento).</p>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul>
+      <li>EX 7.1 — Implementa el LSD (log-spectral distance) como función de pérdida y compara con MSE.</li>
+      <li>EX 7.2 — Visualiza los coeficientes SH predichos vs reales para un sujeto de test.</li>
+      <li>EX 7.3 — Añade data augmentation: ruido gaussiano en las medidas antropométricas durante entrenamiento.</li>
+      <li>EX 7.4 — Compara predicción de HRTF frontal (0°,0°) vs lateral (90°,0°). ¿Cuál es más difícil de predecir?</li>
+      <li>EX 7.5 — Implementa la reconstrucción de HRIR desde coeficientes SH predichos y auraliza una señal.</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman — Por qué Token Scaling mejora frente a MLP estándar</h4>
+    <p class="quiz-q">¿Por qué el Token Scaling mejora la predicción de HRTF frente a un MLP estándar?</p>
+    <details><summary>Ver respuesta</summary><p>Diferentes medidas antropométricas son relevantes para diferentes frecuencias. El ancho de la cabeza determina principalmente el ITD (frecuencias bajas). Las dimensiones del pabellón auricular crean las pinna notches que informan elevación a frecuencias medias-altas (4-16kHz). Un MLP estándar aplica el mismo peso a todas las medidas para todas las frecuencias, ignorando esta selectividad. El Token Scaling permite que el modelo aprenda f_k: cuánto peso dar a cada medida en función de la frecuencia, capturando la especificidad frecuencial de cada estructura anatómica.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Quiz rápido</h4>
+    <p class="quiz-q">¿Qué métrica estándar se usa para evaluar la calidad de una HRTF predicha vs medida?</p>
+    <details><summary>Ver respuesta</summary><p>LSD — Log-Spectral Distance en dB. Mide la diferencia media cuadrática entre los espectros logarítmicos de la HRTF predicha y la medida. Es perceptivamente relevante porque el oído percibe el espectro en escala logarítmica. Valores típicos: LSD &lt; 6 dB se considera buena predicción; el estado del arte (HRTFformer) alcanza ~4.2 dB.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← M6</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · Middleware</div>
+    <div class="module-title">Wwise &amp; Steam Audio</div>
+    <div class="module-sub">Audio middleware, pipeline de juego, RTPC, spatializer plugin</div>
+  </div>
+
+  <div class="card">
+    <h3>Wwise: audio middleware para juegos</h3>
+    <p>Wwise es el middleware de audio más usado en la industria del videojuego. Abstrae el motor de sonido del motor de juego: los diseñadores de sonido trabajan en Wwise mientras los programadores conectan eventos del juego a comportamientos de audio sin necesitar recompilar el juego.</p>
+    <ul>
+      <li><strong>Events</strong>: acciones atómicas (Play, Stop, SetSwitch) enviadas desde el motor de juego.</li>
+      <li><strong>SoundBanks</strong>: paquetes de audio cargados en memoria. Se actualizan en caliente.</li>
+      <li><strong>RTPC</strong>: parámetros del juego (velocidad, salud, distancia) que controlan propiedades de audio en tiempo real.</li>
+      <li><strong>States</strong>: estados globales del juego (Menu, InGame, Combat) que cambian grupos de configuraciones.</li>
+      <li><strong>Switches</strong>: variantes de un mismo evento (pasos en madera/metal/tierra).</li>
+      <li><strong>Blend Containers</strong>: mezclar variantes basadas en RTPC.</li>
+    </ul>
+    <h3>Steam Audio</h3>
+    <p>Steam Audio es la librería de audio espacial de Valve: ray tracing acústico en tiempo real, HRTF binaural, reflexiones de primer orden en geometría del nivel, y oclusión dinámica. Integrable con Wwise, Unreal y Unity como plugin.</p>
+  </div>
+
+  <div class="card">
+    <h3>Lab 8.1 — Integrar Steam Audio con Wwise (C++)</h3>
+    <details>
+      <summary>Ver código C++</summary>
+<pre>// Steam Audio Wwise plugin — Execute() llamado por render thread
+#include "phonon.h"
+
+class SteamAudioWwiseFX : public AK::IAkMixerPluginContext {
+    IPLContext context;
+    IPLSimulator simulator;
+    IPLBinauralRenderer renderer;
+
+    void Initialize() {
+        IPLContextSettings ctxSettings = {
+            .version = STEAMAUDIO_VERSION,
+            .simdLevel = IPL_SIMDLEVEL_AVX2
+        };
+        iplContextCreate(&ctxSettings, &context);
+        IPLHRTFSettings hrtfSettings = {.type = IPL_HRTFTYPE_DEFAULT};
+        IPLAudioSettings audioSettings = {
+            .samplingRate = 44100,
+            .frameSize = 512
+        };
+        iplHRTFCreate(context, &audioSettings, &hrtfSettings, &renderer);
+    }
+
+    void Execute(AkAudioBuffer* io_pBuffer, AkRamp in_fGain, ...) {
+        float azimuth = GetAzimuthFromGameEngine();
+        float elevation = GetElevationFromGameEngine();
+        IPLVector3 dir = {
+            cos(elevation)*sin(azimuth),
+            sin(elevation),
+            cos(elevation)*cos(azimuth)
+        };
+        iplBinauralEffectApply(renderer, /* input mono, output stereo */);
+    }
+};</pre>
+    </details>
+    <p><strong>Reto</strong>: Sistema de audio de juego completo con 5 fuentes sonoras (ambiente, pasos, UI, música adaptativa, efectos), cada una con RTPC de distancia, switch de material, state para música y oclusión dinámica con Steam Audio.</p>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul>
+      <li>EX 8.1 — Diseña el árbol de eventos Wwise para un RPG: al menos 10 eventos con switches y RTPCs.</li>
+      <li>EX 8.2 — Configura Steam Audio probe volumes para un nivel interior. ¿Cuántos probes son necesarios?</li>
+      <li>EX 8.3 — Implementa audio de ambiente con Random Container: varía 5 variantes de viento.</li>
+      <li>EX 8.4 — Crea un Blend Container para motor de vehículo: mezcla 3 loops (idle/aceleración/max) con RTPC RPM.</li>
+      <li>EX 8.5 — Mide el CPU overhead de Steam Audio raytracing con 10 vs 100 fuentes activas simultáneas.</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman — Por qué se bakea el audio de sala en juegos</h4>
+    <p class="quiz-q">¿Por qué se "bakea" (pre-computa) el audio de sala en juegos en lugar de calcularlo en tiempo real?</p>
+    <details><summary>Ver respuesta</summary><p>El ray tracing acústico completo (ISM + difracción + scattering) requiere cientos de milisegundos para converger. A 60fps, el presupuesto total de CPU del juego es ~16ms. No hay forma de calcular acústica completa en tiempo real con ese presupuesto. El baking pre-computa las RIRs para una cuadrícula de posiciones (probe volumes) durante el desarrollo. En runtime, el motor interpola los valores bakeados de los probes cercanos al listener: baked para la cola tardía, ray tracing real-time solo para las primeras reflexiones críticas.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Quiz rápido</h4>
+    <p class="quiz-q">¿Qué es un RTPC en Wwise y para qué se usa?</p>
+    <details><summary>Ver respuesta</summary><p>Un RTPC (Real-Time Parameter Control) es un parámetro del juego que controla propiedades de audio en tiempo real. Por ejemplo, la distancia al listener controla el volumen y el nivel de reverb de una fuente. El RTPC conecta la lógica del juego (un float que cambia cada frame) con los parámetros de la cadena de audio de Wwise, sin necesidad de recompilar el proyecto.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← M7</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Motores</div>
+    <div class="module-title">Unreal Engine — MetaSound</div>
+    <div class="module-sub">MetaSound, Quartz, audio spatialization, blueprint audio scripting</div>
+  </div>
+
+  <div class="card">
+    <h3>MetaSound: síntesis procedural en Unreal</h3>
+    <p>MetaSound (UE5) es el sistema de síntesis de audio procedural de Unreal Engine. Reemplaza al antiguo Sound Cue con un grafo DSP programable que se ejecuta a nivel de muestra en el hilo de audio.</p>
+    <ul>
+      <li><strong>Sample-accurate timing</strong>: los eventos ocurren en muestras exactas, no en frames.</li>
+      <li><strong>DSP Graph</strong>: nodos de osciladores, filtros, envolventes, delays, convolución.</li>
+      <li><strong>Inputs/Outputs</strong>: pasar parámetros del Blueprint al grafo MetaSound en tiempo real.</li>
+      <li><strong>Quartz</strong>: sincronización musical de UE5, cuantiza acciones a beats/bars con sample accuracy.</li>
+    </ul>
+    <ul>
+      <li><strong>Attenuation settings</strong>: curvas de volumen/reverb vs distancia.</li>
+      <li><strong>Audio Volumes</strong>: zonas del mapa con características acústicas propias.</li>
+      <li><strong>Spatialization plugin</strong>: Steam Audio o Resonance Audio como plugin.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Lab 9.1 — MetaSound: síntesis FM controlada por variables del juego</h3>
+    <details>
+      <summary>Ver código Blueprint C++</summary>
+<pre>// En Blueprint C++ — actualizar parámetro MetaSound cada frame
+void AAudioActor::Tick(float DeltaTime) {
+    float dist = FVector::Distance(GetActorLocation(),
+                                   PlayerPawn->GetActorLocation());
+    float freq = FMath::GetMappedRangeValueClamped(
+        FVector2D(0,50), FVector2D(880, 220), dist);
+    MetaSoundComponent->SetFloatParameter("CarrierFreq", freq);
+}
+// Grafo MetaSound:
+// Input Float "CarrierFreq" → Sine Oscillator (portadora)
+// Input Float "ModIndex" → Sine Oscillator (modulador, freq = 2*CarrierFreq)
+// Modulador × ModIndex × CarrierFreq → Sumador de frecuencia portadora
+// ADSR A=0.01, D=0.1, S=0.8, R=0.2 → Multiply → Output Stereo</pre>
+    </details>
+    <p><strong>Reto</strong>: Sistema de ambiente procedural en UE5 con Quartz a 80BPM. Cada 2 beats, un Blueprint decide aleatoriamente si dispara uno de 4 MetaSounds (grillo, viento, rama, lluvia) con pesos que cambian según Time of Day.</p>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul>
+      <li>EX 9.1 — Crea un Audio Volume en UE5 con reverb preset "Cave". Verifica que cambia al entrar.</li>
+      <li>EX 9.2 — Implementa un sistema de pasos con Quartz: cuantizar el trigger de pasos al grid de 16th notes.</li>
+      <li>EX 9.3 — Crea un MetaSound con granular synthesis básica: buffer de 1s, lectura random con envolvente Hann.</li>
+      <li>EX 9.4 — Configura Steam Audio plugin en UE5 con baking de un nivel interior de 5 habitaciones.</li>
+      <li>EX 9.5 — Mide el audio CPU budget del juego con todos los sistemas activos.</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman — Por qué MetaSound ejecuta a nivel de muestra</h4>
+    <p class="quiz-q">¿Por qué MetaSound ejecuta el grafo a nivel de muestra y no de frame?</p>
+    <details><summary>Ver respuesta</summary><p>El render de gráficos ocurre a 60fps (16ms por frame). Los artefactos de audio a esa resolución temporal serían claramente audibles: el oído detecta discontinuidades de amplitud hasta 1ms. La síntesis de audio requiere control sample-accurate (cada 1/44100s ≈ 0.02ms) para evitar aliasing, clicks y distorsión. Si MetaSound controlara parámetros solo a 60fps, los cambios bruscos de frecuencia o amplitud crearían zipper noise. Ejecutar el grafo a nivel de muestra permite síntesis limpia aunque los parámetros del juego vengan a frecuencias menores.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Quiz rápido</h4>
+    <p class="quiz-q">¿Qué permite el sistema Quartz en Unreal Engine 5?</p>
+    <details><summary>Ver respuesta</summary><p>Quartz permite sincronizar eventos del juego con el grid musical (beats/bars) con sample accuracy. Esto permite que el juego dispare sonidos exactamente en el beat, cuantice acciones al pulso musical y cambie el tempo/time signature en tiempo real con transiciones suaves, creando experiencias donde la acción y la música están perfectamente sincronizadas.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← M8</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Motores</div>
+    <div class="module-title">CRYENGINE — Audio System</div>
+    <div class="module-sub">CryAudio, presets de reverb, Wwise integration, audio triggers</div>
+  </div>
+
+  <div class="card">
+    <h3>CRYENGINE Audio: arquitectura de capas</h3>
+    <p>CRYENGINE usa una arquitectura de audio en capas: una capa de abstracción (CryAudio) que puede conectarse a diferentes middlewares (Wwise, SDL Mixer, PortAudio). Esto permite cambiar el backend de audio sin modificar el código del juego.</p>
+    <ul>
+      <li><strong>Audio Triggers</strong>: equivalentes a los Events de Wwise. Encapsulan acciones (Play/Stop/Pause).</li>
+      <li><strong>Audio Parameters</strong>: equivalentes a RTPCs. Floats que controlan propiedades en tiempo real.</li>
+      <li><strong>Audio Switches</strong>: equivalentes a Switches de Wwise. Estados discretos.</li>
+      <li><strong>Audio Preloads</strong>: gestión de memoria de SoundBanks.</li>
+      <li><strong>Environment</strong>: reverb de sala asignado a zona geográfica del nivel.</li>
+    </ul>
+    <table>
+      <thead><tr><th>Feature</th><th>CRYENGINE</th><th>Unreal Engine 5</th></tr></thead>
+      <tbody>
+        <tr><td>Middleware</td><td>Wwise (recomendado)</td><td>MetaSound nativo + Wwise opcional</td></tr>
+        <tr><td>Síntesis procedural</td><td>Via Wwise Synth</td><td>MetaSound nativo (grafo DSP)</td></tr>
+        <tr><td>Ray tracing acústico</td><td>Steam Audio plugin</td><td>Steam Audio/Resonance nativo</td></tr>
+        <tr><td>Abstracción</td><td>CryAudio (multi-backend)</td><td>Audio Engine (mono-backend)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Lab 10.1 — CryAudio C++: activar trigger y actualizar parámetro</h3>
+    <details>
+      <summary>Ver código C++</summary>
+<pre>#include &lt;CryAudio/IAudioSystem.h&gt;
+
+class CAudioManager {
+    CryAudio::ControlId m_triggerId;
+    CryAudio::ControlId m_distanceParamId;
+public:
+    void Initialize() {
+        m_triggerId = CryAudio::StringToId("Play_Footstep");
+        m_distanceParamId = CryAudio::StringToId("Distance");
+    }
+    void PlayFootstep(IEntity* pEntity) {
+        CryAudio::SExecuteTriggerData triggerData(
+            m_triggerId,
+            CryAudio::EOcclusionType::Adaptive
+        );
+        pEntity->GetComponent&lt;IEntityAudioComponent&gt;()->
+            ExecuteTrigger(triggerData);
+    }
+    void UpdateDistance(IEntity* pEntity, float distance) {
+        pEntity->GetComponent&lt;IEntityAudioComponent&gt;()->
+            SetParameter(m_distanceParamId, distance);
+    }
+    void SetEnvironmentReverb(IEntity* pListener,
+                               const char* envName, float amount) {
+        CryAudio::ControlId envId = CryAudio::StringToId(envName);
+        pListener->GetComponent&lt;IEntityAudioComponent&gt;()->
+            SetEnvironmentAmount(envId, amount);
+    }
+};</pre>
+    </details>
+    <p><strong>Reto</strong>: Sistema que transiciona suavemente entre 3 ambientes acústicos (exterior, cueva, interior) cuando el jugador entra en las zonas. La transición debe ser en crossfade de 1 segundo. Documenta el flujo de datos: Engine → CryAudio API → Wwise → DSP → Speaker.</p>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul>
+      <li>EX 10.1 — Implementa el occlusion type Adaptive vs Ignore en CRYENGINE. ¿Cuándo usar cada uno?</li>
+      <li>EX 10.2 — Compara el overhead de CPU de CryAudio con 50 vs 200 fuentes activas simultáneas.</li>
+      <li>EX 10.3 — Crea un Audio Preload para cargar/descargar SoundBanks según la zona del mapa.</li>
+      <li>EX 10.4 — Diseña el sistema de voces para un FPS: máximo 32 voces simultáneas, prioridad por distancia.</li>
+      <li>EX 10.5 — Integra el profiler de audio de CRYENGINE y reporta: qué fuentes consumen más CPU.</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman — Ventaja de la capa de abstracción CryAudio</h4>
+    <p class="quiz-q">¿Qué ventaja tiene la capa de abstracción CryAudio sobre el acceso directo a Wwise?</p>
+    <details><summary>Ver respuesta</summary><p>La capa de abstracción CryAudio desacopla el código del juego del middleware específico. Si el estudio decide cambiar de Wwise a FMOD, o si la licencia cambia, el código del juego no necesita modificarse: solo se escribe un nuevo adaptador para el nuevo middleware. Facilita prototipar con SDL Mixer antes de integrar el middleware definitivo, y permite cambiar el backend en plataformas específicas. En proyectos grandes, ingenieros de audio pueden trabajar en el proyecto Wwise sin acceso al código fuente del motor.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Quiz rápido</h4>
+    <p class="quiz-q">¿Cuál es el equivalente en CRYENGINE de los "Events" de Wwise?</p>
+    <details><summary>Ver respuesta</summary><p>Audio Triggers. Los Audio Triggers en CRYENGINE encapsulan acciones de audio (Play, Stop, Pause) igual que los Events de Wwise. Se activan mediante CryAudio::SExecuteTriggerData y se asignan a entidades en el motor. Audio Parameters corresponden a RTPCs, y Audio Switches corresponden a Switches.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← M9</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Implementación</div>
+    <div class="module-title">C++ &amp; Rust para DSP Nativo</div>
+    <div class="module-sub">SIMD, procesamiento de audio de baja latencia, audio plugins</div>
+  </div>
+
+  <div class="card">
+    <h3>DSP nativo: cuando Python no es suficiente</h3>
+    <p>Para latencias &lt;5ms y procesamiento de cientos de canales simultáneos, C++ y Rust son necesarios. Las APIs de audio nativas (ASIO, Core Audio, ALSA) permiten buffers de 32-64 samples a 192kHz con latencia mínima.</p>
+    <div class="formula">SSE2: 4 floats × operación | AVX2: 8 floats | AVX-512: 16 floats</div>
+    <p>El crate <code>cpal</code> provee una API de audio multiplataforma en Rust. El crate <code>dasp</code> ofrece primitivas DSP seguras y genéricas. Rust evita los race conditions y use-after-free comunes en C++ para audio multihilo.</p>
+  </div>
+
+  <div class="card">
+    <h3>Lab 11.1 — FIR con SIMD (SSE) y FDN en Rust</h3>
+    <details>
+      <summary>Ver código C++ SIMD</summary>
+<pre>// FIR filter con SIMD (SSE)
+#include &lt;immintrin.h&gt;
+void fir_sse(float* output, const float* input,
+             const float* coefs, int N, int n_samples) {
+    for (int i = 0; i &lt; n_samples; i += 4) {
+        __m128 acc = _mm_setzero_ps();
+        for (int k = 0; k &lt; N; k++) {
+            __m128 x = _mm_loadu_ps(&amp;input[i - k]);
+            __m128 h = _mm_set1_ps(coefs[k]);
+            acc = _mm_fmadd_ps(x, h, acc);  // acc += x * h
+        }
+        _mm_storeu_ps(&amp;output[i], acc);
+    }
+}</pre>
+    </details>
+    <details>
+      <summary>Ver código Rust FDN con cpal</summary>
+<pre>// Cargo.toml: cpal = "0.15"
+use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+
+struct FDN {
+    delays: Vec&lt;Vec&lt;f32&gt;&gt;,
+    ptrs: Vec&lt;usize&gt;,
+    gains: Vec&lt;f32&gt;,
+    hadamard: [[f32; 4]; 4],
+}
+
+impl FDN {
+    fn new(delay_sizes: Vec&lt;usize&gt;, gains: Vec&lt;f32&gt;) -&gt; Self {
+        let n = delay_sizes.len();
+        let delays = delay_sizes.iter().map(|&amp;d| vec![0.0f32; d]).collect();
+        let ptrs = vec![0usize; n];
+        let h = 0.5f32;
+        let hadamard = [
+            [ h,  h,  h,  h],
+            [ h, -h,  h, -h],
+            [ h,  h, -h, -h],
+            [ h, -h, -h,  h],
+        ];
+        FDN { delays, ptrs, gains, hadamard }
+    }
+
+    fn process(&amp;mut self, input: f32) -&gt; f32 {
+        let n = self.delays.len();
+        let s: Vec&lt;f32&gt; = (0..n)
+            .map(|k| self.delays[k][self.ptrs[k]])
+            .collect();
+        let sg: Vec&lt;f32&gt; = s.iter().zip(&amp;self.gains)
+            .map(|(si, gi)| si * gi).collect();
+        let mut mixed = [0.0f32; 4];
+        for i in 0..4 {
+            for j in 0..4 {
+                mixed[i] += self.hadamard[i][j] * sg[j];
+            }
+        }
+        let b = 1.0 / (n as f32).sqrt();
+        for k in 0..n {
+            self.delays[k][self.ptrs[k]] = mixed[k] + b * input;
+            self.ptrs[k] = (self.ptrs[k] + 1) % self.delays[k].len();
+        }
+        s.iter().sum::&lt;f32&gt;() / n as f32
+    }
+}
+
+fn main() {
+    let host = cpal::default_host();
+    let device = host.default_output_device().unwrap();
+    println!("Dispositivo: {}", device.name().unwrap());
+}</pre>
+    </details>
+    <p><strong>Reto</strong>: Plugin VST3 de reverb FDN con JUCE (C++). Tres parámetros: RT60 (0.1–10s), PreDelay (0–100ms), DryWet (0–100%). Usar AudioProcessorValueTreeState para automatización. Compilar y cargar en un DAW.</p>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul>
+      <li>EX 11.1 — Implementa un biquad filter en C++ sin ramas (branch-free) para máxima velocidad.</li>
+      <li>EX 11.2 — Mide el throughput de tu FIR con y sin SIMD para filtros de orden 64, 256, 1024.</li>
+      <li>EX 11.3 — Compila la FDN de Rust a WASM y ejecuta en el navegador con WebAudio.</li>
+      <li>EX 11.4 — Implementa el detector de clipping: si |sample| &gt; 0.99, registrar la posición y aplicar softclip.</li>
+      <li>EX 11.5 — Usa lock-free ring buffer (atomic) para comunicación entre hilo GUI y hilo de audio en C++.</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman — Por qué el hilo de audio nunca debe adquirir un mutex</h4>
+    <p class="quiz-q">¿Por qué el hilo de audio en C++ nunca debe adquirir un mutex?</p>
+    <details><summary>Ver respuesta</summary><p>El hilo de audio opera con una deadline estricta: si el buffer de 64 samples a 44.1kHz no se llena en 1.45ms, hay un glitch audible (xrun). Un mutex puede bloquearse por tiempo indeterminado si otro hilo lo sostiene → el callback no retorna a tiempo → xrun. La solución es usar estructuras lock-free: ring buffers atómicos (SPSC queue) para pasar mensajes de la GUI al hilo de audio, y doble buffering para parámetros. En Rust, el compilador ayuda a verificar la seguridad de estos patrones.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Quiz rápido</h4>
+    <p class="quiz-q">¿Qué ventaja ofrece SIMD AVX2 sobre código escalar para procesamiento de audio?</p>
+    <details><summary>Ver respuesta</summary><p>SIMD AVX2 procesa 8 floats simultáneamente en una sola instrucción (8x throughput teórico). Para operaciones típicas de DSP (FIR, convolución, síntesis) que aplican la misma operación a muchas muestras consecutivas, esto reduce dramáticamente el tiempo de cómputo. Con AVX-512 el factor es 16x. En práctica, el speedup efectivo es menor por overhead de loads/stores, pero típicamente 3-6x sobre código escalar.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← M10</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Implementación</div>
+    <div class="module-title">Csound &amp; Faust</div>
+    <div class="module-sub">Síntesis física, prototipado rápido, compilación a C++ y WASM</div>
+  </div>
+
+  <div class="card">
+    <h3>Csound: el sintetizador de los investigadores</h3>
+    <p>Csound existe desde 1985 y es el lenguaje de referencia para síntesis de audio avanzada en investigación. Su arquitectura de orchestra/score separa la definición de instrumentos de la secuenciación.</p>
+    <ul>
+      <li><code>freeverb</code>: reverb Schroeder-Moorer de alta calidad.</li>
+      <li><code>pconvolve</code>: convolución particionada (UPOLS) de RIR. Permite auralización en tiempo real.</li>
+      <li><code>hrtfstat</code> / <code>hrtfmove</code>: espacialización HRTF estática/dinámica con HRTFs MIT Kemar.</li>
+      <li><code>vbap</code>: Vector Base Amplitude Panning para altavoces múltiples.</li>
+    </ul>
+    <h3>Faust: DSP como función matemática</h3>
+    <p>Faust (Functional Audio Stream) describe el procesamiento de audio como funciones matemáticas puras. El compilador genera C++, WASM, o código para plataformas específicas desde la misma descripción funcional.</p>
+    <div class="formula">Faust: process = _ &gt;: reverb.process : _ , _;</div>
+  </div>
+
+  <div class="card">
+    <h3>Lab 12.1 — Auralización en Csound con pconvolve y hrtfmove</h3>
+    <details>
+      <summary>Ver código Csound</summary>
+<pre>; Csound: auralización con convolución y HRTF dinámica
+&lt;CsoundSynthesizer&gt;
+&lt;CsOptions&gt;
+-odac -B512 -b128 -d
+&lt;/CsOptions&gt;
+&lt;CsInstruments&gt;
+sr = 44100
+ksmps = 128
+nchnls = 2
+0dbfs = 1.0
+
+instr 1
+  ifile = p4
+  irir  = p5
+  aDry diskin2 ifile, 1, 0, 1
+  aWet pconvolve aDry, irir, 512
+  kDryWet = 0.7
+  aMix = aDry * (1 - kDryWet) + aWet * kDryWet
+  outs aMix, aMix
+endin
+
+instr 2
+  ifile = p4
+  aDry diskin2 ifile, 1, 0, 1
+  kAzimuth linseg 0, p3*0.5, 180, p3*0.5, 360
+  kElevation = 0
+  aL, aR hrtfmove aDry, kAzimuth, kElevation, \
+         "hrtf-44100-left.dat", "hrtf-44100-right.dat"
+  outs aL, aR
+endin
+&lt;/CsInstruments&gt;
+
+&lt;CsScore&gt;
+i 1 0 30 "dry_speech.wav" "room_rir_concert.wav"
+i 2 31 10 "dry_music.wav"
+e
+&lt;/CsScore&gt;
+&lt;/CsoundSynthesizer&gt;</pre>
+    </details>
+    <details>
+      <summary>Ver código Faust FDN</summary>
+<pre>// Faust: FDN de 4 canales con matriz Hadamard
+import("stdfaust.lib");
+
+rt60 = hslider("RT60 [unit:s]", 2.0, 0.1, 10.0, 0.01);
+wet  = hslider("Wet", 0.5, 0.0, 1.0, 0.01);
+
+d1 = 1051; d2 = 1307; d3 = 1481; d4 = 1699;
+
+g(d) = pow(10, -3.0 * d / (ma.SR * rt60));
+
+hadamard4(a,b,c,d) = (a+b+c+d)/2, (a-b+c-d)/2,
+                      (a+b-c-d)/2, (a-b-c+d)/2;
+
+delayline(n, gain) = _ : @(n) : *(gain);
+
+fdn = _,_,_,_ &lt;: (
+    route(4,4, 1,1, 2,2, 3,3, 4,4) :
+    hadamard4 :
+    delayline(d1, g(d1)),
+    delayline(d2, g(d2)),
+    delayline(d3, g(d3)),
+    delayline(d4, g(d4))
+) ~ (hadamard4);
+
+process = _ &lt;: (
+    _ * (1-wet),
+    _ : fdn : +,+  : *(wet)
+) : +, +;</pre>
+    </details>
+    <p><strong>Reto</strong>: Compilar FDN Faust a WebAssembly con faust.grame.fr. Integrar con WebAudio en HTML: sliders para RT60 y Wet que se aplican en tiempo real. El audio debe procesar micrófono o archivo de audio.</p>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul>
+      <li>EX 12.1 — Implementa freeverb en Csound y ajusta room_size y damping para distintos espacios.</li>
+      <li>EX 12.2 — Usa hrtfstat en Csound para posicionar 4 fuentes en los 4 cuadrantes del espacio horizontal.</li>
+      <li>EX 12.3 — Compila el FDN de Faust a C++ standalone y mide el CPU usage en un loop de 1 minuto.</li>
+      <li>EX 12.4 — Implementa VBAP en Csound para un sistema 5.1 con un arco de movimiento.</li>
+      <li>EX 12.5 — Usa pconvolve en Csound con una RIR de pyroomacoustics: compara con ISM directo.</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman — Por qué Faust compila mejor que C++ manual a veces</h4>
+    <p class="quiz-q">¿Por qué Faust compila a C++ optimizado mejor que código C++ escrito manualmente a veces?</p>
+    <details><summary>Ver respuesta</summary><p>Faust tiene un compilador específico de dominio que conoce la semántica del DSP de audio: sabe que ciertas operaciones son commutativas en el dominio de señal, que las constantes en la tasa de audio pueden pre-calcularse, y puede aplicar transformaciones algebraicas que clang/gcc no puede hacer por falta de conocimiento de dominio. Puede desenrollar bucles óptimamente para SIMD, reorganizar el grafo de señal para minimizar dependencias de datos, y eliminar operaciones identidad. Además, el grafo Faust es puro (sin efectos secundarios), lo que permite análisis global imposible en C++.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Quiz rápido</h4>
+    <p class="quiz-q">¿Qué ventaja tiene el opcode pconvolve de Csound sobre una convolución directa?</p>
+    <details><summary>Ver respuesta</summary><p>Realiza la convolución en tiempo real con baja latencia mediante UPOLS particionado. Divide la RIR en segmentos y los procesa con FFTs de tamaño uniforme, permitiendo auralización en tiempo real de RIRs largas (varios segundos) sin el costo computacional O(N²) de la convolución directa. El tamaño de partición (512 típicamente) controla el balance entre latencia y CPU.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← M11</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Validación</div>
+    <div class="module-title">Validación — liveRAZR &amp; Spaces</div>
+    <div class="module-sub">Medición de RIRs reales, comparación con simulación, métricas ISO 3382</div>
+  </div>
+
+  <div class="card">
+    <h3>ISO 3382: métricas estándar de acústica de sala</h3>
+    <table>
+      <thead><tr><th>Métrica</th><th>Definición</th><th>Valor óptimo (conciertos)</th></tr></thead>
+      <tbody>
+        <tr><td>RT60</td><td>Tiempo para caída de 60dB</td><td>1.8–2.2s (música sinfónica)</td></tr>
+        <tr><td>EDT</td><td>Early Decay Time (caída de 10dB × 6)</td><td>≈ RT60 (difusión ideal)</td></tr>
+        <tr><td>C80</td><td>Clarity: E(0-80ms)/E(80ms-∞) dB</td><td>-2 a +2 dB</td></tr>
+        <tr><td>D50</td><td>Definition: E(0-50ms)/E_total</td><td>&gt;0.5 para habla</td></tr>
+        <tr><td>Ts</td><td>Centre time: centroide temporal de la RIR</td><td>&lt;100ms para conciertos</td></tr>
+        <tr><td>LF</td><td>Lateral energy fraction: envolvente</td><td>0.1–0.35</td></tr>
+        <tr><td>IACC</td><td>Inter-aural cross-correlation</td><td>&lt;0.5 (amplio, envolvente)</td></tr>
+      </tbody>
+    </table>
+    <p>El método <strong>liveRAZR</strong> compara la RIR simulada (ISM o FDN) con la RIR medida en la sala real. Las métricas ISO 3382 calculadas de ambas deben coincidir dentro de tolerancias especificadas. Si difieren: la geometría del modelo o los coeficientes de absorción son incorrectos.</p>
+  </div>
+
+  <div class="card">
+    <h3>Lab 13.1 — Calcular métricas ISO 3382 de una RIR</h3>
+    <details>
+      <summary>Ver código Python</summary>
+<pre>import numpy as np
+
+def schroeder_curve(rir, sr):
+    energy = rir ** 2
+    cum_energy = np.cumsum(energy[::-1])[::-1]
+    cum_norm = cum_energy / (cum_energy[0] + 1e-12)
+    return 10 * np.log10(cum_norm + 1e-12)
+
+def rt60(rir, sr, method='edt'):
+    curve = schroeder_curve(rir, sr)
+    t = np.arange(len(curve)) / sr
+    if method == 'edt':
+        i1 = np.argmin(np.abs(curve - 0))
+        i2 = np.argmin(np.abs(curve - (-10)))
+    elif method == 'T20':
+        i1 = np.argmin(np.abs(curve - (-5)))
+        i2 = np.argmin(np.abs(curve - (-25)))
+    slope = (curve[i2] - curve[i1]) / (t[i2] - t[i1])
+    return -60 / slope
+
+def clarity_c80(rir, sr):
+    n80 = int(0.080 * sr)
+    e_early = np.sum(rir[:n80] ** 2)
+    e_late  = np.sum(rir[n80:] ** 2) + 1e-12
+    return 10 * np.log10(e_early / e_late)
+
+def definition_d50(rir, sr):
+    n50 = int(0.050 * sr)
+    return np.sum(rir[:n50]**2) / (np.sum(rir**2) + 1e-12)
+
+def centre_time_ts(rir, sr):
+    t = np.arange(len(rir)) / sr
+    e = rir ** 2
+    return np.sum(t * e) / (np.sum(e) + 1e-12)
+
+def iso3382_metrics(rir, sr):
+    return {
+        'RT60_EDT': rt60(rir, sr, 'edt'),
+        'RT60_T20': rt60(rir, sr, 'T20'),
+        'C80_dB':   clarity_c80(rir, sr),
+        'D50':      definition_d50(rir, sr),
+        'Ts_ms':    centre_time_ts(rir, sr) * 1000
+    }
+
+sr = 44100
+t = np.linspace(0, 2, 2*sr)
+rir_synth = np.exp(-3*t) * np.random.randn(len(t))
+rir_synth[0] = 1.0
+metrics = iso3382_metrics(rir_synth, sr)
+for k, v in metrics.items():
+    print(f"  {k}: {v:.3f}")</pre>
+    </details>
+    <p><strong>Reto</strong>: Mide la RIR de una sala con altavoz y micrófono usando sweep sinusoidal (Audacity o Room EQ Wizard). Genera la RIR simulada con pyroomacoustics. Ajusta iterativamente los coeficientes de absorción hasta minimizar la diferencia en RT60 y C80.</p>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul>
+      <li>EX 13.1 — Implementa el método de sweep exponencial (ESS) para medir RIRs con tu equipo.</li>
+      <li>EX 13.2 — Calcula C80 y D50 en 5 bandas de octava (125Hz–4kHz) para una RIR medida.</li>
+      <li>EX 13.3 — Compara RT60 de Sabine vs RT60 medido para tu sala. ¿Cuánto difieren?</li>
+      <li>EX 13.4 — Varía los coeficientes de absorción en la simulación hasta que RT60_sim ≈ RT60_medido ±5%.</li>
+      <li>EX 13.5 — Implementa el IACC (Inter-Aural Cross-Correlation) desde dos RIRs binaurales (L y R).</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Feynman — Por qué EDT suele diferir del RT60 en salas reales</h4>
+    <p class="quiz-q">¿Por qué el EDT suele ser diferente del RT60 en salas reales?</p>
+    <details><summary>Ver respuesta</summary><p>El RT60 se extrapola de la pendiente en -5 a -25/-35dB, correspondiente a la cola tardía donde el campo es estadísticamente difuso. El EDT se extrapola del inicio de la curva (0 a -10dB), dominado por las primeras reflexiones y fuertemente dependiente de la posición fuente-receptor. En una sala ideal perfectamente difusa, EDT = RT60. En salas reales, si el oyente está cerca de la fuente, el campo local no es difuso y EDT puede diferir significativamente de RT60.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Quiz rápido</h4>
+    <p class="quiz-q">¿Qué indica un valor de C80 = -5 dB en una sala de conciertos?</p>
+    <details><summary>Ver respuesta</summary><p>Que el sonido tardío (&gt;80ms) domina: la sala es muy reverberante y puede sonar "empastada". C80 negativo significa que hay más energía tardía que temprana. Para música de cámara y ópera, se prefiere C80 positivo (+2 a +4 dB) para claridad. Para música sinfónica romántica, C80 levemente negativo (-2 a 0 dB) da la sensación de envolvente deseada.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← M12</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto Final — Auralizador Completo</div>
+    <div class="module-sub">Pipeline de acústica virtual completo con evaluación Feynman</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica del Proyecto HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>Simulación ISM/FDN</td><td>pyroomacoustics ISM orden ≥6 + FDN 8 canales para cola tardía, validados con ISO 3382</td><td>25</td></tr>
+        <tr><td>Espacialización HRTF</td><td>Convolución HRTF real (CIPIC/SOFA) para fuente directa y primeras reflexiones</td><td>20</td></tr>
+        <tr><td>Oclusión dinámica</td><td>Modelo de oclusión con filtro de material para al menos un obstáculo móvil</td><td>20</td></tr>
+        <tr><td>Validación ISO 3382</td><td>Comparar métricas (RT60, EDT, C80, D50) con medición real o datos publicados</td><td>20</td></tr>
+        <tr><td>Integración en motor</td><td>Pipeline integrado en Unreal/Unity/Wwise o plugin JUCE/WASM funcional</td><td>15</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman — Explica sin notas</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Schroeder y el límite de ray tracing</h4>
+      <p class="quiz-q">¿Por qué ray tracing no funciona por debajo de la frecuencia de Schroeder y qué método alternativo es exacto allí?</p>
+      <details><summary>Ver respuesta</summary><p>Ray tracing asume que el sonido viaja como partícula con longitud de onda despreciable respecto a la geometría. Por debajo de fs, la longitud de onda es comparable o mayor que las dimensiones de la sala: el sonido se difracta por cualquier borde, los modos propios crean interferencias complejas que no se pueden aproximar con rayos. Solo solvers wave-based (FDTD — Finite Difference Time Domain, o BEM — Boundary Element Method) son exactos allí. En práctica, se usa ISM para reflexiones tempranas y ray tracing estadístico para la cola tardía por encima de fs.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · FDN y la matriz ortogonal</h4>
+      <p class="quiz-q">¿Qué pasa con el FDN si la matriz de mezcla no es ortogonal? Da un ejemplo de matriz válida e inválida.</p>
+      <details><summary>Ver respuesta</summary><p>Si |det(A)| &lt; 1: la energía decrece en cada ciclo de mezcla además de por las ganancias g_k → RT60 menor al diseñado. Si |det(A)| &gt; 1: la energía crece en cada ciclo → inestabilidad → ruido explosivo. Solo |det(A)| = 1 (ortogonal) preserva la energía exactamente. Ejemplo válido: la matriz de Hadamard normalizada (det = ±1). Ejemplo inválido: una matriz identidad escalada (I × 1.1) tiene det = 1.1⁴ &gt; 1 → inestabilidad.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · HRTF y personalización</h4>
+      <p class="quiz-q">¿Por qué una HRTF genérica causa front-back confusion y cómo lo resuelve HRTFformer? ¿Cuántos coeficientes SH se necesitan para L=4?</p>
+      <details><summary>Ver respuesta</summary><p>Las pinna notches (filtros espectrales de la oreja) que distinguen adelante/atrás son únicas para cada persona. Una HRTF genérica tiene notches en posiciones frecuenciales distintas a las tuyas: el cerebro no las interpreta como señales de localización válidas. HRTFformer predice tus pinna notches específicas desde medidas de tu oreja (17 medidas antropométricas CIPIC), produciendo una HRTF personalizada cuyas notches coinciden con tu morfología. Para L=4: (L+1)² = (4+1)² = 25 coeficientes SH.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · NUPOLS y latencia mínima</h4>
+      <p class="quiz-q">¿Por qué NUPOLS puede tener menor latencia que UPOLS para la misma RIR? Calcula la latencia de NUPOLS con L₀=64 a 44.1kHz.</p>
+      <details><summary>Ver respuesta</summary><p>UPOLS procesa todos los bloques con el mismo tamaño L → latencia = L. Para una RIR larga, si L es pequeño para baja latencia, hay muchas FFTs pequeñas → alta CPU. Con L grande para reducir CPU, la latencia aumenta. NUPOLS usa L₀ pequeño solo para el primer bloque (sonido directo + early reflections, perceptualmente críticos) y bloques mayores para la cola tardía procesados en hilos separados. La latencia total es L₀/sr = 64/44100 ≈ 1.45 ms (mínima), independientemente de la longitud total de la RIR.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · Validación ISO 3382</h4>
+      <p class="quiz-q">¿Por qué C80 es la métrica más importante para validar la simulación de una sala de cámara? ¿Qué método usa alta SNR con equipo de consumo para medir RIRs?</p>
+      <details><summary>Ver respuesta</summary><p>C80 mide el balance entre energía temprana (primeras reflexiones &lt;80ms, que aportan claridad e inteligibilidad) y energía tardía (reverberación). Para música de cámara, la articulación de cada nota debe ser audible: C80 determina si la sala permite distinguir staccato de legato. RT60 solo mide cuánto tarda en decaer la energía total pero no cómo se distribuye temporalmente. Un simulador que reproduce RT60 correctamente pero falla en C80 no reproduce la acústica perceptiva real. Para medir RIRs con alta SNR con equipo de consumo: sweep sinusoidal exponencial (ESS) deconvolucionado — el sweep cubre todo el espectro audible y la deconvolución con el sweep inverso extrae la RIR con alta SNR incluso en presencia de ruido de fondo.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← M13</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_acustica_virtual_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Briefing'},
+    {id:'m1',  label:'M1 · Frecuencia Schroeder'},
+    {id:'m2',  label:'M2 · ISM — Imágenes'},
+    {id:'m3',  label:'M3 · FDN Reverberación'},
+    {id:'m4',  label:'M4 · NUPOLS Convolución'},
+    {id:'m5',  label:'M5 · Oclusión & Difracción'},
+    {id:'m6',  label:'M6 · HRTF Armónicos Esféricos'},
+    {id:'m7',  label:'M7 · HRTFformer ML'},
+    {id:'m8',  label:'M8 · Wwise & Steam Audio'},
+    {id:'m9',  label:'M9 · Unreal Engine'},
+    {id:'m10', label:'M10 · CRYENGINE'},
+    {id:'m11', label:'M11 · C++ & Rust DSP'},
+    {id:'m12', label:'M12 · Csound & Faust'},
+    {id:'m13', label:'M13 · Validación — Spaces'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

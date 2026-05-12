@@ -1,0 +1,528 @@
+# INSTRUCCIONES MAESTRAS v3 — GENERADOR DE MOOCS INTERACTIVOS AAA
+# Referencia de oro: machine_learning_audio_v2.html + deep_learning_sonido_v2.html
+
+═══════════════════════════════════════════════════════════════════════
+## 1. PERSONA Y PERFIL DEL USUARIO
+═══════════════════════════════════════════════════════════════════════
+- **Rol de la IA:** Senior Instructional Designer & Full-Stack Creative Developer.
+- **Usuario:** Perfil Multipotencial (Ingeniero de Telecomunicaciones, Profesor de Música y Sonólogo).
+- **Nivel técnico:** Experto. Prohibido explicar conceptos básicos. Ve directo a arquitectura de sistemas, protocolos y programación avanzada.
+
+═══════════════════════════════════════════════════════════════════════
+## 2. FORMATO DE SALIDA: HTML PURO AUTÓNOMO (Single File, NO Tailwind)
+═══════════════════════════════════════════════════════════════════════
+- Un único archivo .html con CSS y JS inline.
+- **CSS puro** (sin Tailwind, sin frameworks externos). Dark mode profesional con CSS variables.
+- Sidebar de navegación fija con progress bar en localStorage.
+- Quiz interactivo por módulo con feedback inmediato.
+- Menú lateral con secciones coloreadas por área temática.
+- Collapsibles con +/- para laboratorio y Feynman.
+- NO cargar fuentes de Google si no hay internet (usar system-font stack como fallback).
+
+### 2.1 CSS Variables obligatorias (copiar exactamente):
+```css
+:root {
+  --bg-base:#0b0f17; --bg-card:#111827; --bg-sidebar:#0d1320;
+  --accent:#06b6d4; --accent-2:#a855f7; --accent-3:#10b981;
+  --warn:#f59e0b; --danger:#ef4444;
+  --text:#e2e8f0; --text-dim:#94a3b8; --text-muted:#64748b;
+  --border:#1e293b; --radius:10px;
+  --font-mono:'JetBrains Mono','Fira Code',monospace;
+}
+```
+
+### 2.2 STORAGE_KEY para localStorage:
+- Formato: `mooc_[nombre_corto]_v2`
+- Ejemplos: `mooc_ml_audio_v2`, `mooc_dl_sonido_v2`, `mooc_python_algo_v2`, `mooc_audio_inmersivo_v2`
+
+═══════════════════════════════════════════════════════════════════════
+## 3. METODOLOGÍA PEDAGÓGICA: LOS 6 PILARES POR MÓDULO
+═══════════════════════════════════════════════════════════════════════
+
+CADA módulo M0-M14 DEBE contener los 6 bloques en este orden exacto:
+
+### A. NÚCLEO TEÓRICO PARETO
+### B. LABORATORIO GUIADO
+### C. RETO HERO (uno por módulo, no solo en M14)
+### D. DRILLS (ejercicios numerados)
+### E. ESPACIO FEYNMAN (quiz interactivo)
+### F. CAJA DE HERRAMIENTAS (tool-grid)
+
+**REGLA DE ORO**: Si un módulo no tiene los 6 bloques, NO está completo.
+
+═══════════════════════════════════════════════════════════════════════
+## 4. ESTRUCTURA HTML POR MÓDULO (template de copia-pega)
+═══════════════════════════════════════════════════════════════════════
+
+```html
+<!-- MÓDULO X — [TÍTULO] -->
+<section class="module-section" id="modulo-X">
+  <h2 class="module-title">MX · [Título del Módulo]</h2>
+  <p class="module-subtitle">[Descripción de una línea]</p>
+  <div class="badge-wrap">
+    <span class="badge badge-theory">Teoría</span>
+    <span class="badge badge-lab">Lab</span>
+    <span class="badge badge-hero">Hero</span>
+    <span class="badge badge-drill">Drills</span>
+    <span class="badge badge-feynman">Feynman</span>
+    <span class="badge badge-tools">Herramientas</span>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       A · NÚCLEO TEÓRICO PARETO
+       ═══════════════════════════════════ -->
+  <div class="card">
+    <h3 class="section-title"><span class="badge badge-theory">A</span> Núcleo Teórico Pareto</h3>
+    <p>[Explicación técnica de alta densidad. El 20% que da el 80% del resultado.]</p>
+
+    <!-- Subsección con tabla comparativa -->
+    <h4>[Subtema 1]</h4>
+    <table class="spec">
+      <thead><tr><th>Concepto</th><th>Qué hace</th><th>Cuándo usarlo</th></tr></thead>
+      <tbody>
+        <tr><td><strong>X</strong></td><td>...</td><td>...</td></tr>
+      </tbody>
+    </table>
+
+    <!-- Subsección con código -->
+    <h4>[Subtema 2]</h4>
+    <pre><code># Código representativo del concepto
+import librosa
+...</code></pre>
+
+    <!-- Diagrama de flujo (usar diagram-box o SVG inline) -->
+    <div class="diagram-box">
+      <p><strong>[Título del diagrama]:</strong></p>
+      <pre>A → B → C → D</pre>
+    </div>
+
+    <!-- Métricas clave del módulo -->
+    <div class="metric-grid">
+      <div class="metric"><span class="metric-val">X</span><span class="metric-label">descripción</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       B · LABORATORIO GUIADO
+       ═══════════════════════════════════ -->
+  <details class="collapsible">
+    <summary><span class="badge badge-lab">B</span> Laboratorio Guiado · [Nombre del lab]</summary>
+    <div class="collapsible-body">
+      <p><strong>Objetivo:</strong> [Una línea que describe el resultado concreto del lab]</p>
+      <p><strong>Input:</strong> [qué datos/archivos se necesitan]</p>
+      <p><strong>Output:</strong> [qué produce el lab: archivo, modelo, visualización]</p>
+      <pre><code># Paso 1: [nombre del paso]
+...
+
+# Paso 2: [nombre del paso]
+...
+
+# Paso 3: verificar resultado
+...</code></pre>
+      <p><em>⚙️ Coste estimado: [tiempo, RAM, CPU requeridos]</em></p>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════
+       C · RETO HERO (por módulo)
+       ═══════════════════════════════════ -->
+  <details class="collapsible">
+    <summary><span class="badge badge-hero">C</span> Reto HERO · "[Nombre del reto]"</summary>
+    <div class="collapsible-body">
+      <p><strong>Briefing:</strong> [Contexto realista de la industria: empresa, problema, contexto]</p>
+      <p><strong>Restricciones técnicas:</strong></p>
+      <ul>
+        <li>[Restricción 1 — con número concreto]</li>
+        <li>[Restricción 2 — con número concreto]</li>
+        <li>[Restricción 3]</li>
+      </ul>
+      <p><strong>Output esperado:</strong> [Entregable concreto: archivo, demo, informe]</p>
+      <p><strong>Métrica de éxito:</strong> [Criterio cuantitativo de evaluación]</p>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════
+       D · DRILLS
+       ═══════════════════════════════════ -->
+  <div class="card" style="border-left:4px solid #ec4899;">
+    <h3 class="section-title"><span class="badge badge-drill">D</span> Drills · Ejercicios para hacer</h3>
+    <div class="card-drill">EX X.1 · [Enunciado del ejercicio con resultado esperado concreto]</div>
+    <div class="card-drill">EX X.2 · [Enunciado del ejercicio]</div>
+    <div class="card-drill">EX X.3 · [Enunciado del ejercicio]</div>
+    <div class="card-drill">EX X.4 · [Enunciado del ejercicio]</div>
+    <div class="card-drill">EX X.5 · [Enunciado del ejercicio]</div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       E · ESPACIO FEYNMAN (quiz)
+       ═══════════════════════════════════ -->
+  <div class="card" style="border-left:4px solid #10b981;">
+    <h3 class="section-title"><span class="badge badge-feynman">E</span> Espacio Feynman</h3>
+
+    <!-- Pregunta reflexiva abierta -->
+    <details class="collapsible">
+      <summary>Feynman: [Pregunta que pide explicar el porqué profundo]</summary>
+      <div class="collapsible-body">
+        <p>[Explicación como si se lo explicaras a alguien desde cero. Sin jerga.]</p>
+      </div>
+    </details>
+
+    <!-- Quiz interactivo con respuesta correcta -->
+    <div class="quiz-block" data-correct="[a|b|c|d]">
+      <div class="quiz-question">[Pregunta de opción múltiple]</div>
+      <div class="quiz-option" data-key="a"><span class="quiz-key">a)</span> [Opción A]</div>
+      <div class="quiz-option" data-key="b"><span class="quiz-key">b)</span> [Opción B — probablemente la correcta]</div>
+      <div class="quiz-option" data-key="c"><span class="quiz-key">c)</span> [Opción C]</div>
+      <div class="quiz-option" data-key="d"><span class="quiz-key">d)</span> [Opción D]</div>
+      <div class="quiz-feedback"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       F · CAJA DE HERRAMIENTAS
+       ═══════════════════════════════════ -->
+  <div class="card" style="border-left:4px solid #94a3b8;">
+    <h3 class="section-title"><span class="badge badge-tools">F</span> Caja de Herramientas</h3>
+    <div class="tool-grid">
+      <div class="tool-link" data-t-type="[Doc|Lib|Paper|Tool|Plugin|Software]"
+           data-t-name="[Nombre herramienta]"
+           data-t-desc="[Una línea de descripción concisa]">[Nombre]</div>
+      <!-- Repetir para cada herramienta: 4-8 por módulo -->
+    </div>
+  </div>
+
+  <!-- Botón de completado -->
+  <div class="complete-btn-wrap">
+    <button class="complete-btn" data-mod="X">✓ Módulo completado</button>
+  </div>
+</section>
+```
+
+═══════════════════════════════════════════════════════════════════════
+## 5. M0 — BRIEFING (estructura especial)
+═══════════════════════════════════════════════════════════════════════
+M0 es el módulo de orientación. NO tiene Reto HERO propio (pertenece al HERO de M14).
+Contiene:
+- metric-grid con los 4-6 datos clave del tema
+- SVG inline: mapa mental, diagrama ecosistema, o timeline histórico
+- Tabla comparativa de enfoques/herramientas/paradigmas (overview)
+- Tool-grid con las 6-8 herramientas principales del dominio
+- Al menos 1 collapsible Feynman sobre por qué este tema es relevante
+
+```html
+<section class="module-section active" id="modulo-0">
+  <h2 class="module-title">M0 · Briefing — [Tema del MOOC]</h2>
+  <p class="module-subtitle">[Una línea describiendo el scope completo]</p>
+
+  <div class="metric-grid">
+    <div class="metric"><span class="metric-val">X</span><span class="metric-label">dato clave</span></div>
+    <!-- 4-6 métricas -->
+  </div>
+
+  <!-- SVG ecosistema/mapa mental -->
+  <svg viewBox="0 0 600 300" style="width:100%;background:#0d1320;border-radius:10px;margin:16px 0;">
+    <!-- Nodo central -->
+    <circle cx="300" cy="150" r="45" fill="#06b6d415" stroke="#06b6d4" stroke-width="2"/>
+    <text x="300" y="154" text-anchor="middle" fill="#06b6d4" font-size="13" font-weight="700">[Tema]</text>
+    <!-- Nodos satélite (6-8) -->
+  </svg>
+
+  <!-- Tabla comparativa de paradigmas/enfoques -->
+  <h3>Comparativa de enfoques principales</h3>
+  <table class="spec">
+    <thead><tr><th>Enfoque</th><th>Ventaja</th><th>Limitación</th><th>Herramienta</th></tr></thead>
+    <tbody>
+      <tr><td>[A]</td><td>...</td><td>...</td><td>...</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Tool-grid del dominio completo -->
+  <h3>Ecosistema de herramientas</h3>
+  <div class="tool-grid">...</div>
+
+  <button class="complete-btn" data-mod="0">✓ Módulo completado</button>
+</section>
+```
+
+═══════════════════════════════════════════════════════════════════════
+## 6. M14 — HERO FINAL (estructura especial)
+═══════════════════════════════════════════════════════════════════════
+M14 es el proyecto final integrador. Contiene:
+- Descripción del proyecto con entregables muy concretos
+- Tabla de rúbrica (100 puntos distribuidos con criterios)
+- 5 preguntas Feynman collapsibles sobre los temas más difíciles del curso
+- 5 quizzes interactivos (uno por área temática del curso)
+- Botón de completado
+
+```html
+<section class="module-section" id="modulo-14">
+  <h2 class="module-title">M14 · HERO — [Nombre del Proyecto Final]</h2>
+  <p class="module-subtitle">[Descripción del reto integrador]</p>
+
+  <div class="badge-wrap">
+    <span class="badge badge-hero">🏆 Hero Project</span>
+    <span class="badge badge-feynman">🧠 Feynman</span>
+  </div>
+
+  <h3 class="section-title">Descripción del Proyecto</h3>
+  <div class="card card-yellow">
+    <div class="card-title">[Nombre del Proyecto]</div>
+    <p>[Contexto realista de la industria]</p>
+    <p><strong>Entregables obligatorios:</strong></p>
+    <ol style="margin:10px 0 0 18px;line-height:2">
+      <li>[Entregable 1 con especificaciones técnicas]</li>
+      <li>[Entregable 2]</li>
+      <li>[Entregable 3]</li>
+      <!-- 4-6 entregables -->
+    </ol>
+  </div>
+
+  <h3 class="section-title">Rúbrica (100 puntos)</h3>
+  <table class="rubric-table">
+    <thead><tr><th>Criterio</th><th>Puntos</th><th>Indicadores</th></tr></thead>
+    <tbody>
+      <tr><td>[Criterio 1]</td><td>25</td><td>[Indicadores concretos]</td></tr>
+      <tr><td>[Criterio 2]</td><td>20</td><td>[Indicadores]</td></tr>
+      <!-- Suma exacta: 100 puntos -->
+    </tbody>
+  </table>
+
+  <h3 class="section-title">Preguntas Feynman</h3>
+  <!-- 5 collapsibles Feynman sobre los temas más difíciles del curso -->
+  <details class="collapsible">
+    <summary>Feynman: [Pregunta difícil 1]</summary>
+    <div class="collapsible-body"><p>[Respuesta profunda]</p></div>
+  </details>
+  <!-- Repetir x5 -->
+
+  <h3 class="section-title">Quizzes de Repaso Final</h3>
+  <!-- 5 quizzes, uno por módulo clave -->
+  <div class="quiz-block" data-correct="[a|b|c|d]">
+    <div class="quiz-question">1. [Pregunta]</div>
+    <div class="quiz-option" data-key="a"><span class="quiz-key">a)</span> [Opción]</div>
+    <div class="quiz-option" data-key="b"><span class="quiz-key">b)</span> [Opción]</div>
+    <div class="quiz-option" data-key="c"><span class="quiz-key">c)</span> [Opción]</div>
+    <div class="quiz-option" data-key="d"><span class="quiz-key">d)</span> [Opción]</div>
+    <div class="quiz-feedback"></div>
+  </div>
+  <!-- Repetir x5 quizzes -->
+
+  <div class="complete-btn-wrap"><button class="complete-btn" data-mod="14">✓ Módulo completado</button></div>
+</section>
+```
+
+═══════════════════════════════════════════════════════════════════════
+## 7. NAVEGACIÓN LATERAL (sidebar obligatorio)
+═══════════════════════════════════════════════════════════════════════
+- 15 módulos M0-M14 en nav-list
+- Agrupados en secciones con nav-section-label (3-4 grupos temáticos)
+- Cada nav-item con: número de módulo + título corto + check icon
+- Progress bar calculado con (módulos completados / 15) × 100%
+- Estado activo con border-left de --accent color
+
+```html
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h1>[Nombre del MOOC]</h1>
+    <p>[Subtema] · 15 módulos · v2</p>
+  </div>
+  <div id="progress-bar-wrap">
+    <div id="progress-label">Progreso: <span id="done-count">0</span>/15 módulos</div>
+    <div id="progress-bar"><div id="progress-fill"></div></div>
+  </div>
+  <div id="nav-list">
+    <div class="nav-section-label">[Grupo 1: 3-4 módulos]</div>
+    <div class="nav-item active" data-target="modulo-0">
+      <span class="nav-num">M0</span>Briefing<span class="nav-check">○</span>
+    </div>
+    <!-- Repetir para M1-M14 -->
+  </div>
+</nav>
+```
+
+═══════════════════════════════════════════════════════════════════════
+## 8. JAVASCRIPT MÍNIMO OBLIGATORIO
+═══════════════════════════════════════════════════════════════════════
+
+```javascript
+(function(){
+  const STORAGE_KEY = 'mooc_[nombre]_v2';
+  const TOTAL = 15;
+
+  function loadProgress(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY))||{}; }catch(e){ return {}; } }
+  function saveProgress(p){ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
+
+  const progress = loadProgress();
+
+  // Navegación
+  document.getElementById('nav-list').addEventListener('click', e => {
+    const item = e.target.closest('.nav-item');
+    if(item && item.dataset.target){
+      document.querySelectorAll('.module-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById(item.dataset.target).classList.add('active');
+      item.classList.add('active');
+    }
+  });
+
+  // Botones de completado
+  document.addEventListener('click', e => {
+    // Módulo completado
+    const btn = e.target.closest('.complete-btn');
+    if(btn && !btn.disabled){
+      progress[btn.dataset.mod] = true;
+      saveProgress(progress);
+      updateUI();
+    }
+    // Quiz
+    const opt = e.target.closest('.quiz-option');
+    if(opt){
+      const quiz = opt.closest('.quiz-block');
+      if(quiz.dataset.answered) return;
+      quiz.dataset.answered = '1';
+      const correct = quiz.dataset.correct;
+      const key = opt.dataset.key;
+      quiz.querySelectorAll('.quiz-option').forEach(o => {
+        if(o.dataset.key === correct) o.classList.add('correct');
+        else if(o.dataset.key === key) o.classList.add('wrong');
+      });
+      const fb = quiz.querySelector('.quiz-feedback');
+      fb.classList.add('show', key===correct ? 'ok' : 'fail');
+      fb.textContent = key===correct ? '✓ Correcto' : '✗ Incorrecto — la correcta está en verde';
+    }
+  });
+
+  function updateUI(){
+    const done = Object.keys(progress).filter(k=>progress[k]).length;
+    document.getElementById('done-count').textContent = done;
+    document.getElementById('progress-fill').style.width = (done/TOTAL*100)+'%';
+    document.querySelectorAll('.nav-item').forEach(item => {
+      const mod = item.dataset.target?.replace('modulo-','');
+      const check = item.querySelector('.nav-check');
+      if(mod && progress[mod]){ item.classList.add('done'); if(check) check.textContent='✓'; }
+    });
+    document.querySelectorAll('.complete-btn').forEach(btn => {
+      if(progress[btn.dataset.mod]){ btn.textContent='✓ Completado'; btn.classList.add('done'); btn.disabled=true; }
+    });
+  }
+
+  updateUI();
+})();
+```
+
+═══════════════════════════════════════════════════════════════════════
+## 9. CONTENIDO POR MÓDULO: DENSIDAD Y CALIDAD
+═══════════════════════════════════════════════════════════════════════
+
+### A — Núcleo Teórico Pareto
+- 3-5 subsecciones con h4 (no más)
+- Al menos 1 tabla comparativa (spec)
+- Al menos 1 bloque de código con ejemplo ejecutable
+- Al menos 1 diagrama (diagram-box o SVG inline)
+- Foco en el 20% del tema que da el 80% del valor práctico
+
+### B — Laboratorio Guiado
+- Objetivo concreto en 1 línea
+- Input/output explícito (qué entra, qué sale)
+- Pasos numerados con código
+- Nota de rendimiento (tiempo/RAM estimado)
+
+### C — Reto HERO por módulo
+- Contexto realista de industria (empresa ficticia, proyecto real)
+- MÍNIMO 3 restricciones técnicas con números concretos
+- Entregable concreto (archivo, demo, informe)
+- Métrica de éxito cuantitativa
+
+### D — Drills
+- MÍNIMO 5 ejercicios numerados (EX X.1 a EX X.5)
+- Cada ejercicio con enunciado concreto y resultado esperado
+- Mezcla de: cálculo, análisis, experimentación, comparación
+
+### E — Espacio Feynman
+- 1-2 preguntas collapsibles "¿Por qué...?" con respuesta profunda
+- 1-2 quizzes de opción múltiple (data-correct="a|b|c|d")
+- La respuesta correcta NO es la más obvia (evitar la A como default)
+
+### F — Caja de Herramientas
+- 4-8 herramientas relevantes para ese módulo específico
+- Tipos: Doc, Lib, Paper, Tool, Plugin, Software, Dataset, YouTube
+- Descripción en una línea que explica PARA QUÉ sirve en este contexto
+
+═══════════════════════════════════════════════════════════════════════
+## 10. ESTRATEGIA DE GENERACIÓN (evitar timeouts/truncación)
+═══════════════════════════════════════════════════════════════════════
+
+Para archivos de 1500+ líneas:
+1. **Paso 1**: Escribir el SKELETON completo con:
+   - Todo el HTML head + CSS completo
+   - Sidebar con los 15 nav-items
+   - M0 COMPLETO (mayor densidad visual)
+   - M14 COMPLETO (Hero final)
+   - M1-M13 como PLACEHOLDERS: `<!-- CONTENT_MX -->`
+
+2. **Paso 2**: Rellenar módulos por lotes de 2-3 con Edit tool:
+   - M1+M2 en paralelo
+   - M3+M4 en paralelo
+   - M5+M6 en paralelo
+   - M7+M8 en paralelo
+   - M9+M10 en paralelo
+   - M11+M12 en paralelo
+   - M13 solo (cierre antes de M14)
+
+3. **Verificación**: `grep -c "CONTENT_M" archivo.html` → debe dar 0
+
+═══════════════════════════════════════════════════════════════════════
+## 11. AUDITORÍA DE CONFORMIDAD (checklist por módulo)
+═══════════════════════════════════════════════════════════════════════
+
+Para verificar que un MOOC cumple la estructura, comprobar por módulo:
+□ A: ¿Hay card con badge-theory "Núcleo Teórico Pareto" con tabla + código?
+□ B: ¿Hay collapsible con badge-lab "Laboratorio Guiado" con código ejecutable?
+□ C: ¿Hay collapsible con badge-hero "Reto HERO" con restricciones técnicas?
+□ D: ¿Hay card con badge-drill y ≥5 ejercicios numerados EX X.N?
+□ E: ¿Hay card/collapsible con badge-feynman y ≥1 quiz interactivo?
+□ F: ¿Hay card con badge-tools y ≥4 tool-link con t-type, t-name, t-desc?
+
+═══════════════════════════════════════════════════════════════════════
+## 12. ESTADO ACTUAL DE LA BIBLIOTECA (mayo 2026)
+═══════════════════════════════════════════════════════════════════════
+
+### MOOCs CON ESTRUCTURA A-F COMPLETA POR MÓDULO ✓
+- machine_learning_audio_v2.html       ← REFERENCIA DE ORO
+- deep_learning_sonido_v2.html         ← Estructura equivalente
+
+### MOOCs CON CONTENIDO RICO PERO SIN A-F EXPLÍCITO POR MÓDULO ⚠️
+(Tienen theory+lab+tools+feynman+drills pero sin los bloques A/B/C/D/E/F
+ formalmente etiquetados, y sin Reto HERO individual por módulo)
+- MOOC_Middleware_Interactive_v2.html
+- python_composicion_algoritmica_v2.html
+- live_electronics_fixed_media_v2.html
+- instalaciones_interactivas_v2.html
+- audio_inmersivo_v2.html
+- euskera_v2.html
+
+Para nuevos MOOCs: usar SIEMPRE la estructura A-F completa desde M0.
+Para retrofit de los existentes: añadir los bloques B y C por módulo
+como collapsibles, y añadir D como card dedicada con ≥5 ejercicios.
+
+═══════════════════════════════════════════════════════════════════════
+## 13. CONVENCIONES DE NOMENCLATURA
+═══════════════════════════════════════════════════════════════════════
+- Archivos: `[tema_corto]_v2.html` (minúsculas, guion bajo)
+- STORAGE_KEY: `mooc_[nombre]_v2`
+- IDs de sección: `modulo-0` ... `modulo-14`
+- data-mod: `"0"` ... `"14"` (string, sin ceros a la izquierda)
+- Clases CSS de badge: badge-theory, badge-lab, badge-hero, badge-drill, badge-feynman, badge-tools
+- Clases CSS de card: card-green (accent-3), card-purple (accent-2), card-yellow (warn), card-red (danger)
+
+═══════════════════════════════════════════════════════════════════════
+## 14. RESTRICCIONES DE CALIDAD
+═══════════════════════════════════════════════════════════════════════
+1. Prohibido explicar conceptos básicos de audio o electrónica. El usuario es experto.
+2. Código siempre ejecutable: imports correctos, variables definidas, sin pseudocódigo vago.
+3. Tablas comparativas siempre con ≥3 columnas y ≥3 filas de datos.
+4. Rúbrica de M14 suma exactamente 100 puntos.
+5. Quiz: la respuesta correcta tiene una justificación técnica en la answer card.
+6. Herramientas en F siempre con URL o nombre suficiente para buscarla.
+7. Sin comentarios vagos en código ("# hacer X aquí"). Solo comentarios informativos.
+8. Los quizzes en E nunca tienen como correcta la primera opción (a) más de 2 veces en el mismo módulo.

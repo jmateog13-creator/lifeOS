@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ingeniería de Retención, Gamificación Aural y Storytelling v3</title>
+<style>
+:root {
+  --bg:#0b0f17; --surface:#111827; --surface2:#1e2a3a;
+  --accent:#a855f7; --accent2:#c084fc; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#1e293b;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'JetBrains Mono','Fira Code',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+/* SIDEBAR */
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(168,85,247,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* MAIN */
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+/* CODE */
+pre{background:#070b12;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#070b12;padding:2px 6px;border-radius:4px}
+/* SVG */
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+/* FORMULA */
+.formula{background:rgba(168,85,247,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+/* METRICS GRID */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+/* QUIZ */
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(0,0,0,.15);border-radius:6px;line-height:1.6}
+/* HERO RUBRIC */
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+/* HIGHLIGHT BOX */
+.highlight-box{background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.25);border-radius:8px;padding:14px;margin:10px 0}
+/* TOOL GRID */
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:10px}
+.tool-card{background:#070b12;border:1px solid var(--border);border-radius:8px;padding:12px;font-size:.8rem}
+.tool-card strong{display:block;color:var(--accent);margin-bottom:4px}
+/* BTN */
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+/* TAG */
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:700;letter-spacing:.05em}
+.tag-a{background:rgba(6,182,212,.15);color:#06b6d4}
+.tag-b{background:rgba(168,85,247,.15);color:var(--accent)}
+.tag-c{background:rgba(239,68,68,.15);color:var(--red)}
+.tag-d{background:rgba(245,158,11,.15);color:var(--warn)}
+.tag-e{background:rgba(16,185,129,.15);color:var(--green)}
+/* LIST */
+ul.drill-list{padding-left:20px}
+ul.drill-list li{margin:6px 0;font-size:.88rem;color:var(--muted)}
+ul.drill-list li strong{color:var(--text)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>Ingeniería de Retención y Storytelling</h2>
+    <p>Gamificación Aural y Edutainment</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introducción</div>
+    <div class="module-title">Ecosistema Edutainment</div>
+    <div class="module-sub">Ingeniería de retención: desde el hook de 5 segundos hasta el impacto medible en analytics</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 130" width="100%" font-family="'JetBrains Mono',monospace" font-size="11">
+      <defs>
+        <marker id="ar2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#a855f7"/>
+        </marker>
+      </defs>
+      <rect x="10" y="40" width="100" height="50" rx="8" fill="#111827" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="60" y="62" text-anchor="middle" fill="#a855f7" font-weight="bold">5s Hook</text>
+      <text x="60" y="78" text-anchor="middle" fill="#94a3b8">apertura</text>
+      <rect x="145" y="40" width="115" height="50" rx="8" fill="#111827" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="202" y="62" text-anchor="middle" fill="#06b6d4" font-weight="bold">ABT Model</text>
+      <text x="202" y="78" text-anchor="middle" fill="#94a3b8">And/But/Therefore</text>
+      <rect x="294" y="40" width="120" height="50" rx="8" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+      <text x="354" y="62" text-anchor="middle" fill="#10b981" font-weight="bold">Story Beats</text>
+      <text x="354" y="78" text-anchor="middle" fill="#94a3b8">Hero's Journey</text>
+      <rect x="447" y="40" width="120" height="50" rx="8" fill="#111827" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="507" y="62" text-anchor="middle" fill="#f59e0b" font-weight="bold">Retención</text>
+      <text x="507" y="78" text-anchor="middle" fill="#94a3b8">L=(c+a+b)×R×t</text>
+      <rect x="601" y="40" width="115" height="50" rx="8" fill="#111827" stroke="#ef4444" stroke-width="1.5"/>
+      <text x="658" y="62" text-anchor="middle" fill="#ef4444" font-weight="bold">Impacto</text>
+      <text x="658" y="78" text-anchor="middle" fill="#94a3b8">analytics / KPIs</text>
+      <line x1="110" y1="65" x2="143" y2="65" stroke="#a855f7" stroke-width="1.5" marker-end="url(#ar2)"/>
+      <line x1="260" y1="65" x2="292" y2="65" stroke="#a855f7" stroke-width="1.5" marker-end="url(#ar2)"/>
+      <line x1="414" y1="65" x2="445" y2="65" stroke="#a855f7" stroke-width="1.5" marker-end="url(#ar2)"/>
+      <line x1="567" y1="65" x2="599" y2="65" stroke="#a855f7" stroke-width="1.5" marker-end="url(#ar2)"/>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">5s</div><div class="metric-label">ventana de enganche inicial</div></div>
+    <div class="metric"><div class="metric-val">10-29%</div><div class="metric-label">ratio But/And óptimo ABT</div></div>
+    <div class="metric"><div class="metric-val">150-160</div><div class="metric-label">WPM ritmo óptimo narración</div></div>
+    <div class="metric"><div class="metric-val">60s</div><div class="metric-label">caída crítica de retención YouTube</div></div>
+    <div class="metric"><div class="metric-val">3s</div><div class="metric-label">patrón de interrupción máx.</div></div>
+    <div class="metric"><div class="metric-val">7±2</div><div class="metric-label">ítems en memoria de trabajo (Miller)</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa de Modelos Narrativos</h3>
+    <table>
+      <tr><th>Modelo</th><th>Estructura</th><th>Creador</th><th>Mejor para</th></tr>
+      <tr><td>ABT</td><td>And→But→Therefore</td><td>Randy Olson</td><td>Ciencia, pitch, contenido educativo</td></tr>
+      <tr><td>Hero's Journey</td><td>12 etapas Campbell</td><td>Joseph Campbell</td><td>Narrativa larga, documentales</td></tr>
+      <tr><td>3-Act</td><td>Setup/Confrontation/Resolution</td><td>Syd Field</td><td>Guión cinematográfico</td></tr>
+      <tr><td>Sparkline</td><td>What-is vs What-could-be</td><td>Nancy Duarte</td><td>Presentaciones TED/inspiracionales</td></tr>
+      <tr><td>STAR</td><td>Situation/Task/Action/Result</td><td>McKinsey</td><td>Business storytelling</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Stack de Herramientas Edutainment</h3>
+    <div class="tool-grid">
+      <div class="tool-card"><strong>ABT Analyzer</strong>Script Python para ratio But/And en transcripts</div>
+      <div class="tool-card"><strong>DaVinci Resolve</strong>Edición rítmica, pacing 150-160wpm, color grading</div>
+      <div class="tool-card"><strong>YouTube Studio</strong>Retention curves, AVD, CTR, audience segments</div>
+      <div class="tool-card"><strong>Foley / SFX</strong>ZapSplat, Freesound, biblioteca propia de impactos</div>
+      <div class="tool-card"><strong>Pattern Interrupts</strong>B-roll, zoom, música, gráficos cada 20-30s</div>
+      <div class="tool-card"><strong>Duarte Sparklines</strong>Plantilla PowerPoint contraste presente/futuro</div>
+      <div class="tool-card"><strong>TubeBuddy/VidIQ</strong>SEO, CTR optimization, A/B thumbnails</div>
+      <div class="tool-card"><strong>Notion/Obsidian</strong>Gestión de proyectos de contenido y scripts</div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Modelo ABT</div>
+    <div class="module-title">El Modelo ABT de Randy Olson</div>
+    <div class="module-sub">And/But/Therefore: la estructura narrativa mínima viable para contenido educativo</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>Randy Olson (biólogo marino convertido en cineasta) destila toda narrativa efectiva en tres conectores:</p>
+    <div class="highlight-box">
+      <p><strong style="color:var(--green)">AND</strong> = contexto, acumulación. Muchos AND = aburrimiento.</p>
+      <p><strong style="color:var(--red)">BUT</strong> = conflicto, tensión. La chispa que activa la atención.</p>
+      <p><strong style="color:#06b6d4">THEREFORE</strong> = consecuencia, resolución. Cierra el loop narrativo.</p>
+    </div>
+    <div class="formula">Ratio de narración = (# BUT / # AND) × 100 → óptimo: 10-29%</div>
+    <table style="margin-top:12px;">
+      <tr><th>Posición</th><th>Estructura</th><th>Ejemplo</th><th>Problema</th></tr>
+      <tr><td>DHY (extremo no narrativo)</td><td>Solo hechos</td><td>Paper científico</td><td>Sin tensión, olvidable</td></tr>
+      <tr><td>AAA</td><td>Solo AND</td><td>Enciclopedia</td><td>Acumulación sin conflicto</td></tr>
+      <tr><td><strong>ABT</strong></td><td>AND+BUT+THEREFORE</td><td>Pitch científico</td><td>El punto óptimo</td></tr>
+      <tr><td>Cliffhanger</td><td>Solo BUT</td><td>Thriller sin fin</td><td>Tensión sin resolución</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Analizador ABT con Python</h3>
+    <pre>import re
+
+def analyze_abt(transcript: str) -> dict:
+    text_lower = transcript.lower()
+    AND_WORDS  = ['y ', 'y,', 'además', 'también', 'asimismo', ' and ', 'moreover', 'furthermore']
+    BUT_WORDS  = ['pero', 'sin embargo', 'aunque', 'no obstante', ' but ', 'however', 'yet']
+    THERE_WORDS= ['por lo tanto', 'entonces', 'así que', 'por eso', 'therefore', 'thus', 'so ']
+
+    def count_keywords(text, keywords):
+        return sum(text.count(kw) for kw in keywords)
+
+    n_and   = count_keywords(text_lower, AND_WORDS)
+    n_but   = count_keywords(text_lower, BUT_WORDS)
+    n_there = count_keywords(text_lower, THERE_WORDS)
+    ratio_but  = (n_but  / max(n_and, 1)) * 100
+    diagnosis  = (
+        "ÓPTIMO: tensión narrativa equilibrada (10-29%)"
+        if 10 <= ratio_but <= 29
+        else "PLANO: demasiados AND, añadir conflicto" if ratio_but < 10
+        else "CAÓTICO: demasiados BUT, reducir tensión"
+    )
+    return {'n_and': n_and, 'n_but': n_but, 'n_therefore': n_there,
+            'ratio_but_and': f"{ratio_but:.1f}%", 'diagnosis': diagnosis}
+
+def transform_to_abt(topic: str, pain_point: str, solution: str) -> str:
+    return f"""[AND - CONTEXTO] {topic} es fundamental, y las herramientas existen.
+[BUT - CONFLICTO] Pero {pain_point}, y esto bloquea al 90% de los estudiantes.
+[THEREFORE - RESOLUCIÓN] Por lo tanto, {solution}."""</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q1 · Diagnóstico ABT</h4>
+    <p class="quiz-q">Un script tiene 15 conectores AND y 2 BUT. ¿Cuál es el ratio BUT/AND y qué diagnóstico corresponde según el modelo de Olson?</p>
+    <details><summary>Ver respuesta</summary><p>Ratio = (2/15) × 100 = 13.3%. Diagnóstico: ÓPTIMO. Está dentro del rango 10-29% de Randy Olson, lo que indica equilibrio correcto entre contexto (AND) y tensión narrativa (BUT). Con 13.3% hay suficiente conflicto para mantener la atención del espectador sin crear un exceso de tensión que resulte agotador.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Ecuación L=(c+a+b)×R×t</div>
+    <div class="module-title">Ecuación de Aprendizaje</div>
+    <div class="module-sub">L = (c + a + b) × R × t — modelado cuantitativo del aprendizaje efectivo</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <div class="formula">L = (c + a + b) × R × t</div>
+    <table style="margin-top:12px;">
+      <tr><th>Variable</th><th>Significado</th><th>Rango</th><th>Cómo optimizar</th></tr>
+      <tr><td><strong>c</strong> (claridad)</td><td>Comprensión conceptual</td><td>0-10</td><td>Analogías, diagramas, Feynman technique</td></tr>
+      <tr><td><strong>a</strong> (aplicabilidad)</td><td>Usabilidad práctica inmediata</td><td>0-10</td><td>Laboratorios concretos, proyectos reales</td></tr>
+      <tr><td><strong>b</strong> (belongingness)</td><td>Conexión identitaria del aprendiz</td><td>0-10</td><td>Casos de uso del nicho del estudiante</td></tr>
+      <tr><td><strong>R</strong> (retención)</td><td>Tasa de retención a 7 días</td><td>0-1</td><td>Espaciado, retrieval practice, interleaving</td></tr>
+      <tr><td><strong>t</strong> (tiempo activo)</td><td>Tiempo de práctica deliberada</td><td>horas</td><td>Eliminar fricción, gamificación, streaks</td></tr>
+    </table>
+    <p style="margin-top:10px;color:var(--muted)"><strong>Insight clave:</strong> L es multiplicativo, no aditivo. Si R=0.1 (sin repaso), el aprendizaje colapsa aunque c+a+b=30. La retención es el multiplicador más crítico.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Calculadora y simulador de Ebbinghaus</h3>
+    <pre>import numpy as np
+
+def learning_score(c, a, b, R, t):
+    return (c + a + b) * R * t
+
+scenarios = {
+    'MOOC pasivo (ver sin practicar)': {'c':8,'a':3,'b':5,'R':0.15,'t':10},
+    'MOOC activo (labs + quizzes)':    {'c':8,'a':8,'b':6,'R':0.55,'t':12},
+    'Bootcamp intensivo (inmersión)':  {'c':7,'a':9,'b':8,'R':0.40,'t':80},
+    'Mentoría personalizada':          {'c':9,'a':9,'b':9,'R':0.70,'t':20},
+}
+for name, params in scenarios.items():
+    print(f"{name:35s} L = {learning_score(**params):6.1f}")
+
+def ebbinghaus_retention(t_hours, stability=24):
+    return np.exp(-t_hours / stability)
+
+# Análisis de sensibilidad: ¿qué variable impacta más en L?
+base = {'c':7,'a':7,'b':6,'R':0.4,'t':20}
+for var in ['c','a','b','R','t']:
+    test = dict(base); test[var] *= 1.1
+    delta_L = (learning_score(**test) - learning_score(**base)) / learning_score(**base) * 100
+    print(f"+10% en {var} → ΔL = {delta_L:.1f}%")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q2 · Multiplicatividad de L</h4>
+    <p class="quiz-q">En L=(c+a+b)×R×t, si duplicas el tiempo de estudio (t×2) pero reduces R a la mitad (sin repaso), ¿qué pasa con L y qué conclusión pedagógica se extrae?</p>
+    <details><summary>Ver respuesta</summary><p>L queda igual — t×2 cancela con R÷2, lo que muestra que estudiar más sin repasar no ayuda. La ecuación es multiplicativa: (c+a+b) × (R/2) × (2t) = (c+a+b) × R × t. Pedagógicamente, esto significa que doblar el tiempo de estudio sin implementar práctica espaciada no produce más aprendizaje que el original. La inversión debe ir en aumentar R (repaso espaciado, retrieval practice) más que en más horas de exposición pasiva.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Hook de 5 Segundos</div>
+    <div class="module-title">La Regla del Hook de 5 Segundos</div>
+    <div class="module-sub">La ventana de atención inicial determina si el espectador continúa o abandona</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>En YouTube, la decisión de continuar o irse ocurre en los primeros <strong>5 segundos</strong>. Los espectadores que superan el minuto 1 tienen 4× más probabilidad de llegar al final.</p>
+    <table style="margin-top:12px;">
+      <tr><th>Técnica de Hook</th><th>Mecanismo psicológico</th><th>Ejemplo</th></tr>
+      <tr><td>Pregunta provocadora</td><td>Gap de curiosidad (Loewenstein)</td><td>"¿Por qué el 90% falla en X?"</td></tr>
+      <tr><td>Afirmación contraintuitiva</td><td>Disonancia cognitiva</td><td>"Estudiar más te hace aprender menos"</td></tr>
+      <tr><td>Promesa concreta</td><td>Anticipación de recompensa</td><td>"En 6 minutos dominarás Y"</td></tr>
+      <tr><td>In medias res</td><td>Inmediatez narrativa</td><td>Empieza con el resultado/explosión</td></tr>
+      <tr><td>Patrón interrumpido</td><td>Orientating response</td><td>Sonido inesperado + corte visual</td></tr>
+    </table>
+    <div class="formula">CTR × AVD = Reach Score (indicador de salud del canal)</div>
+    <p style="margin-top:8px;color:var(--muted)">CTR objetivo: ≥5%. AVD objetivo: ≥40% de la duración total.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Analizador de hooks</h3>
+    <pre>import re
+from dataclasses import dataclass, field
+from typing import List
+
+@dataclass
+class HookAnalysis:
+    text: str; score: float = 0.0
+    techniques: List[str] = field(default_factory=list)
+    feedback:   List[str] = field(default_factory=list)
+
+def analyze_hook(text: str, max_seconds: int = 5, wpm: float = 150) -> HookAnalysis:
+    words     = text.split()
+    max_words = int(max_seconds * wpm / 60)
+    score     = 0.0; techniques = []; feedback = []
+
+    if len(words) <= max_words:
+        score += 25; techniques.append(f"Longitud OK ({len(words)} palabras)")
+    else:
+        feedback.append(f"Demasiado largo: {len(words)} palabras (máx {max_words})")
+
+    text_lower = text.lower()
+    if '?' in text:
+        score += 25; techniques.append("Pregunta (gap de curiosidad)")
+
+    tension_words = ['pero', 'sin embargo', 'problema', 'error', 'falla', 'fail']
+    if any(w in text_lower for w in tension_words):
+        score += 20; techniques.append("Tensión narrativa detectada")
+    else:
+        feedback.append("Añade un elemento de tensión o conflicto")
+
+    if re.search(r'\b\d+\b', text):
+        score += 15; techniques.append("Número específico (credibilidad)")
+
+    time_words = ['minutos', 'horas', 'días', 'semanas', 'minutes']
+    if any(w in text_lower for w in time_words):
+        score += 15; techniques.append("Promesa temporal")
+
+    return HookAnalysis(text=text, score=score, techniques=techniques, feedback=feedback)</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q3 · Peor Hook Posible</h4>
+    <p class="quiz-q">¿Por qué empezar un video con "Hola! Hoy vamos a aprender sobre..." es el peor tipo de hook y qué debería reemplazarlo?</p>
+    <details><summary>Ver respuesta</summary><p>Porque no abre ningún gap de curiosidad ni tensión; confirma lo que el espectador ya sabe (hay un video sobre X), sin dar razón para seguir mirando en los 5 segundos críticos. El espectador ya vio el título y thumbnail — repetir esa información no aporta valor nuevo. En su lugar, debería comenzar directamente con el conflicto (BUT), una pregunta provocadora o in medias res con el resultado final del módulo para crear expectativa inmediata.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Sparklines Duarte</div>
+    <div class="module-title">Sparklines — Nancy Duarte</div>
+    <div class="module-sub">La estructura de las grandes presentaciones: contraste entre lo que es y lo que podría ser</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>Nancy Duarte analizó 200 años de grandes discursos. Descubrió que todos comparten la misma estructura de Sparkline: alternancia entre <strong>What IS</strong> (realidad actual) y <strong>What COULD BE</strong> (futuro posible).</p>
+    <div class="highlight-box">
+      <p><strong>Estructura Sparkline:</strong></p>
+      <p>New Bliss (fin) → CALL TO ACTION → What IS → What COULD BE → What IS → What COULD BE... → What IS</p>
+      <p style="margin-top:8px;color:var(--muted)">Cada oscilación crea tensión y la resolución final (Call to Action) libera esa tensión dirigiendo al público hacia la acción.</p>
+    </div>
+    <table style="margin-top:12px;">
+      <tr><th>Presentación icónica</th><th>Patrón Sparkline</th></tr>
+      <tr><td>MLK "I Have a Dream"</td><td>IS: segregación → COULD BE: igualdad (×8 ciclos)</td></tr>
+      <tr><td>Steve Jobs iPhone 2007</td><td>IS: teléfonos torpes → COULD BE: smartphone (×5 ciclos)</td></tr>
+      <tr><td>TED Talk promedio</td><td>IS: problema → COULD BE: solución (×2-3 ciclos)</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Generador de estructura Sparkline</h3>
+    <pre>from dataclasses import dataclass, field
+from typing import List
+
+@dataclass
+class SparklineBeat:
+    beat_type: str   # 'IS' | 'COULD_BE' | 'CTA' | 'OPENING'
+    content:   str
+    duration_s: int = 60
+
+@dataclass
+class SparklideStructure:
+    title: str
+    beats: List[SparklineBeat] = field(default_factory=list)
+
+    def add_is(self, content: str, duration_s: int = 60):
+        self.beats.append(SparklineBeat('IS', content, duration_s)); return self
+
+    def add_could_be(self, content: str, duration_s: int = 60):
+        self.beats.append(SparklineBeat('COULD_BE', content, duration_s)); return self
+
+    def add_cta(self, content: str, duration_s: int = 30):
+        self.beats.append(SparklineBeat('CTA', content, duration_s)); return self
+
+    def tension_score(self) -> float:
+        transitions = sum(1 for i in range(1, len(self.beats))
+                          if self.beats[i].beat_type != self.beats[i-1].beat_type)
+        return transitions / max(len(self.beats), 1)
+
+talk = SparklideStructure("Por qué tu mezcla no suena profesional")
+talk.add_is("Los productores novatos pasan semanas en una canción", 90)
+talk.add_could_be("Con el flujo correcto, mezclas profesionalmente en 3h", 60)
+talk.add_is("No existe una guía definitiva de EQ para bajo", 120)
+talk.add_could_be("Un checklist que siempre funciona", 60)
+talk.add_cta("Descarga el EQ Checklist y aplícalo en tu próxima mezcla", 60)
+print(f"Tensión narrativa: {talk.tension_score():.2f}")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q4 · New Bliss y Call to Action</h4>
+    <p class="quiz-q">¿Por qué la estructura Sparkline termina con "New Bliss" (COULD_BE) justo antes del Call to Action, en lugar de terminar con otro "What IS"?</p>
+    <details><summary>Ver respuesta</summary><p>Para que el público quede en un estado emocional positivo de posibilidad, justo antes del Call to Action; terminar en IS dejaría al público en el problema sin motivación para actuar. Nancy Duarte lo llama "New Bliss": el punto final donde el público ha experimentado múltiples oscilaciones IS↔COULD_BE y llega a un estado de máxima posibilidad percibida. El CTA en este momento convierte la emoción acumulada en acción concreta — el estado emocional positivo reduce la resistencia al cambio.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Hero's Journey</div>
+    <div class="module-title">El Viaje del Héroe — Campbell y Vogler</div>
+    <div class="module-sub">Las 12 etapas del monomito aplicadas al diseño de cursos y contenido educativo</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>Joseph Campbell identificó que todos los mitos comparten la misma estructura de 12 etapas. En edutainment, <strong>el estudiante es el héroe</strong>.</p>
+    <table>
+      <tr><th>Etapa</th><th>Campbell</th><th>Equivalente Educativo</th></tr>
+      <tr><td>1</td><td>Mundo Ordinario</td><td>Situación actual del estudiante (antes del curso)</td></tr>
+      <tr><td>2</td><td>Llamada a la Aventura</td><td>El problema que el curso resuelve (M0 ABT)</td></tr>
+      <tr><td>3</td><td>Rechazo de la Llamada</td><td>"No tengo tiempo / No soy suficientemente bueno"</td></tr>
+      <tr><td>4</td><td>Encuentro con el Mentor</td><td>El instructor como guía (no el héroe)</td></tr>
+      <tr><td>5</td><td>Cruce del Umbral</td><td>M1: primer conocimiento desafiante</td></tr>
+      <tr><td>6</td><td>Pruebas, Aliados, Enemigos</td><td>Módulos de dificultad creciente + comunidad</td></tr>
+      <tr><td>7</td><td>La Caverna más Profunda</td><td>El módulo más difícil (punto de crisis)</td></tr>
+      <tr><td>8</td><td>La Prueba Suprema</td><td>Proyecto HERO final</td></tr>
+      <tr><td>9</td><td>Recompensa</td><td>Certificado + portfolio + habilidad demostrada</td></tr>
+      <tr><td>10</td><td>Camino de Regreso</td><td>Aplicación en trabajo/proyecto propio</td></tr>
+      <tr><td>11</td><td>Resurrección</td><td>Primer proyecto publicado (superación real)</td></tr>
+      <tr><td>12</td><td>Regreso con el Elixir</td><td>Enseñar a otros (solidifica el aprendizaje)</td></tr>
+    </table>
+    <p style="margin-top:10px;color:var(--muted);"><strong>Trampa común:</strong> El instructor no debe ser el héroe. El instructor es Gandalf, no Frodo.</p>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q5 · Error de Posicionamiento del Instructor</h4>
+    <p class="quiz-q">Según la estructura Hero's Journey aplicada al edutainment, ¿cuál es el error más común en el diseño de cursos y cómo se corrige?</p>
+    <details><summary>Ver respuesta</summary><p>El instructor se posiciona como el héroe ("yo hice X, yo construí Y") en lugar de posicionar al estudiante como el protagonista del viaje. Hablar de los logros propios centra la narrativa en el instructor, desplazando al estudiante del rol protagónico. La corrección: "Tú vas a construir X. Yo te doy el mapa del territorio que tomé 5 años en aprender." El instructor es el mentor (Gandalf, Yoda, Dumbledore) que ha estado antes en ese camino y puede acelerar el viaje del héroe/estudiante.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Pre-Producción</div>
+    <div class="module-title">Pre-Producción de Ingeniería</div>
+    <div class="module-sub">Scripting técnico, storyboard y planificación de producción como proceso de ingeniería</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>La pre-producción es el 70% del impacto con el 30% del tiempo. Un script bien estructurado previene retomas costosas y garantiza el flujo narrativo.</p>
+    <table>
+      <tr><th>Fase</th><th>Entregable</th><th>Herramienta</th></tr>
+      <tr><td>1. Ideación</td><td>ABT de 3 frases</td><td>Papel + análisis de gaps</td></tr>
+      <tr><td>2. Outline</td><td>3-5 beats narrativos</td><td>Notion / índice de módulo</td></tr>
+      <tr><td>3. Script</td><td>Guión completo WPM=150</td><td>Google Docs con timer</td></tr>
+      <tr><td>4. Storyboard</td><td>Esquema visual por sección</td><td>Figma / papel</td></tr>
+      <tr><td>5. Tech checklist</td><td>Setup audio/video/screen</td><td>Checklist pre-grabación</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Calculadora de script y template</h3>
+    <pre>import math
+
+def script_calculator(words: int, wpm: float = 150, b_roll_ratio: float = 0.3) -> dict:
+    narration_min  = words / wpm
+    total_min      = narration_min / (1 - b_roll_ratio)
+    return {
+        'words':              words,
+        'narration_time':     f"{narration_min:.1f} min",
+        'total_duration':     f"{total_min:.1f} min",
+        'b_roll_time':        f"{total_min * b_roll_ratio:.1f} min",
+        'pattern_interrupts': f"{math.floor(total_min / 0.5):.0f} (cada 30s aprox.)",
+    }
+
+for words in [300, 600, 1200, 2400]:
+    r = script_calculator(words)
+    print(f"Script {words:5d} palabras → {r['total_duration']:8s} "
+          f"(B-roll: {r['b_roll_time']}, interrupciones: {r['pattern_interrupts']})")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q6 · Cálculo de Duración</h4>
+    <p class="quiz-q">Un script de 1800 palabras a 150 WPM con 30% de B-roll, ¿cuánto durará el video final y cómo se calcula?</p>
+    <details><summary>Ver respuesta</summary><p>~17 minutos. Cálculo: 1800/150 = 12 min de narración activa. El B-roll ocupa el 30% del tiempo total, por lo que la narración representa el 70%: total = 12 / 0.7 = 17.1 min. Interpretación: de 17 minutos totales, 12 minutos son de voz hablando y 5.1 minutos son de B-roll (secuencias de apoyo sin narración activa en ese instante).</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Edición Rítmica</div>
+    <div class="module-title">Edición Rítmica — Pacing 150-160 WPM</div>
+    <div class="module-sub">El ritmo de la narración como factor de retención: velocidad, pausas y énfasis</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>Los mejores presentadores online (MrBeast, 3Blue1Brown, Kurzgesagt) mantienen 150-160 WPM en narración activa, con pausas estratégicas antes de revelaciones clave.</p>
+    <table>
+      <tr><th>WPM</th><th>Percepción</th><th>Uso ideal</th></tr>
+      <tr><td>&lt;120</td><td>Lento, aburrido</td><td>Contenido muy técnico con gráficos complejos</td></tr>
+      <tr><td>130-150</td><td>Natural, educativo</td><td>Tutoriales, explicaciones con demos</td></tr>
+      <tr><td>150-160</td><td>Dinámico, energético</td><td>Edutainment, YouTube educativo</td></tr>
+      <tr><td>160-180</td><td>Urgente, emocionante</td><td>Hooks, momentos de tensión máxima</td></tr>
+      <tr><td>&gt;180</td><td>Difícil de seguir</td><td>Solo para énfasis muy breve</td></tr>
+    </table>
+    <p style="margin-top:10px;"><strong>Técnica de pausa dramática:</strong> 0.5-1s antes de revelar la respuesta/conclusión. Activa anticipación en el espectador.</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Analizador de pacing por segmentos</h3>
+    <pre>from typing import List, Tuple
+
+def analyze_pacing(transcript_with_timestamps: List[Tuple[float, str]]) -> dict:
+    segments = {}; window_s = 30
+    for ts, text in transcript_with_timestamps:
+        bucket = int(ts // window_s) * window_s
+        if bucket not in segments: segments[bucket] = []
+        segments[bucket].append(text)
+
+    results = []
+    for start_s in sorted(segments.keys()):
+        combined = ' '.join(segments[start_s])
+        words    = len(combined.split())
+        wpm      = words / (window_s / 60)
+        status   = ("OPTIMO" if 130 <= wpm <= 160
+                    else "LENTO" if wpm < 130 else "RAPIDO")
+        results.append({'time': f"{start_s//60:.0f}m{start_s%60:02.0f}s",
+                        'wpm': round(wpm, 1), 'status': status})
+
+    avg_wpm = sum(r['wpm'] for r in results) / len(results) if results else 0
+    return {'segments': results, 'average_wpm': avg_wpm}</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q7 · Pausa Dramática y Neurología</h4>
+    <p class="quiz-q">¿Por qué una pausa de 0.5s antes de revelar la respuesta mejora la retención del espectador desde el punto de vista neurológico?</p>
+    <details><summary>Ver respuesta</summary><p>Activa el efecto de anticipación: el cerebro genera predicciones activas durante la pausa, creando un estado de alta atención; la revelación posterior tiene mayor impacto neurológico (dopamine release). Durante la pausa, el sistema predictivo del cerebro formula hipótesis sobre la respuesta — este estado de predicción activa el sistema de recompensa dopaminérgico. Cuando llega la revelación, independientemente de si la predicción fue correcta o no, hay un pico de activación que consolida la memoria del contenido.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · Pattern Interrupts</div>
+    <div class="module-title">Pattern Interrupts</div>
+    <div class="module-sub">Técnicas de interrupción de patrón para mantener la atención activa cada 20-30 segundos</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>El cerebro humano detecta cambios de patrón como señal de relevancia (orienting response). En video educativo, un Pattern Interrupt cada 20-30s mantiene activo el sistema de atención.</p>
+    <table>
+      <tr><th>Tipo de Interrupt</th><th>Duración</th><th>Implementación</th></tr>
+      <tr><td>Zoom / Corte brusco</td><td>&lt;0.3s</td><td>Jump cut en edición</td></tr>
+      <tr><td>B-roll con narración</td><td>3-10s</td><td>Video ilustrativo sobre narración</td></tr>
+      <tr><td>Gráfico animado</td><td>2-5s</td><td>After Effects / Motion</td></tr>
+      <tr><td>Sound effect</td><td>&lt;1s</td><td>Foley / SFX de énfasis</td></tr>
+      <tr><td>Pregunta retórica</td><td>3-5s</td><td>Pausa + animación texto</td></tr>
+      <tr><td>Demo en pantalla</td><td>30-120s</td><td>Screen capture con zoom</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Planificador automático de pattern interrupts</h3>
+    <pre>from dataclasses import dataclass, field
+from typing import List
+import random
+
+@dataclass
+class PatternInterrupt:
+    time_s: float; type: str; description: str; duration_s: float = 2.0
+
+@dataclass
+class VideoInterruptPlan:
+    title: str; duration_s: float
+    interrupts: List[PatternInterrupt] = field(default_factory=list)
+
+    def auto_plan(self, interval_s: float = 25, variety: bool = True):
+        INTERRUPT_TYPES = [
+            ('jump_cut',     'Jump cut + zoom in', 0.5),
+            ('broll',        'B-roll ilustrativo', 5.0),
+            ('graphic',      'Gráfico animado', 3.0),
+            ('sfx',          'Sound effect de énfasis', 0.5),
+            ('text_overlay', 'Texto clave en pantalla', 2.0),
+            ('question',     'Pregunta retórica + pausa', 4.0),
+        ]
+        t = interval_s; i = 0
+        while t < self.duration_s - 10:
+            itype, desc, dur = INTERRUPT_TYPES[i % len(INTERRUPT_TYPES)]
+            self.interrupts.append(PatternInterrupt(t, itype, desc, dur))
+            t += interval_s + random.uniform(-5, 5); i += 1
+        return self
+
+    def validate(self):
+        times  = sorted(pi.time_s for pi in self.interrupts)
+        prev   = 0; issues = []
+        for t in times:
+            if t - prev > 30: issues.append(f"Gap de {t-prev:.0f}s entre {prev:.0f}s y {t:.0f}s")
+            prev = t
+        return issues if issues else ["Plan válido: sin gaps > 30s"]
+
+random.seed(42)
+plan = VideoInterruptPlan("M2 - MFCC Pipeline", duration_s=8*60)
+plan.auto_plan(interval_s=22)
+print("Interrupciones planificadas:", len(plan.interrupts))
+print("Validación:", plan.validate())</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q8 · Orienting Response y Edutainment</h4>
+    <p class="quiz-q">¿Por qué el orienting response (respuesta de orientación) es relevante para el edutainment y cómo lo explotan intencionalmente los pattern interrupts?</p>
+    <details><summary>Ver respuesta</summary><p>Es el reflejo evolutivo que dirige la atención hacia cambios en el entorno (nuevos estímulos). Los pattern interrupts lo activan intencionalmente, manteniendo al cerebro en estado de alerta y procesamiento activo durante el video. Evolutivamente, prestar atención a cambios en el entorno es una ventaja de supervivencia — el sistema nervioso está cableado para responder a la novedad. Los creadores de edutainment explotan este mecanismo al introducir cambios visuales, sonoros o narrativos cada 20-30 segundos, previniendo que el espectador entre en modo piloto automático.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Diseño de Sonido</div>
+    <div class="module-title">Diseño de Sonido Aural — Foley y Capas</div>
+    <div class="module-sub">El audio como vector de emoción y retención: música, SFX, voz y silencios estratégicos</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>El audio no es un complemento del video: es el 50% de la experiencia. Los espectadores perdonan video de baja calidad, pero abandonan inmediatamente ante audio de baja calidad.</p>
+    <table>
+      <tr><th>Capa de Audio</th><th>Función</th><th>Nivel relativo</th></tr>
+      <tr><td>Voz principal (dry)</td><td>Narración / información</td><td>0 dBFS referencia</td></tr>
+      <tr><td>Música de fondo</td><td>Estado emocional / energía</td><td>-18 a -24 dBFS bajo voz</td></tr>
+      <tr><td>SFX / Foley</td><td>Énfasis, impacto, confirmación</td><td>-12 a -18 dBFS</td></tr>
+      <tr><td>Whoosh / Swipe</td><td>Transición visual acompañada</td><td>-15 dBFS transitorio</td></tr>
+      <tr><td>Silencio estratégico</td><td>Pausa dramática (patrón interrupt)</td><td>-∞ (0.3-0.8s)</td></tr>
+    </table>
+    <p style="margin-top:10px;"><strong>EQ para voz en tutorial:</strong> High-pass a 80 Hz (eliminar rumble), corte de 200-300 Hz (reducir mud), boost de 2-4 kHz (presencia/claridad).</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Procesador de voz tutorial con Python</h3>
+    <pre>import numpy as np, librosa, soundfile as sf
+from scipy.signal import butter, sosfilt
+
+def process_tutorial_voice(input_path: str, output_path: str, sr_target: int = 44100):
+    y, sr = librosa.load(input_path, sr=sr_target, mono=True)
+
+    # 1. High-pass filter (80 Hz)
+    sos = butter(4, 80, btype='high', fs=sr, output='sos')
+    y   = sosfilt(sos, y)
+
+    # 2. EQ paramétrico simplificado
+    def parametric_eq(audio, freq, gain_db, Q, fs):
+        A   = 10 ** (gain_db / 40); w0 = 2 * np.pi * freq / fs
+        alpha = np.sin(w0) / (2 * Q)
+        b = [1 + alpha*A, -2*np.cos(w0), 1 - alpha*A]
+        a = [1 + alpha/A, -2*np.cos(w0), 1 - alpha/A]
+        from scipy.signal import lfilter
+        return lfilter(b, a, audio)
+
+    y = parametric_eq(y, freq=250,  gain_db=-3, Q=0.7,  fs=sr)  # scoop mud
+    y = parametric_eq(y, freq=3000, gain_db=+2, Q=1.5,  fs=sr)  # presencia
+
+    # 3. Normalizar a -3 dBFS
+    peak   = np.abs(y).max(); target = 10 ** (-3 / 20)
+    y      = y * (target / peak)
+
+    sf.write(output_path, y, sr)
+    print(f"Peak final: {20*np.log10(np.abs(y).max()):.1f} dBFS")
+    print(f"RMS final:  {20*np.log10(np.sqrt(np.mean(y**2))):.1f} dBFS")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q9 · High-Pass Filter en Voz Tutorial</h4>
+    <p class="quiz-q">¿Por qué se aplica un high-pass filter a 80 Hz en el procesamiento de voz tutorial y qué ocurre con el headroom si se omite?</p>
+    <details><summary>Ver respuesta</summary><p>Para eliminar el ruido de baja frecuencia (rumble de HVAC, vibraciones de mesa, manipulación de micrófono) que no contiene información de voz pero ocupa headroom y enturbia el mix. Si se omite, las bajas frecuencias parásitas consumen amplitud en el limitador/compresor final, reduciendo el headroom disponible para la voz. Esto obliga a bajar el nivel general o resulta en clipping. Las frecuencias bajo 80 Hz no contribuyen a la inteligibilidad de la voz humana, por lo que su eliminación no afecta la calidad perceptual.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Analytics y KPIs</div>
+    <div class="module-title">Analytics y KPIs de Retención</div>
+    <div class="module-sub">Medir lo que importa: retention curves, CTR, AVD y loops de mejora continua</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <table>
+      <tr><th>KPI</th><th>Fórmula / Definición</th><th>Benchmark</th><th>Optimizar con</th></tr>
+      <tr><td>CTR</td><td>Clics/Impresiones</td><td>≥5% educativo</td><td>Thumbnail A/B, title</td></tr>
+      <tr><td>AVD</td><td>Tiempo total visto / vistas</td><td>≥40% duración</td><td>Pacing, hooks, edición</td></tr>
+      <tr><td>Retention at 30s</td><td>% viewers en s=30</td><td>≥70%</td><td>Hook + ABT apertura</td></tr>
+      <tr><td>Completion Rate</td><td>Views al 95% / views totales</td><td>≥30%</td><td>Cierre fuerte, CTA</td></tr>
+      <tr><td>Re-watch Rate</td><td>Vistas totales / espectadores únicos</td><td>≥1.3×</td><td>Contenido de referencia</td></tr>
+      <tr><td>Engagement Rate</td><td>(Likes+Coms+Shares)/Views</td><td>≥3%</td><td>Preguntas directas, comunidad</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Analizador de métricas de retención</h3>
+    <pre>import numpy as np, pandas as pd
+from typing import List, Dict
+
+def analyze_retention_curve(retention_data: List[Dict]) -> Dict:
+    df = pd.DataFrame(retention_data).sort_values('time_pct')
+    df['drop'] = df['retention_pct'].diff().fillna(0)
+    drops = df[df['drop'] < -5].to_dict('records')
+    avd_pct         = float(df.set_index('time_pct')['retention_pct'].mean())
+    retention_30s   = float(df[df['time_pct'] <= 10]['retention_pct'].mean())
+    completion_rate = float(df[df['time_pct'] >= 95]['retention_pct'].mean())
+    return {
+        'avd_pct':         round(avd_pct, 1),
+        'retention_30s':   round(retention_30s, 1),
+        'completion_rate': round(completion_rate, 1),
+        'n_drops':         len(drops),
+        'drop_timestamps': [f"{d['time_pct']:.0f}%" for d in drops[:3]],
+    }
+
+def benchmark_assessment(kpis: Dict) -> List[str]:
+    recs = []
+    if kpis['retention_30s'] < 70:
+        recs.append("Hook débil: reforzar los primeros 5s con pregunta o tensión")
+    if kpis['avd_pct'] < 40:
+        recs.append("Edición lenta: aumentar pacing, más pattern interrupts")
+    if kpis['completion_rate'] < 30:
+        recs.append("Cierre débil: añadir teaser del próximo módulo en los últimos 30s")
+    if not recs: recs.append("Métricas por encima de benchmark en todos los KPIs")
+    return recs</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q10 · CTR Alto / AVD Bajo</h4>
+    <p class="quiz-q">Un video tiene CTR=8% (excelente) pero AVD=22% (muy bajo). ¿Cuál es el diagnóstico más probable y qué produce esta combinación?</p>
+    <details><summary>Ver respuesta</summary><p>El thumbnail/título atrae clics pero el contenido no cumple la promesa (clickbait); hay desconexión entre expectativa y entrega — los espectadores se van rápido. Esta combinación es la señal más clara de "bait-and-switch" narrativo: el espectador hace clic porque el título/thumbnail promete algo concreto, pero el contenido real no entrega esa promesa en los primeros minutos. El algoritmo de YouTube pesa el AVD más que el CTR para distribución, por lo que un alto CTR con bajo AVD resulta en penalización algorítmica progresiva.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Gamificación SGBL</div>
+    <div class="module-title">SGBL y Gamificación Estructural</div>
+    <div class="module-sub">Sistema de Gamificación Basado en Logros: XP, streaks, badges y retroalimentación inmediata</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>La gamificación efectiva en edutainment no es solo añadir puntos; es diseñar bucles de retroalimentación que satisfagan necesidades psicológicas fundamentales (Self-Determination Theory).</p>
+    <table>
+      <tr><th>Mecánica</th><th>Necesidad SDT</th><th>Implementación</th></tr>
+      <tr><td>XP / Niveles</td><td>Competencia</td><td>Puntos por quiz + completitud</td></tr>
+      <tr><td>Streaks</td><td>Autonomía + hábito</td><td>Días consecutivos de práctica</td></tr>
+      <tr><td>Badges</td><td>Competencia + relación</td><td>Logros compartibles en LinkedIn</td></tr>
+      <tr><td>Leaderboards</td><td>Relación (cuidado: competitive harm)</td><td>Solo local / por cohorte</td></tr>
+      <tr><td>Boss Challenges</td><td>Competencia</td><td>Proyecto HERO = boss final</td></tr>
+      <tr><td>Unlockables</td><td>Autonomía</td><td>Recursos premium al completar módulos</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Motor de gamificación SGBL</h3>
+    <pre>import json, datetime
+from dataclasses import dataclass, field
+from typing import List, Optional
+
+@dataclass
+class UserProfile:
+    name: str; xp: int = 0; level: int = 1
+    streak_days: int = 0; last_activity: Optional[str] = None
+    badges_earned: List[str] = field(default_factory=list)
+    modules_done:  List[str] = field(default_factory=list)
+
+class SGBLEngine:
+    LEVEL_THRESHOLDS = [0, 100, 250, 500, 900, 1500, 2500, 4000, 6000, 10000]
+    BADGES = {
+        'first_module':   ('Primer Paso',        50,   'Completar el primer módulo'),
+        'week_streak':    ('Semana Ardiente',     200,  '7 días seguidos de práctica'),
+        'hero_complete':  ('Proyecto HERO',       500,  'Completar el proyecto HERO'),
+        'half_course':    ('A Mitad de Camino',   100,  '7 módulos completados'),
+        'course_complete':('Maestro',             1000, 'Completar los 15 módulos'),
+    }
+
+    def __init__(self, user: UserProfile):
+        self.user = user; self.log: List[str] = []
+
+    def award_xp(self, amount: int, reason: str):
+        self.user.xp += amount; self.log.append(f"+{amount} XP: {reason}")
+        for lvl, threshold in enumerate(self.LEVEL_THRESHOLDS):
+            if self.user.xp >= threshold: self.user.level = lvl
+
+    def complete_module(self, module_id: str):
+        if module_id in self.user.modules_done: return
+        self.user.modules_done.append(module_id)
+        self.award_xp(80, f"Módulo {module_id} completado")
+        n = len(self.user.modules_done)
+        if n >= 1:  self._award_badge('first_module')
+        if n >= 7:  self._award_badge('half_course')
+        if n >= 15: self._award_badge('course_complete')
+
+    def _award_badge(self, badge_id: str):
+        if badge_id not in self.user.badges_earned:
+            name, xp_reward, desc = self.BADGES[badge_id]
+            self.user.badges_earned.append(badge_id)
+            self.award_xp(xp_reward, f"Badge '{name}' desbloqueado")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q11 · Leaderboards y Self-Determination Theory</h4>
+    <p class="quiz-q">¿Por qué los leaderboards globales pueden ser contraproducentes en cursos educativos, según la Self-Determination Theory?</p>
+    <details><summary>Ver respuesta</summary><p>Desplazan la motivación intrínseca (curiosidad, competencia real) por motivación extrínseca (ranking); los estudiantes en posiciones bajas pierden autonomía percibida y abandonan, lo que daña la completion rate. La SDT establece que la motivación intrínseca (aprender porque es interesante) es más sostenible y produce aprendizaje más profundo. Un leaderboard global coloca a la mayoría de usuarios en posiciones "perdedoras", dañando la percepción de competencia — una de las tres necesidades básicas de la SDT — y aumentando el abandono entre los estudiantes más rezagados, que son precisamente los que más necesitan apoyo.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Casos de Estudio</div>
+    <div class="module-title">Casos de Estudio Maestros</div>
+    <div class="module-sub">South Park, MLK, MrBeast y "A Quiet Place": anatomía de la narrativa que impacta</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <table>
+      <tr><th>Caso</th><th>Técnica clave</th><th>Lección para edutainment</th></tr>
+      <tr><td>South Park</td><td>6-Day Turnaround: cada episodio en 6 días</td><td>La restricción fuerza el ABT puro: sin relleno, solo AND-BUT-THEREFORE</td></tr>
+      <tr><td>MLK "I Have a Dream"</td><td>Sparkline perfecta: IS (segregación) × 8 → COULD BE (igualdad) × 8</td><td>La repetición de COULD BE construye emoción acumulativa</td></tr>
+      <tr><td>MrBeast</td><td>Hook visual en frame 0 + recompensa constante + interrupt cada 15s</td><td>El espectador siempre sabe qué va a ganar si sigue mirando</td></tr>
+      <tr><td>A Quiet Place</td><td>Sonido como narrativa: el silencio es la amenaza</td><td>El audio no decora: es protagonista. Usa silencios estratégicos</td></tr>
+      <tr><td>3Blue1Brown</td><td>Visualización matemática + voz lenta y deliberada (125 WPM)</td><td>La calidad visual puede compensar velocidad más lenta</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Anatomía del método South Park + MrBeast</h3>
+    <pre>from dataclasses import dataclass
+
+@dataclass
+class SouthParkEpisode:
+    """
+    South Park escribe el ABT primero, luego construye los gags.
+    Trey y Matt: "Si no puedes resumirlo en 3 frases AND/BUT/THEREFORE, no tienes episodio."
+    """
+    title: str; and_clause: str; but_clause: str; there_clause: str
+
+    def render_abt(self):
+        print(f"\nEP: {self.title}")
+        print(f"  AND:       {self.and_clause}")
+        print(f"  BUT:       {self.but_clause}")
+        print(f"  THEREFORE: {self.there_clause}")
+
+@dataclass
+class MrBeastHook:
+    frame_0:      str  # imagen o acción en el primer frame
+    promise:      str  # qué va a ganar/ver el espectador
+    social_proof: str  # credibilidad o escala del challenge
+    urgency:      str  # por qué ver AHORA
+
+    def hook_score(self) -> int:
+        return sum([20 if self.frame_0 else 0,  30 if self.promise else 0,
+                    25 if self.social_proof else 0, 25 if self.urgency else 0])
+
+ep = SouthParkEpisode(
+    title       = "M2: MFCC",
+    and_clause  = "Los ingenieros de audio usan el oído para mezclar,",
+    but_clause  = "pero el 95% de los clasificadores ML que usan FFT cruda fallan,",
+    there_clause= "por lo tanto el MFCC simula la percepción auditiva y supera a la FFT."
+)
+ep.render_abt()</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q12 · Restricción Temporal y Calidad Narrativa</h4>
+    <p class="quiz-q">¿Por qué el método South Park de "6 días" produce narrativas más limpias que un proceso sin deadline en términos del modelo ABT?</p>
+    <details><summary>Ver respuesta</summary><p>La restricción temporal fuerza la síntesis: solo queda lo esencial del AND-BUT-THEREFORE; sin deadline, el creador rellena con contexto innecesario (muchos AND) que diluye el conflicto central. La abundancia de tiempo disponible permite — y psicológicamente invita a — añadir más contexto, ejemplos y matices (más AND), lo que reduce el ratio BUT/AND. La restricción de 6 días obliga a priorizar: si solo hay tiempo para 3 frases, tienen que ser las 3 frases del ABT. La escasez elimina lo no esencial, produciendo el ratio óptimo de Olson (10-29%) de forma natural.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Mobile y Distribución</div>
+    <div class="module-title">Optimización Mobile y Distribución</div>
+    <div class="module-sub">Mobile-first design, subtítulos accesibles y estrategia de distribución multi-plataforma</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-a">A</span> Núcleo Teórico</h3>
+    <p>El 70-80% del consumo de video educativo es mobile (datos YouTube 2024). El diseño mobile-first cambia radicalmente decisiones de producción.</p>
+    <table>
+      <tr><th>Elemento</th><th>Desktop</th><th>Mobile-First</th></tr>
+      <tr><td>Texto en pantalla</td><td>12-14pt</td><td>≥24pt, máx 3 líneas</td></tr>
+      <tr><td>UI demos</td><td>Vista completa</td><td>Zoom en región relevante (PIPs)</td></tr>
+      <tr><td>Subtítulos</td><td>Opcionales</td><td>Auto-generados + revisados (85% usuarios)</td></tr>
+      <tr><td>Aspect ratio</td><td>16:9 solo</td><td>16:9 + clips 9:16 Shorts/Reels</td></tr>
+      <tr><td>Hook timing</td><td>10s tolerancia</td><td>3s máximo</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3><span class="tag tag-b">B</span> Laboratorio — Generador de subtítulos y plan de distribución</h3>
+    <pre>import json
+from pathlib import Path
+
+def transcribe_to_srt(audio_path: str, output_srt: str,
+                       model_size: str = 'medium', language: str = 'es') -> str:
+    import whisper
+    model  = whisper.load_model(model_size)
+    result = whisper.transcribe(model, audio_path, language=language,
+                                 word_timestamps=True, verbose=False)
+    srt_lines = []
+    for i, seg in enumerate(result['segments'], 1):
+        start = format_srt_time(seg['start'])
+        end   = format_srt_time(seg['end'])
+        srt_lines.extend([str(i), f"{start} --> {end}", seg['text'].strip(), ""])
+    srt_content = '\n'.join(srt_lines)
+    Path(output_srt).write_text(srt_content, encoding='utf-8')
+    return srt_content
+
+def format_srt_time(seconds: float) -> str:
+    h = int(seconds // 3600); m = int((seconds % 3600) // 60)
+    s = int(seconds % 60);    ms = int((seconds - int(seconds)) * 1000)
+    return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
+
+def generate_distribution_plan(video_title: str, duration_min: float) -> dict:
+    is_short = duration_min <= 3; is_medium = 3 < duration_min <= 20
+    platforms = {
+        'YouTube Main':       {'suitable': True,      'checklist': ['Thumbnail A/B', 'Descripción con timestamps', 'Subtítulos SRT revisados', 'Cards y End Screen']},
+        'YouTube Shorts':     {'suitable': is_short,  'checklist': ['Corte vertical del hook', 'Texto overlay ≥24pt', '#Shorts en descripción']},
+        'LinkedIn':           {'suitable': is_medium, 'checklist': ['Subtítulos burned-in (85% muted)', 'Primer frame informativo']},
+    }
+    return platforms</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q13 · LinkedIn y Video en Silencio</h4>
+    <p class="quiz-q">¿Por qué el 85% de los usuarios de LinkedIn ven videos en silencio y qué cambio fundamental implica esto en la producción?</p>
+    <details><summary>Ver respuesta</summary><p>LinkedIn autoplay en silencio en el feed; sin subtítulos burned-in el espectador no recibe el mensaje. La producción debe tratarse como si fuera muda: el visual y los textos overlay deben comunicar sin audio. Esto implica: subtítulos quemados en el video (no opcionales), text overlays grandes que resuman el punto clave de cada sección, primer frame informativo con texto legible, y que la narrativa visual sea autónoma — las imágenes y gráficos deben contar la historia incluso si el espectador nunca activa el sonido.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto HERO — Módulo Edutainment Completo</div>
+    <div class="module-sub">Diseña, produce y publica un módulo educativo que cumpla todos los estándares de ingeniería narrativa</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica del Proyecto HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>Script ABT (ratio 10-29%)</td><td>Analizador ABT confirma ratio, hook de 5s identificable</td><td>25</td></tr>
+        <tr><td>Retención ≥40% AVD</td><td>Video publicado en YouTube con analytics reales a 7 días</td><td>25</td></tr>
+        <tr><td>Pattern interrupts planificados</td><td>Plan documentado + mínimo 1 interrupt cada 30s en edición</td><td>20</td></tr>
+        <tr><td>Audio procesado correctamente</td><td>Voz -3dBFS peak, música -18dBFS, sin clipping</td><td>15</td></tr>
+        <tr><td>Hero's Journey aplicado</td><td>Mapa de 12 etapas completado con content real</td><td>10</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman Final — Explica sin notas</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · ABT y Ratio</h4>
+      <p class="quiz-q">Un script de 400 palabras tiene 8 conectores AND y 1 BUT. ¿Cuál es el ratio BUT/AND, está en rango óptimo, y necesitas añadir más BUT para mejorar la narrativa?</p>
+      <details><summary>Ver respuesta</summary><p>Ratio = 1/8 × 100 = 12.5% — ya está en rango óptimo (10-29%). No es necesario añadir más BUT. El script ya tiene tensión narrativa adecuada según el modelo de Randy Olson. El rango 10-29% significa que hay suficiente conflicto para activar la atención sin crear un exceso de tensión que resulte agotador o incoherente. Con 12.5%, el script está hacia el extremo inferior del rango óptimo, lo que lo hace apropiado para contenido educativo (que requiere más contexto AND que contenido de entretenimiento puro).</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · Ecuación de Aprendizaje Comparativa</h4>
+      <p class="quiz-q">Curso A: c=8, a=9, b=7, R=0.2, t=40h. Curso B: c=7, a=7, b=6, R=0.6, t=20h. ¿Cuál tiene mayor L y qué variable explica el resultado?</p>
+      <details><summary>Ver respuesta</summary><p>Curso A: (8+9+7)×0.2×40 = 24×8 = 192. Curso B: (7+7+6)×0.6×20 = 20×12 = 240. El Curso B produce más aprendizaje con la mitad del tiempo, porque la retención (R=0.6 vs 0.2) es el multiplicador más poderoso. R=0.6 es 3 veces mayor que R=0.2, mientras que el Curso A solo compensa con variables lineales (c+a+b=24 vs 20, y t=40 vs 20). La lección: invertir en práctica espaciada y retrieval practice (aumentar R) tiene mayor retorno que añadir más horas de exposición pasiva.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · Sparkline y Posición del CTA</h4>
+      <p class="quiz-q">¿En qué punto exacto del Sparkline va el "Call to Action" y por qué ese momento específico maximiza la conversión?</p>
+      <details><summary>Ver respuesta</summary><p>Al final, después del último COULD BE (New Bliss): el público está en el estado emocional más alto, con máxima motivación y mínima resistencia al cambio. La estructura Sparkline construye emoción acumulativa mediante múltiples oscilaciones IS↔COULD_BE. Al llegar al CTA, el público ha experimentado repetidamente el contraste entre la realidad actual (frustración) y el futuro posible (aspiración). En el pico emocional del New Bliss, la resistencia cognitiva al cambio está en su mínimo — el CTA en ese momento convierte la energía emocional acumulada en acción concreta con máxima eficiencia.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · Instructor como Mentor vs Héroe</h4>
+      <p class="quiz-q">Un instructor de curso online dice: "Yo construí este sistema para Netflix y en este curso te enseño mi método." ¿Qué error narrativo comete y cómo se reformula?</p>
+      <details><summary>Ver respuesta</summary><p>Se posiciona como el héroe en lugar del mentor: el instructor es Gandalf/Yoda, no Frodo/Luke. Hablar de sus logros propios centra la narrativa en él, desplazando al estudiante del viaje. La reformulación correcta: "Tú vas a construir un sistema de recomendación. Yo te doy el mapa del territorio que tomé 5 años en aprender — para que tú lo hagas en 6 semanas." Esta versión: (1) posiciona al estudiante como protagonista ("Tú vas a construir"), (2) convierte la experiencia del instructor en una herramienta al servicio del estudiante, (3) crea expectativa concreta y alcanzable.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · Diagnóstico de Analytics</h4>
+      <p class="quiz-q">Tu video tiene Retention at 30s = 85% pero AVD = 18%. ¿Qué parte de tu producción está fallando y cuáles son las primeras 3 acciones de mejora?</p>
+      <details><summary>Ver respuesta</summary><p>El cuerpo del video: el hook es excelente (85% supera el minuto 0.5) pero el contenido posterior pierde al espectador rápidamente. El pacing, la densidad técnica o la falta de pattern interrupts causan la caída. Primeras 3 acciones: (1) Revisar la curva de retención en YouTube Studio para identificar los timestamps exactos de mayor drop — ahí está el problema específico. (2) Añadir pattern interrupts cada 20-25s en las secciones con mayor caída (zoom cuts, B-roll, gráficos). (3) Simplificar las secciones técnicas más densas o dividir el video en episodios más cortos — el AVD de 18% en un video de duración media indica que el espectador abandona muy temprano, posiblemente en el minuto 1-2.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_edutainment_gamificacion_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Ecosistema Edutainment'},
+    {id:'m1',  label:'M1 · Modelo ABT'},
+    {id:'m2',  label:'M2 · Ecuación L=(c+a+b)×R×t'},
+    {id:'m3',  label:'M3 · Hook de 5 Segundos'},
+    {id:'m4',  label:'M4 · Sparklines Duarte'},
+    {id:'m5',  label:'M5 · Hero\'s Journey'},
+    {id:'m6',  label:'M6 · Pre-Producción'},
+    {id:'m7',  label:'M7 · Edición Rítmica'},
+    {id:'m8',  label:'M8 · Pattern Interrupts'},
+    {id:'m9',  label:'M9 · Diseño de Sonido'},
+    {id:'m10', label:'M10 · Analytics y KPIs'},
+    {id:'m11', label:'M11 · Gamificación SGBL'},
+    {id:'m12', label:'M12 · Casos de Estudio'},
+    {id:'m13', label:'M13 · Mobile y Distribución'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item'+(state.done.includes(m.id)?' done':'')+(state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+  function updateProgress(){
+    const pct = Math.round((state.done.length/MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id; save(); buildNav(); window.scrollTo(0,0);
+  };
+  window.completeAndNext = function(current,next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save(); if(next) goTo(next); else buildNav();
+  };
+  buildNav(); goTo(state.current);
+})();
+</script>
+</body>
+</html>

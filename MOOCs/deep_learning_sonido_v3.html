@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOOC: Deep Learning para Sonido — Zero to Hero (v3)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0b0f17; --surface:#111827; --surface2:#1f2937;
+  --accent:#06b6d4; --accent2:#22d3ee; --warn:#f59e0b;
+  --text:#e5e7eb; --muted:#9ca3af; --border:#374151;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'Fira Code',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+/* SIDEBAR */
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* MAIN */
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+/* CODE */
+pre{background:#060a12;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono);color:#a5f3fc}
+code{font-family:var(--font-mono);font-size:12.5px;background:#060a12;padding:2px 6px;border-radius:4px}
+/* SVG */
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+/* FORMULA */
+.formula{background:rgba(6,182,212,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+/* METRICS GRID */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+/* WARN BOX */
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+/* HERO */
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+/* QUIZ */
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(0,0,0,.15);border-radius:6px;line-height:1.6}
+/* BTN */
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>Deep Learning para Sonido</h2>
+    <p>Zero to Hero · 15 módulos · Perfil Teleco/Sonólogo</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Briefing</div>
+    <div class="module-title">El audio como tensor: el contrato con la GPU</div>
+    <div class="module-sub">Shapes, pipelines eficientes, mixed precision y reproducibilidad</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 760 380" width="760" height="380" font-family="Inter,sans-serif" font-size="12" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="g0" x1="0" x2="1"><stop offset="0" stop-color="#06b6d4"/><stop offset="1" stop-color="#a855f7"/></linearGradient>
+      </defs>
+      <rect x="290" y="10" width="180" height="50" rx="10" fill="url(#g0)"/>
+      <text x="380" y="40" text-anchor="middle" fill="#0b0f17" font-weight="800" font-size="14">DEEP LEARNING SONIDO</text>
+      <rect x="20" y="90" width="160" height="44" rx="8" fill="#111827" stroke="#06b6d4"/>
+      <text x="100" y="110" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">M0-M2 Fundamentos</text>
+      <text x="100" y="125" text-anchor="middle" fill="#9ca3af" font-size="10">Tensor · CNN · RNN</text>
+      <rect x="200" y="90" width="160" height="44" rx="8" fill="#111827" stroke="#a855f7"/>
+      <text x="280" y="110" text-anchor="middle" fill="#d8b4fe" font-size="11" font-weight="700">M3-M4 Generativos</text>
+      <text x="280" y="125" text-anchor="middle" fill="#9ca3af" font-size="10">VAE · GAN</text>
+      <rect x="380" y="90" width="160" height="44" rx="8" fill="#111827" stroke="#f59e0b"/>
+      <text x="460" y="110" text-anchor="middle" fill="#fcd34d" font-size="11" font-weight="700">M5-M6 Transformers</text>
+      <text x="460" y="125" text-anchor="middle" fill="#9ca3af" font-size="10">AST · Wav2Vec2 · BEATs</text>
+      <rect x="560" y="90" width="180" height="44" rx="8" fill="#111827" stroke="#22c55e"/>
+      <text x="650" y="110" text-anchor="middle" fill="#86efac" font-size="11" font-weight="700">M7-M8 Diffusion+Voc</text>
+      <text x="650" y="125" text-anchor="middle" fill="#9ca3af" font-size="10">DDPM · HiFi-GAN</text>
+      <rect x="20" y="170" width="180" height="44" rx="8" fill="#111827" stroke="#ec4899"/>
+      <text x="110" y="190" text-anchor="middle" fill="#f9a8d4" font-size="11" font-weight="700">M9 Streaming</text>
+      <text x="110" y="205" text-anchor="middle" fill="#9ca3af" font-size="10">Causal · Online</text>
+      <rect x="220" y="170" width="180" height="44" rx="8" fill="#111827" stroke="#ec4899"/>
+      <text x="310" y="190" text-anchor="middle" fill="#f9a8d4" font-size="11" font-weight="700">M10 Quantization</text>
+      <text x="310" y="205" text-anchor="middle" fill="#9ca3af" font-size="10">PTQ · QAT · INT8</text>
+      <rect x="420" y="170" width="180" height="44" rx="8" fill="#111827" stroke="#ec4899"/>
+      <text x="510" y="190" text-anchor="middle" fill="#f9a8d4" font-size="11" font-weight="700">M11-M12 Robustez/DDP</text>
+      <text x="510" y="205" text-anchor="middle" fill="#9ca3af" font-size="10">Adversarial · Multi-GPU</text>
+      <rect x="620" y="170" width="120" height="44" rx="8" fill="#111827" stroke="#3b82f6"/>
+      <text x="680" y="190" text-anchor="middle" fill="#93c5fd" font-size="11" font-weight="700">M13 Deploy</text>
+      <text x="680" y="205" text-anchor="middle" fill="#9ca3af" font-size="10">ONNX · CoreML · RAVE</text>
+      <rect x="290" y="280" width="180" height="50" rx="10" fill="#a855f7"/>
+      <text x="380" y="312" text-anchor="middle" fill="#fff" font-weight="800" font-size="14">PROYECTO HERO</text>
+      <line x1="380" y1="60" x2="100" y2="90" stroke="#374151"/>
+      <line x1="380" y1="60" x2="280" y2="90" stroke="#374151"/>
+      <line x1="380" y1="60" x2="460" y2="90" stroke="#374151"/>
+      <line x1="380" y1="60" x2="650" y2="90" stroke="#374151"/>
+      <line x1="100" y1="134" x2="110" y2="170" stroke="#374151"/>
+      <line x1="280" y1="134" x2="310" y2="170" stroke="#374151"/>
+      <line x1="460" y1="134" x2="510" y2="170" stroke="#374151"/>
+      <line x1="650" y1="134" x2="680" y2="170" stroke="#374151"/>
+      <line x1="110" y1="214" x2="380" y2="280" stroke="#374151"/>
+      <line x1="310" y1="214" x2="380" y2="280" stroke="#374151"/>
+      <line x1="510" y1="214" x2="380" y2="280" stroke="#374151"/>
+      <line x1="680" y1="214" x2="380" y2="280" stroke="#374151"/>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">15</div><div class="metric-label">Módulos</div></div>
+    <div class="metric"><div class="metric-val">PyTorch 2.x</div><div class="metric-label">Framework core</div></div>
+    <div class="metric"><div class="metric-val">2-3×</div><div class="metric-label">Speedup AMP FP16</div></div>
+    <div class="metric"><div class="metric-val">O(T²)</div><div class="metric-label">Coste self-attention</div></div>
+    <div class="metric"><div class="metric-val">RAVE</div><div class="metric-label">VAE tiempo real</div></div>
+    <div class="metric"><div class="metric-val">FAD</div><div class="metric-label">Métrica generativa</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Stack del curso y prerrequisitos</h3>
+    <p>Asumimos: ya conoces backprop, Adam, BatchNorm, dropout. El curso es <em>audio-céntrico</em>, no DL-básico. Stack: PyTorch · torchaudio · transformers · diffusers · lightning · accelerate · PEFT · ONNX · TensorRT · CoreML · Wandb · MLflow.</p>
+    <table>
+      <tr><th>Capa</th><th>Tecnología</th><th>Rol</th></tr>
+      <tr><td>Core</td><td>PyTorch 2.x · torchaudio · CUDA 12</td><td>Tensores, autograd, GPU</td></tr>
+      <tr><td>Training</td><td>PyTorch Lightning · accelerate</td><td>Loop estándar, multi-GPU</td></tr>
+      <tr><td>Generativos</td><td>diffusers · transformers · audiocraft</td><td>VAE, GAN, diffusion, MusicGen</td></tr>
+      <tr><td>SSL</td><td>fairseq · BEATs · HuBERT</td><td>Self-supervised pretraining</td></tr>
+      <tr><td>Deploy</td><td>ONNX · TensorRT · CoreML · RAVE nn~</td><td>Inference cross-platform</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Núcleo Teórico Pareto — Audio como tensor</h3>
+    <table>
+      <tr><th>Representación</th><th>Shape PyTorch</th><th>Cuándo</th></tr>
+      <tr><td>Waveform mono</td><td>(B, 1, T)</td><td>1D-CNN, end-to-end (WaveNet, Demucs)</td></tr>
+      <tr><td>Waveform estéreo</td><td>(B, 2, T)</td><td>Música (separación, mastering)</td></tr>
+      <tr><td>Mel-spectrogram</td><td>(B, 1, n_mels, T_frames)</td><td>2D-CNN, Transformer (AST)</td></tr>
+      <tr><td>Multi-feat stack</td><td>(B, F, T_frames)</td><td>RNN, frame-by-frame tasks</td></tr>
+      <tr><td>Tokens cuantizados</td><td>(B, T_tokens)</td><td>EnCodec, language models audio</td></tr>
+    </table>
+    <p style="margin-top:12px;font-size:13px;color:var(--muted);">Convención PyTorch: batch primero. torch.nn.Conv1d espera (B, C, T). Confundir T y C es el bug #1 del campo.</p>
+    <pre>
+from torch.utils.data import DataLoader
+
+loader = DataLoader(
+    dataset, batch_size=32,
+    num_workers=8, pin_memory=True,
+    persistent_workers=True, prefetch_factor=2,
+    shuffle=True, drop_last=True,
+)
+
+# Mixed precision AMP — 2-3x speedup en Ampere/Hopper
+import torch
+scaler = torch.cuda.amp.GradScaler()
+for x, y in loader:
+    opt.zero_grad()
+    with torch.cuda.amp.autocast(dtype=torch.float16):
+        out  = model(x)
+        loss = criterion(out, y)
+    scaler.scale(loss).backward()
+    scaler.step(opt)
+    scaler.update()</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · CNN</div>
+    <div class="module-title">CNN para Audio: ResNet, EfficientNet y AudioCNN propios</div>
+    <div class="module-sub">Receptive field, skip connections, kernels asimétricos, pooling estratégico</div>
+  </div>
+
+  <div class="card">
+    <h3>1.1 Receptive Field y ResNet</h3>
+    <p>Cada capa expande lo que el output puede "ver" del input. RF_n = RF_{n-1} + (k-1) · stride_acumulado. Con 4 stages CNN → RF ≈ 100 frames temporales. A hop=512, sr=22050 → ~2.3s.</p>
+    <p>He et al. 2015. Skip connections: y = F(x) + x. Si F(x) → 0, la red puede ser identidad. Por defecto en cualquier audio CNN moderna.</p>
+    <pre>
+import torch.nn as nn
+
+class ResidualBlock(nn.Module):
+    def __init__(self, c_in, c_out, stride=1):
+        super().__init__()
+        self.conv1 = nn.Conv2d(c_in, c_out, 3, stride, 1, bias=False)
+        self.bn1   = nn.BatchNorm2d(c_out)
+        self.conv2 = nn.Conv2d(c_out, c_out, 3, 1, 1, bias=False)
+        self.bn2   = nn.BatchNorm2d(c_out)
+        self.skip  = nn.Identity() if (stride==1 and c_in==c_out) else \
+                     nn.Conv2d(c_in, c_out, 1, stride, bias=False)
+    def forward(self, x):
+        h = torch.nn.functional.relu(self.bn1(self.conv1(x)))
+        h = self.bn2(self.conv2(h))
+        return torch.nn.functional.relu(h + self.skip(x))</pre>
+  </div>
+
+  <div class="card">
+    <h3>1.2 Kernels asimétricos y pooling</h3>
+    <p>El eje frecuencia NO es traslación-invariante. Kernels comunes: <strong>3×7</strong> (corto en freq, largo en tiempo) o <strong>7×3</strong> (al revés según task). Pooling solo en tiempo si el modelo discrimina identidad espectral.</p>
+    <table>
+      <tr><th>Variante EfficientNet</th><th>Params</th><th>FLOPs</th><th>Cuándo</th></tr>
+      <tr><td>B0</td><td>5.3 M</td><td>0.39 GFLOPs</td><td>Edge / mobile</td></tr>
+      <tr><td>B3</td><td>12 M</td><td>1.8 GFLOPs</td><td>Sweet spot</td></tr>
+      <tr><td>B7</td><td>66 M</td><td>37 GFLOPs</td><td>Top accuracy</td></tr>
+    </table>
+    <pre>
+import torch, torchvision.models as tvm
+
+# EfficientNet-B0 adaptado a mono mel-spec
+backbone = tvm.efficientnet_b0(weights="DEFAULT")
+old_conv = backbone.features[0][0]
+new_conv = torch.nn.Conv2d(1, old_conv.out_channels,
+                            kernel_size=old_conv.kernel_size,
+                            stride=old_conv.stride, padding=old_conv.padding, bias=False)
+new_conv.weight.data = old_conv.weight.data.mean(dim=1, keepdim=True)
+backbone.features[0][0] = new_conv
+backbone.classifier[1] = torch.nn.Linear(backbone.classifier[1].in_features, 10)</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · RNN</div>
+    <div class="module-title">RNN/LSTM/GRU + CTC: cuando el orden importa</div>
+    <div class="module-sub">LSTM cell, BiLSTM, CRNN canónica, CTC loss sin alineamiento</div>
+  </div>
+
+  <div class="card">
+    <h3>LSTM cell y CRNN canónica</h3>
+    <pre>
+# LSTM cell (Hochreiter & Schmidhuber 1997)
+f_t = σ(W_f · [h_{t-1}, x_t] + b_f)    # forget gate
+i_t = σ(W_i · [h_{t-1}, x_t] + b_i)    # input gate
+g_t = tanh(W_g · [h_{t-1}, x_t] + b_g) # candidate
+o_t = σ(W_o · [h_{t-1}, x_t] + b_o)    # output gate
+C_t = f_t * C_{t-1} + i_t * g_t         # cell state (long-term)
+h_t = o_t * tanh(C_t)                   # hidden state</pre>
+    <pre>
+import torch.nn as nn
+
+class CRNN(nn.Module):
+    def __init__(self, n_classes=10, hidden=256):
+        super().__init__()
+        self.cnn = nn.Sequential(
+            nn.Conv2d(1, 32, 3, padding=1), nn.ReLU(), nn.MaxPool2d((2,1)),
+            nn.Conv2d(32, 64, 3, padding=1), nn.ReLU(), nn.MaxPool2d((2,1)),
+            nn.Conv2d(64, 128, 3, padding=1), nn.ReLU(),
+        )
+        self.lstm = nn.LSTM(128*32, hidden, bidirectional=True, batch_first=True)
+        self.fc   = nn.Linear(2*hidden, n_classes)
+
+    def forward(self, x):   # (B, 1, n_mels=128, T)
+        h = self.cnn(x)     # (B, 128, 32, T)
+        B, C, F, T = h.shape
+        h = h.permute(0, 3, 1, 2).reshape(B, T, C*F)
+        h, _ = self.lstm(h) # (B, T, 2*hidden)
+        return self.fc(h)   # (B, T, n_classes)</pre>
+  </div>
+
+  <div class="card">
+    <h3>CTC Loss — sin alineamiento frame-a-frame</h3>
+    <p>Graves et al. 2006. Permite entrenar sin saber qué label corresponde a qué frame. El token blank desambigua repeticiones: sin él, "AA" (dos letras) y "A" (una alargada) tendrían la misma secuencia tras colapso.</p>
+    <pre>
+import torch
+ctc = torch.nn.CTCLoss(blank=0, zero_infinity=True)
+
+log_probs = model(x).log_softmax(dim=-1).permute(1, 0, 2)
+loss = ctc(log_probs, targets, input_lengths, target_lengths)
+
+from torchaudio.models.decoder import ctc_decoder
+decoder = ctc_decoder(lexicon=None, tokens=tokens, blank_token="-")
+hyps = decoder(emissions)</pre>
+    <table>
+      <tr><th></th><th>LSTM</th><th>GRU</th></tr>
+      <tr><td>Gates</td><td>3 (forget, input, output)</td><td>2 (reset, update)</td></tr>
+      <tr><td>States</td><td>2 (h, C)</td><td>1 (h)</td></tr>
+      <tr><td>Speed</td><td>baseline</td><td>~25% más rápido</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Generativos I</div>
+    <div class="module-title">Autoencoders, VAE y β-VAE: comprimir y manipular</div>
+    <div class="module-sub">ELBO, reparameterization trick, posterior collapse, RAVE</div>
+  </div>
+
+  <div class="card">
+    <h3>VAE — distribución posterior parametrizada</h3>
+    <p>Kingma & Welling 2014. El encoder devuelve μ(x) y log σ²(x). Sample: z = μ + σ·ε, ε~N(0,I) (reparameterization trick — diferenciable). Loss ELBO:</p>
+    <div class="formula">L = E[||x - g(z)||²] + β · KL(N(μ, σ²) || N(0, I))</div>
+    <pre>
+import torch, torch.nn as nn
+
+class MelVAE(nn.Module):
+    def __init__(self, latent=128):
+        super().__init__()
+        self.enc = nn.Sequential(
+            nn.Conv2d(1, 32, 4, 2, 1), nn.ReLU(),
+            nn.Conv2d(32, 64, 4, 2, 1), nn.ReLU(),
+            nn.Conv2d(64, 128, 4, 2, 1), nn.ReLU(), nn.Flatten(),
+        )
+        self.fc_mu     = nn.Linear(128*16*8, latent)
+        self.fc_logvar = nn.Linear(128*16*8, latent)
+        self.fc_dec    = nn.Linear(latent, 128*16*8)
+        self.dec = nn.Sequential(
+            nn.ConvTranspose2d(128, 64, 4, 2, 1), nn.ReLU(),
+            nn.ConvTranspose2d(64, 32, 4, 2, 1), nn.ReLU(),
+            nn.ConvTranspose2d(32, 1, 4, 2, 1),
+        )
+
+    def reparam(self, mu, logvar):
+        return mu + (0.5*logvar).exp() * torch.randn_like(logvar)
+
+    def forward(self, x):
+        h = self.enc(x)
+        mu, logvar = self.fc_mu(h), self.fc_logvar(h)
+        z = self.reparam(mu, logvar)
+        return self.dec(self.fc_dec(z).view(-1, 128, 16, 8)), mu, logvar
+
+def vae_loss(x_rec, x, mu, logvar, beta=1.0):
+    rec = torch.nn.functional.mse_loss(x_rec, x, reduction="sum")
+    kl  = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    return rec + beta * kl</pre>
+  </div>
+
+  <div class="card">
+    <h3>β-VAE, posterior collapse y RAVE</h3>
+    <p>β > 1: fuerza disentanglement (cada dimensión latente captura un factor puro — timbre, pitch). Posterior collapse: el decoder ignora z (KL→0). Solución: KL annealing (β arranca en 0, sube linealmente). RAVE (Caillon & Esling 2021): VAE waveform-domain + adversarial fine-tuning, inferencia &lt;5ms en CPU, plugin nn~ para Max/MSP.</p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Generativos II</div>
+    <div class="module-title">GANs para Audio: WGAN-GP, WaveGAN, MelGAN</div>
+    <div class="module-sub">Minimax, Wasserstein, gradient penalty, spectral norm, FAD</div>
+  </div>
+
+  <div class="card">
+    <h3>WGAN-GP y Spectral Normalization</h3>
+    <p>GAN vanilla: mode collapse, vanishing gradient cuando D es demasiado bueno. WGAN (Arjovsky 2017) reemplaza Jensen-Shannon por Earth Mover Distance. GP (Gulrajani 2017) penaliza el gradiente del crítico para forzar Lipschitz-1.</p>
+    <pre>
+import torch
+def gradient_penalty(D, real, fake, device):
+    bsz = real.size(0)
+    eps = torch.rand(bsz, 1, 1, 1, device=device)
+    interp = (eps * real + (1 - eps) * fake).requires_grad_(True)
+    d_interp = D(interp)
+    grads = torch.autograd.grad(
+        outputs=d_interp, inputs=interp,
+        grad_outputs=torch.ones_like(d_interp),
+        create_graph=True, retain_graph=True,
+    )[0]
+    grads = grads.view(bsz, -1)
+    return ((grads.norm(2, dim=1) - 1) ** 2).mean()
+
+# Loss D = E[D(fake)] - E[D(real)] + 10 * GP
+# Loss G = -E[D(fake)]
+# Ratio critico/G: 5:1
+
+from torch.nn.utils import spectral_norm
+conv = spectral_norm(nn.Conv2d(64, 128, 3, padding=1))</pre>
+    <table>
+      <tr><th>Modelo</th><th>Dominio</th><th>Para qué</th></tr>
+      <tr><td>WaveGAN</td><td>waveform 1D</td><td>Síntesis sound effects 1s</td></tr>
+      <tr><td>MelGAN</td><td>waveform vocoder</td><td>TTS rápido</td></tr>
+      <tr><td>HiFi-GAN</td><td>waveform vocoder</td><td>SOTA TTS hasta 2023</td></tr>
+      <tr><td>BigVGAN</td><td>waveform vocoder</td><td>SOTA actual NVIDIA 2022</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>FAD — Fréchet Audio Distance</h3>
+    <p>Distancia Fréchet entre distribuciones de embeddings VGGish de real vs generado. Métrica perceptual robusta. FAD &lt;5 = "casi indistinguible". FAD &gt;50 = "obvio". El crítico WGAN no usa sigmoid: estima Wasserstein (real-valued), no probabilidad.</p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Transformers</div>
+    <div class="module-title">Transformers en Audio: AST, PaSST, BEATs</div>
+    <div class="module-sub">Self-attention O(T²), patches, positional encoding, LoRA</div>
+  </div>
+
+  <div class="card">
+    <h3>Self-attention y AST</h3>
+    <div class="formula">attn = softmax(Q · Kᵀ / sqrt(d_k)) · V</div>
+    <p>Coste O(T²). Para mel-spec con T=1024 es tratable. Para waveform raw (T=88k a 4s@22kHz): T²=8B → imposible sin tricks.</p>
+    <p>AST (Gong 2021): mel-spec → patches 16×16 → embeddings → Transformer encoder (12 layers, 12 heads, 768 dim). Inicializa con ViT ImageNet pretrained. PaSST (Koutini 2022): dropout estructurado de patches → 2-3× más rápido. BEATs (Microsoft 2022): SSL Transformer con masked LM sobre tokens discretos → SOTA AudioSet (mAP=48.6%).</p>
+    <pre>
+from transformers import ASTFeatureExtractor, ASTForAudioClassification, Trainer, TrainingArguments
+
+extractor = ASTFeatureExtractor.from_pretrained("MIT/ast-finetuned-audioset-10-10-0.4593")
+model     = ASTForAudioClassification.from_pretrained(
+    "MIT/ast-finetuned-audioset-10-10-0.4593",
+    num_labels=50, ignore_mismatched_sizes=True,
+)
+args = TrainingArguments(
+    output_dir="ast-esc50", num_train_epochs=10,
+    per_device_train_batch_size=8, learning_rate=5e-5,
+    warmup_ratio=0.1, weight_decay=0.01, fp16=True,
+)
+trainer = Trainer(model=model, args=args, train_dataset=ds_tr, eval_dataset=ds_va)
+trainer.train()
+# Esperado ESC-50 5-fold: accuracy 0.93-0.96</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Self-Supervised</div>
+    <div class="module-title">Self-Supervised Learning: Wav2Vec2, HuBERT, CLAP</div>
+    <div class="module-sub">Masked prediction, contrastive learning, audio-text alignment</div>
+  </div>
+
+  <div class="card">
+    <h3>Paradigmas SSL para Audio</h3>
+    <p>Wav2Vec2 (Facebook 2020): cuantiza waveform en tokens discretos con Gumbel-Softmax codebook; entrena con masked contrastive loss en espacio de cuantización. HuBERT (Facebook 2021): offline clustering k-means sobre MFCC → pseudo-labels → masked prediction. CLAP (LAION 2022): encoder audio + encoder texto con contrastive loss (CLIP-style) → zero-shot audio tagging.</p>
+    <pre>
+from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+import torch
+
+processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
+model     = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-base-960h")
+
+# Fine-tune con LoRA
+from peft import get_peft_model, LoraConfig, TaskType
+config = LoraConfig(r=8, lora_alpha=16, target_modules=["q_proj","v_proj"],
+                    lora_dropout=0.05, bias="none", task_type=TaskType.FEATURE_EXTRACTION)
+model = get_peft_model(model, config)
+model.print_trainable_parameters()
+# Trainable: ~0.5% del total</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Diffusion</div>
+    <div class="module-title">Diffusion Models para Audio: DDPM, Stable Audio, AudioLDM</div>
+    <div class="module-sub">Forward process, denoising score matching, DDIM, latent diffusion</div>
+  </div>
+
+  <div class="card">
+    <h3>DDPM y Latent Diffusion</h3>
+    <div class="formula">q(x_t | x_{t-1}) = N(x_t; √(1-β_t) x_{t-1}, β_t I)</div>
+    <div class="formula">L_simple = E[||ε - ε_θ(x_t, t)||²]  (denoising score matching)</div>
+    <p>Latent Diffusion: U-Net opera en espacio comprimido por VAE preentrenado (factor 8-64×). Reduce tensores en todas las T iteraciones → entrena 10-100× más rápido que diffusion sobre waveform raw. DDIM: sampling determinista, 50 pasos vs 1000 DDPM con calidad similar.</p>
+    <pre>
+from diffusers import AudioLDM2Pipeline
+import torch
+
+pipe = AudioLDM2Pipeline.from_pretrained(
+    "cvssp/audioldm2", torch_dtype=torch.float16
+).to("cuda")
+
+audio = pipe(
+    "drums jazz bebop 120bpm",
+    num_inference_steps=200, audio_length_in_s=10.0,
+    guidance_scale=3.5,
+).audios[0]</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · Vocoders</div>
+    <div class="module-title">Vocoders Neuronales: HiFi-GAN, BigVGAN, WaveGlow</div>
+    <div class="module-sub">Mel → waveform, multi-period discriminator, anti-aliasing</div>
+  </div>
+
+  <div class="card">
+    <h3>HiFi-GAN — SOTA TTS Vocoder</h3>
+    <p>Kong et al. 2020. Generator: mel-spec → waveform con upsampling convolucional transpuesto. Discriminators: Multi-Period (MPD) + Multi-Scale (MSD) para detectar artefactos a distintas escalas. Losses: adversarial + feature matching + multi-scale mel spectrogram. Inferencia &gt;100× real-time en GPU. BigVGAN (NVIDIA 2022): anti-aliased non-linearities (Snake activation) → SOTA calidad, generaliza a fuera de dominio.</p>
+    <pre>
+from transformers import SpeechT5HifiGan
+import torchaudio, torch
+
+vocoder = SpeechT5HifiGan.from_pretrained("microsoft/speecht5_hifigan").cuda()
+
+# mel_spec: (B, n_mels=80, T_frames)
+with torch.no_grad():
+    waveform = vocoder(mel_spec.cuda())  # (B, T_audio)
+    # Factor de upsampling: T_audio = T_frames * hop_length</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Streaming</div>
+    <div class="module-title">Streaming y Procesado Causal: inferencia en tiempo real</div>
+    <div class="module-sub">Causal conv, chunk-wise processing, latency-controlled BiLSTM</div>
+  </div>
+
+  <div class="card">
+    <h3>Causalidad y Latencia</h3>
+    <p>BiLSTM: necesita la secuencia completa → incompatible con streaming. Para tiempo real: LSTM unidireccional (causal por construcción), LC-BLSTM (backward limitado a ventana pequeña), Time-Restricted Self-Attention (atención solo a pasados N frames).</p>
+    <pre>
+import torch.nn as nn
+
+class CausalConv1d(nn.Module):
+    """Conv1d causal: no mira el futuro."""
+    def __init__(self, in_ch, out_ch, kernel_size, dilation=1):
+        super().__init__()
+        self.pad = (kernel_size - 1) * dilation
+        self.conv = nn.Conv1d(in_ch, out_ch, kernel_size,
+                              dilation=dilation, padding=0)
+    def forward(self, x):
+        x = nn.functional.pad(x, (self.pad, 0))
+        return self.conv(x)
+
+class StreamingLSTM(nn.Module):
+    """LSTM con estado persistente entre chunks."""
+    def __init__(self, input_size, hidden_size):
+        super().__init__()
+        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
+        self.hidden = None
+
+    def reset(self): self.hidden = None
+
+    def forward(self, chunk):  # chunk: (B, T_chunk, F)
+        out, self.hidden = self.lstm(chunk, self.hidden)
+        return out</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Quantization</div>
+    <div class="module-title">Quantization: PTQ, QAT, INT8 en producción</div>
+    <div class="module-sub">MinMax, GPTQ, bitsandbytes, outliers de activación</div>
+  </div>
+
+  <div class="card">
+    <h3>PTQ vs QAT</h3>
+    <p>Post-Training Quantization (PTQ): calibra el rango con un dataset de calibración; MinMax desperdicia rango por outliers. Quantization-Aware Training (QAT): la red aprende a evitar outliers de activación durante training simulado en INT8 → recupera más accuracy que PTQ. QAT es más costoso pero esencial para Transformers.</p>
+    <pre>
+import torch
+from torch.ao.quantization import get_default_qconfig, prepare_qat, convert
+
+# PTQ dinámico (CPU)
+model_ptq = torch.quantization.quantize_dynamic(
+    model, {torch.nn.Linear, torch.nn.LSTM}, dtype=torch.qint8
+)
+
+# QAT
+model.qconfig = get_default_qconfig("fbgemm")
+model_qat = prepare_qat(model.train())
+# ... fine-tune 5-10 epochs
+model_int8 = convert(model_qat.eval())</pre>
+    <table>
+      <tr><th>Precision</th><th>Bits</th><th>Cuándo</th></tr>
+      <tr><td>FP32</td><td>32</td><td>Default seguro, masters</td></tr>
+      <tr><td>FP16</td><td>16</td><td>AMP, requiere GradScaler</td></tr>
+      <tr><td>BF16</td><td>16</td><td>A100/H100, sin GradScaler</td></tr>
+      <tr><td>INT8</td><td>8</td><td>Inference CPU/GPU edge</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Robustez</div>
+    <div class="module-title">Adversarial Robustness en Audio</div>
+    <div class="module-sub">FGSM, PGD, ataques físicos, adversarial training, randomized smoothing</div>
+  </div>
+
+  <div class="card">
+    <h3>Ataques y Defensas</h3>
+    <p>FGSM (Goodfellow 2014): perturbación ε en dirección del gradiente. PGD (Madry 2018): multi-step FGSM con proyección → ataque más fuerte. Ataques físicos en audio: perturbaciones inaudibles que engañan ASR (Carlini & Wagner, CommanderSong).</p>
+    <pre>
+import torch
+
+def fgsm_attack(model, x, y, eps=0.01):
+    """Fast Gradient Sign Method para audio."""
+    x_adv = x.clone().requires_grad_(True)
+    loss = torch.nn.functional.cross_entropy(model(x_adv), y)
+    loss.backward()
+    return (x_adv + eps * x_adv.grad.sign()).detach().clamp(-1, 1)
+
+def pgd_attack(model, x, y, eps=0.01, alpha=0.002, n_steps=40):
+    """Projected Gradient Descent."""
+    x_adv = x.clone() + torch.empty_like(x).uniform_(-eps, eps)
+    for _ in range(n_steps):
+        x_adv.requires_grad_(True)
+        loss = torch.nn.functional.cross_entropy(model(x_adv), y)
+        loss.backward()
+        x_adv = (x_adv + alpha * x_adv.grad.sign()).detach()
+        x_adv = torch.max(torch.min(x_adv, x+eps), x-eps).clamp(-1, 1)
+    return x_adv</pre>
+    <p>Adversarial Training: incluir ejemplos adversariales en el training (AT usa AT accuracy alta vs ataques conocidos). Randomized Smoothing: certificación matemática pero baja accuracy clean. Elegir AT cuando se necesita accuracy práctica vs ataques conocidos; Smoothing para garantías formales.</p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Multi-GPU</div>
+    <div class="module-title">Multi-GPU: DDP, FSDP y gradient checkpointing</div>
+    <div class="module-sub">DistributedDataParallel, ZeRO, mixed precision distribuida</div>
+  </div>
+
+  <div class="card">
+    <h3>DDP y FSDP con accelerate</h3>
+    <pre>
+# DDP con PyTorch nativo
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+
+dist.init_process_group("nccl")
+model = DDP(model.cuda(), device_ids=[local_rank])
+
+# FSDP (ZeRO-3 equivalente) — modelos gigantes
+from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+from torch.distributed.fsdp.wrap import transformer_auto_wrap_policy
+model = FSDP(model, auto_wrap_policy=transformer_auto_wrap_policy)
+
+# accelerate — boilerplate mínimo
+from accelerate import Accelerator
+accelerator = Accelerator(mixed_precision="fp16")
+model, optimizer, loader = accelerator.prepare(model, optimizer, loader)
+for batch in loader:
+    out = model(batch)
+    accelerator.backward(out.loss)
+    optimizer.step(); optimizer.zero_grad()</pre>
+    <p>Gradient checkpointing: recomputa activaciones en el backward en lugar de almacenarlas → reduce VRAM 2-5× con ~33% más de tiempo de training.</p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Deploy</div>
+    <div class="module-title">ONNX, CoreML, TensorRT y RAVE nn~</div>
+    <div class="module-sub">Exportación, optimización hardware-specific, inferencia cross-platform</div>
+  </div>
+
+  <div class="card">
+    <h3>Pipeline de exportación</h3>
+    <pre>
+import torch
+
+# 1. ONNX — cross-platform
+torch.onnx.export(
+    model, dummy_input, "model.onnx",
+    input_names=["audio"], output_names=["logits"],
+    dynamic_axes={"audio": {0:"batch", 2:"time"}, "logits": {0:"batch"}},
+    opset_version=17,
+)
+
+# 2. TensorRT — NVIDIA, 5-10x vs ONNX RT
+# trtexec --onnx=model.onnx --saveEngine=model.trt --fp16
+
+# 3. CoreML — Apple Silicon
+import coremltools as ct
+mlmodel = ct.convert(
+    model_torchscript,
+    inputs=[ct.TensorType(name="audio", shape=(1, 1, 22050*5))],
+    compute_precision=ct.precision.FLOAT16,
+    compute_units=ct.ComputeUnit.ALL,  # ANE + GPU
+)
+mlmodel.save("AudioModel.mlpackage")</pre>
+    <p>TensorRT compila el grafo a kernels CUDA específicos para tu GPU: layer fusion (conv+bn+relu en un kernel), kernel auto-tuning, precision-mixed scheduling. Por eso es 5-10× más rápido que ONNX Runtime genérico.</p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto HERO: Sistema Generativo + Evaluación Rigurosa</div>
+    <div class="module-sub">Ablations, métricas objetivas y subjetivas, deployment real, discusión ética</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica del Proyecto HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Criterio</th><th>Descripción</th><th>Pts</th></tr>
+        <tr><td>Pipeline datos reproducible</td><td>script + hashes + splits estratificados</td><td>8</td></tr>
+        <tr><td>Comparativa ≥3 arquitecturas</td><td>5 seeds, paired t-test, Cohen's d</td><td>10</td></tr>
+        <tr><td>Ablation study completo</td><td>≥5 filas con CI bootstrap</td><td>10</td></tr>
+        <tr><td>Métricas objetivas múltiples</td><td>FAD/PESQ/SDR/WER según pista, ≥3</td><td>8</td></tr>
+        <tr><td>Listening test subjetivo</td><td>≥10 listeners, ABX o MOS</td><td>10</td></tr>
+        <tr><td>Optimización deployment</td><td>ONNX/TRT/CoreML INT8, latencia medida</td><td>10</td></tr>
+        <tr><td>Demo funcional</td><td>Web/HF Spaces accesible públicamente</td><td>10</td></tr>
+        <tr><td>Statistical significance</td><td>diff + CI + Cohen's d</td><td>7</td></tr>
+        <tr><td>Documentación pro</td><td>model card + datasheet + ethical considerations</td><td>7</td></tr>
+        <tr><td>Reproducibilidad seeds</td><td>5 seeds, std reportada</td><td>5</td></tr>
+        <tr><td>Discusión ética</td><td>biases, misuse, watermark, GDPR si voz</td><td>5</td></tr>
+        <tr><td>Tests automatizados</td><td>cobertura ≥60%, CI verde</td><td>5</td></tr>
+        <tr><td>README de calidad</td><td>quickstart en &lt;3 min</td><td>5</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman Final — Explica sin notas</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Adversarial Robustness</h4>
+      <p class="quiz-q">¿Cuándo usar Adversarial Training en lugar de Randomized Smoothing?</p>
+      <details><summary>Ver respuesta</summary><p>Adversarial Training cuando necesitas accuracy alta vs ataques conocidos y no requieres garantías matemáticas. Randomized Smoothing aporta certificación formal (garantía matemática del radio de perturbación tolerable) pero baja accuracy en datos limpios. AT prima accuracy práctica; Smoothing prima garantía formal. Para audio en producción (ASR, speaker ID), AT es más habitual por la mejor accuracy clean.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · Latent Diffusion</h4>
+      <p class="quiz-q">¿Por qué Latent Diffusion entrena más rápido que diffusion sobre waveform raw?</p>
+      <details><summary>Ver respuesta</summary><p>Porque la U-Net opera en el espacio latente comprimido por un VAE preentrenado (factor 8-64×). En lugar de trabajar con tensores de audio de longitud T=88k (4s @22kHz), opera en tensores de longitud T/64 ≈ 1.4k. Todas las T iteraciones de denoising procesan tensores mucho menores → entrenamiento 10-100× más rápido sin perder calidad perceptual significativa, ya que el VAE captura las estadísticas relevantes del audio.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · BiLSTM vs LSTM unidireccional</h4>
+      <p class="quiz-q">¿Cuándo elegir BiLSTM vs LSTM unidireccional para tareas de audio?</p>
+      <details><summary>Ver respuesta</summary><p>BiLSTM para tareas offline (transcripción de archivo, análisis post-hoc): capta contexto pasado y futuro → mejor accuracy. LSTM unidireccional para streaming/live: es causal por construcción, solo necesita los frames pasados → latencia mínima. Para ASR en producción live, LSTM unidireccional o LC-BLSTM (backward limitado a ventana pequeña) son la opción correcta aunque sacrifiquen algunos puntos de WER.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · QAT vs PTQ</h4>
+      <p class="quiz-q">¿Por qué QAT recupera más accuracy que PTQ en Transformers?</p>
+      <details><summary>Ver respuesta</summary><p>Porque QAT entrena la red para ser robusta a la cuantización INT8. Durante el training simulado con fake quantization, la red aprende a evitar outliers de activación que PTQ MinMax no puede suprimir. PTQ MinMax calibra el rango con datos de calibración, pero los outliers de activación en Transformers desperdician el rango dinámico INT8. QAT es más costoso (requiere fino 5-10 epochs) pero esencial para mantener accuracy en modelos grandes.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · Evaluación generativa</h4>
+      <p class="quiz-q">¿Qué reportar COMO MÍNIMO al comparar modelos generativos de audio?</p>
+      <details><summary>Ver respuesta</summary><p>FAD + listening test (MOS o ABX con ≥10 listeners) + diversidad (intra-distance entre muestras para detectar mode collapse) + análisis de modos. Nunca solo FAD: una métrica objetiva no capta todos los aspectos perceptuales. Incluir ejemplos cherry-picked Y ejemplos aleatorios (para no sesgar la presentación). Si hay speaker ID o voz: análisis de fairness por subgrupos demográficos. Reportar todo con intervalos de confianza y statistical significance (paired t-test, Cohen's d).</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_deep_learning_sonido_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Briefing & Tensors'},
+    {id:'m1',  label:'M1 · CNN ResNet/EffNet'},
+    {id:'m2',  label:'M2 · RNN/LSTM/CTC'},
+    {id:'m3',  label:'M3 · AE/VAE/β-VAE'},
+    {id:'m4',  label:'M4 · GANs WGAN-GP'},
+    {id:'m5',  label:'M5 · Transformers/AST'},
+    {id:'m6',  label:'M6 · Self-Supervised'},
+    {id:'m7',  label:'M7 · Diffusion Models'},
+    {id:'m8',  label:'M8 · Vocoders Neural'},
+    {id:'m9',  label:'M9 · Streaming/Causal'},
+    {id:'m10', label:'M10 · Quantization'},
+    {id:'m11', label:'M11 · Adversarial Robustness'},
+    {id:'m12', label:'M12 · Multi-GPU DDP/FSDP'},
+    {id:'m13', label:'M13 · ONNX/CoreML/RAVE'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

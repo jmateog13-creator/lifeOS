@@ -9,6 +9,11 @@
     --cyan-dim: rgba(0, 243, 255, 0.1);
     --gold: #ffd700;
     --gold-dim: rgba(255, 215, 0, 0.1);
+    --danger: #e74c3c;
+    --purple: #b388ff;
+    --purple-dim: rgba(179, 136, 255, 0.1);
+    --orange: #ff9f43;
+    --green: #2ecc71;
 
     --text-main: #e0e0e0;
     --text-muted: #888;
@@ -557,4 +562,148 @@ h2::after {
 .shop-buy-btn:hover {
     background: var(--gold);
     color: black;
+}
+
+/* --- DAILY MINIMUM --- */
+#daily-minimum {
+    background: rgba(20, 20, 25, 0.8);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    border-radius: 12px;
+    padding: 20px 25px;
+    margin-bottom: 30px;
+    backdrop-filter: blur(10px);
+}
+
+.daily-min-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-art);
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    color: var(--gold);
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+#daily-min-tasks {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.daily-task {
+    background: var(--panel-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    transition: all 0.3s;
+    flex: 1;
+    min-width: 220px;
+}
+
+.daily-task:hover:not(.done) {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(255, 215, 0, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.daily-task.done {
+    opacity: 0.45;
+    cursor: default;
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+.daily-check {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.day-cleared {
+    color: var(--green);
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-align: center;
+    padding: 12px;
+    width: 100%;
+    text-shadow: 0 0 15px rgba(46, 204, 113, 0.4);
+}
+
+/* --- WEEKLY FOCUS BANNER --- */
+.weekly-focus-banner {
+    text-align: center;
+    padding: 12px 20px;
+    margin: 30px 0 10px;
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    background: var(--purple-dim);
+    border: 1px solid rgba(179, 136, 255, 0.25);
+    border-radius: 8px;
+    color: #aaa;
+}
+
+.focus-cat {
+    color: var(--purple);
+    font-weight: bold;
+}
+
+.focus-bonus {
+    color: var(--green);
+    font-weight: bold;
+    margin-left: 12px;
+}
+
+h2.focus-active {
+    color: var(--purple);
+}
+
+h2.focus-active::after {
+    background: var(--purple);
+}
+
+.focus-badge {
+    font-size: 0.65rem;
+    background: var(--purple-dim);
+    border: 1px solid var(--purple);
+    color: var(--purple);
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 2px;
+    font-family: var(--font-tech);
+}
+
+/* --- TOGGLE CATEGORIES --- */
+.toggle-categories-container {
+    text-align: center;
+    margin: 15px 0 5px;
+}
+
+.toggle-categories-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-muted);
+    padding: 12px 35px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: var(--font-tech);
+    border-radius: 4px;
+    transition: all 0.3s;
+}
+
+.toggle-categories-btn:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: 0 0 15px var(--cyan-dim);
 }

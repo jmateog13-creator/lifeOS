@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neuromusicología &amp; Psicoacústica Computacional — MOOC v3</title>
+<style>
+:root {
+  --bg:#0b0f17; --surface:#111827; --surface2:#1e293b;
+  --accent:#06b6d4; --accent2:#22d3ee; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#1e293b;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'JetBrains Mono','Fira Code',monospace; --font-sans:'Inter','Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#0d1117;padding:2px 6px;border-radius:4px}
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+.formula{background:rgba(6,182,212,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(0,0,0,.15);border-radius:6px;line-height:1.6}
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+.hl-green{color:var(--green)} .hl-red{color:var(--red)} .hl-blue{color:var(--blue)} .hl-amber{color:var(--warn)} .hl-cyan{color:var(--accent)}
+details.lab-detail{border:1px solid var(--border);border-radius:8px;margin-bottom:10px}
+details.lab-detail summary{padding:11px 14px;font-size:.82rem;font-weight:600;color:var(--muted)}
+details.lab-detail .det-body{padding:14px;border-top:1px solid var(--border)}
+.drill-list{list-style:none;padding:0}
+.drill-list li{padding:9px 12px;border:1px solid var(--border);border-radius:6px;margin-bottom:6px;font-size:.82rem;color:var(--muted);display:flex;align-items:flex-start;gap:8px}
+.drill-list li::before{content:'›';color:var(--warn);font-weight:700;flex-shrink:0}
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:10px}
+.tool-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.tool-card .tn{font-size:.72rem;font-weight:600;color:var(--text);margin-bottom:3px}
+.tool-card .td{font-size:.65rem;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>Neuromusicología</h2>
+    <p>Cerebro &amp; Sonido · 15 módulos</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introducción</div>
+    <div class="module-title">Ecosistema: Neuromusicología &amp; Psicoacústica Computacional</div>
+    <div class="module-sub">Cerebro, sonido y herramientas computacionales</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 560 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:560px;display:block;margin:0 auto">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#06b6d4"/>
+        </marker>
+      </defs>
+      <rect x="5" y="110" width="100" height="36" rx="6" fill="#111827" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="55" y="133" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="700" font-family="Inter,sans-serif">SONIDO</text>
+      <rect x="145" y="70" width="110" height="36" rx="6" fill="#111827" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="200" y="88" text-anchor="middle" fill="#a855f7" font-size="10" font-weight="700" font-family="Inter,sans-serif">Cóclea</text>
+      <text x="200" y="100" text-anchor="middle" fill="#a855f7" font-size="10" font-family="Inter,sans-serif">Tonotopía</text>
+      <rect x="145" y="150" width="110" height="36" rx="6" fill="#111827" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="200" y="168" text-anchor="middle" fill="#a855f7" font-size="10" font-weight="700" font-family="Inter,sans-serif">Tronco</text>
+      <text x="200" y="180" text-anchor="middle" fill="#a855f7" font-size="10" font-family="Inter,sans-serif">Phase-Lock</text>
+      <rect x="305" y="90" width="110" height="36" rx="6" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+      <text x="360" y="113" text-anchor="middle" fill="#10b981" font-size="10" font-weight="700" font-family="Inter,sans-serif">Corteza</text>
+      <rect x="305" y="150" width="110" height="36" rx="6" fill="#111827" stroke="#10b981" stroke-width="1.5"/>
+      <text x="360" y="173" text-anchor="middle" fill="#10b981" font-size="10" font-weight="700" font-family="Inter,sans-serif">dFC / grafos</text>
+      <rect x="435" y="120" width="115" height="36" rx="6" fill="#111827" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="492" y="138" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="700" font-family="Inter,sans-serif">Clínica</text>
+      <text x="492" y="150" text-anchor="middle" fill="#f59e0b" font-size="10" font-family="Inter,sans-serif">CIS/RAS/Brain.fm</text>
+      <line x1="105" y1="128" x2="143" y2="100" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="105" y1="128" x2="143" y2="168" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="255" y1="88" x2="303" y2="100" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="255" y1="168" x2="303" y2="168" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="415" y1="108" x2="433" y2="128" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="415" y1="168" x2="433" y2="145" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr)"/>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">FFR</div><div class="metric-label">Brainstem Response</div></div>
+    <div class="metric"><div class="metric-val">~5kHz</div><div class="metric-label">Phase-Locking límite</div></div>
+    <div class="metric"><div class="metric-val">Arnold</div><div class="metric-label">Tongues 1:1, 2:1, 3:2</div></div>
+    <div class="metric"><div class="metric-val">dFC</div><div class="metric-label">Conectividad Dinámica</div></div>
+    <div class="metric"><div class="metric-val">CIS</div><div class="metric-label">Implante Coclear Strat</div></div>
+    <div class="metric"><div class="metric-val">VBM</div><div class="metric-label">Morfometría músicos</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Mapa del Curso</h3>
+    <table>
+      <tr><th>Bloque</th><th>Módulos</th><th>Tema central</th></tr>
+      <tr><td>Periférico</td><td>M1–M2</td><td>Cóclea, tonotopía, FFR</td></tr>
+      <tr><td>Rit. &amp; Entrainment</td><td>M3–M4</td><td>Arnold tongues, entropía</td></tr>
+      <tr><td>Neuroimagen</td><td>M5–M7</td><td>fMRI, dFC, grafos</td></tr>
+      <tr><td>Clínico</td><td>M8–M12</td><td>CIS, RAS, Brain.fm</td></tr>
+      <tr><td>Plasticidad</td><td>M13</td><td>VBM músicos vs no-músicos</td></tr>
+      <tr><td>HERO</td><td>M14</td><td>Proyecto integrador</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Periférico</div>
+    <div class="module-title">Transducción Coclear</div>
+    <div class="module-sub">Mecánica de onda viajera, tonotopía, células ciliadas internas</div>
+  </div>
+
+  <div class="formula">Tonotopía: f(x) = f_apex · e^(k·x) — escala exponencial (casi log)<br>
+ERB(f) = 24.7 · (4.37·f/1000 + 1)<br>
+Q = CF / BW10dB (selectividad del filtro)</div>
+
+  <div class="card">
+    <h3>La cóclea como banco de filtros</h3>
+    <p>La membrana basilar de la cóclea es un análogo físico de la transformada de Fourier: diferentes frecuencias producen máximos de desplazamiento en diferentes posiciones a lo largo de los 35mm del caracol. Frecuencias altas resuenan en la base; bajas en el ápex.</p>
+    <h3>Células ciliadas internas (IHC)</h3>
+    <p>Las ~3500 IHCs son los verdaderos transductores: la deflexión de los estereocilios abre canales iónicos de K+/Ca2+, despolarizando la célula y liberando glutamato en la sinapsis con el nervio auditivo. La tasa de disparo codifica la amplitud mediante <strong>rate coding</strong>.</p>
+    <h3>Células ciliadas externas (OHC)</h3>
+    <p>Las ~12000 OHCs son actuadores activos: la prestinotina les permite cambiar de longitud a frecuencias de hasta 70kHz, amplificando la oscilación de la membrana basilar hasta 1000x.</p>
+  </div>
+
+  <div class="card">
+    <h3>Lab — Banco de filtros gammatone (cóclea simulada)</h3>
+    <pre>import numpy as np
+from scipy.signal import lfilter
+
+def erb_hz(f):
+    return 24.7 * (4.37 * f / 1000 + 1)
+
+def gammatone_coeffs(cf, sr, n=4):
+    T = 1.0 / sr
+    A = 2 * T
+    B = 2 * np.pi * erb_hz(cf)
+    gain = (A * (2*np.pi*cf)**n * T**n) / np.math.factorial(n-1)
+    pole = np.exp(-(B + 2j*np.pi*cf) * T)
+    a = [1, -pole.real * 2, abs(pole)**2]
+    b = [gain]
+    return b, a
+
+def cochlear_filterbank(signal, cfs, sr=44100):
+    outputs = []
+    for cf in cfs:
+        b, a = gammatone_coeffs(cf, sr)
+        filtered = lfilter(b, a, signal)
+        envelope = np.abs(filtered)
+        outputs.append(envelope)
+    return np.array(outputs)
+
+f_min, f_max = 100, 8000
+cfs = np.logspace(np.log10(f_min), np.log10(f_max), 16)
+sr = 44100
+t = np.linspace(0, 0.5, int(sr*0.5))
+signal = (np.sin(2*np.pi*261.6*t) +
+          np.sin(2*np.pi*329.6*t) +
+          np.sin(2*np.pi*392.0*t)).astype(np.float32)
+cochleagram = cochlear_filterbank(signal, cfs)
+print(f"Cochleagram shape: {cochleagram.shape}")  # (16, N)</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>EX 1.1 — Calcula ERB(250Hz), ERB(1000Hz), ERB(4000Hz). ¿Cómo varía el ancho relativo?</li>
+      <li>EX 1.2 — Simula la pérdida de OHCs: elimina la amplificación activa y compara el cocleagrama.</li>
+      <li>EX 1.3 — Genera un tono puro de 440Hz y localiza qué canal gammatone muestra el máximo.</li>
+      <li>EX 1.4 — Calcula el Q de los filtros gammatone en 250, 1000 y 4000Hz.</li>
+      <li>EX 1.5 — Compara la resolución frecuencial del banco gammatone con FFT de la misma señal.</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q1 · Transducción coclear</h4>
+    <p class="quiz-q">¿Qué función tienen las células ciliadas externas (OHC) y por qué su pérdida afecta tanto la sensibilidad como la selectividad frecuencial?</p>
+    <details><summary>Ver respuesta</summary><p>Las OHCs son actuadores activos que amplifican la oscilación de la membrana basilar hasta 1000x mediante la prestinotina, una proteína motora. Esta amplificación activa es responsable de la sensibilidad del oído sano (puede detectar movimientos de la membrana del tamaño de un átomo de hidrógeno) y de la selectividad frecuencial (sharpening de los filtros cocleares). Sin OHCs, el umbral auditivo sube 40–60 dB y los filtros gammatone se vuelven mucho más anchos, deteriorando la discriminación de frecuencias cercanas.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Periférico</div>
+    <div class="module-title">Phase-Locking &amp; FFR</div>
+    <div class="module-sub">Sincronización neuronal de fase, Frequency Following Response, codificación temporal</div>
+  </div>
+
+  <div class="formula">PLV (Phase-Locking Value) = |1/N · Σ e^{iφ_n}| ∈ [0,1]</div>
+
+  <div class="card">
+    <h3>Phase-locking: codificación temporal</h3>
+    <p>Las fibras del nervio auditivo pueden disparar en sincronía con la fase de la onda sonora hasta ~5kHz. El <strong>phase-locking</strong> permite al sistema nervioso codificar la periodicidad del sonido con mucha más precisión que la resolución de los filtros cocleares. Es la base de la percepción de pitch de sonidos complejos.</p>
+    <h3>Frequency Following Response (FFR)</h3>
+    <p>La FFR es una señal EEG grabada en el vertex (Cz) que refleja la respuesta del tronco encefálico al estímulo auditivo. Músicos entrenados muestran FFRs más robustas (mayor amplitud de armónicos) que no-músicos.</p>
+  </div>
+
+  <div class="card">
+    <h3>Lab — Cálculo de PLV y espectro FFR</h3>
+    <pre>import numpy as np
+from scipy.signal import hilbert, butter, filtfilt
+
+def bandpass(signal, low, high, fs, order=4):
+    nyq = fs / 2
+    b, a = butter(order, [low/nyq, high/nyq], btype='band')
+    return filtfilt(b, a, signal)
+
+def phase_locking_value(stimulus, eeg, fs, freq_band=(80, 180)):
+    stim_filt = bandpass(stimulus[:eeg.shape[1]], *freq_band, fs)
+    stim_phase = np.angle(hilbert(stim_filt))
+    plvs = []
+    for trial in eeg:
+        eeg_filt = bandpass(trial, *freq_band, fs)
+        eeg_phase = np.angle(hilbert(eeg_filt))
+        phase_diff = eeg_phase - stim_phase
+        plv = np.abs(np.mean(np.exp(1j * phase_diff)))
+        plvs.append(plv)
+    return np.array(plvs)
+
+def compute_ffr_spectrum(eeg_trials, fs=16384):
+    mean_ffr = np.mean(eeg_trials, axis=0)
+    N = len(mean_ffr)
+    freqs = np.fft.rfftfreq(N, 1/fs)
+    spectrum = np.abs(np.fft.rfft(mean_ffr))
+    return freqs, spectrum
+
+np.random.seed(42)
+fs = 16384
+t = np.arange(int(fs * 0.2)) / fs
+f0 = 110
+stimulus = sum(np.sin(2*np.pi*f0*k*t) / k for k in range(1, 6))
+n_trials = 50
+eeg = np.random.randn(n_trials, len(t)) * 0.5
+for i in range(n_trials):
+    eeg[i] += 0.1 * stimulus
+freqs, spec = compute_ffr_spectrum(eeg, fs)
+print(f"FFR pico en: {freqs[np.argmax(spec)]:.1f} Hz")</pre>
+  </div>
+
+  <div class="card">
+    <h3>Drills</h3>
+    <ul class="drill-list">
+      <li>EX 2.1 — Calcula PLV para el rango delta (1-4Hz) entre EEG simulado y metrónomo a 2Hz.</li>
+      <li>EX 2.2 — Aumenta el número de trials de 10 a 100. ¿Mejora la SNR del promedio?</li>
+      <li>EX 2.3 — Filtra el EEG a banda gamma (30-80Hz) antes de calcular PLV. ¿Baja el PLV? ¿Por qué?</li>
+      <li>EX 2.4 — Añade ruido de línea (50Hz) al EEG simulado y aplica notch filter antes de calcular FFR.</li>
+      <li>EX 2.5 — Compara PLV calculado con ventana Hann vs sin ventana. ¿Afecta el leakage espectral?</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q2 · Phase-locking y FFR</h4>
+    <p class="quiz-q">¿Por qué la FFR requiere promediado de muchos trials y no se ve en un solo trial? Razona en términos de SNR.</p>
+    <details><summary>Ver respuesta</summary><p>La amplitud de la FFR es de 0.1–1 μV, mientras que el EEG espontáneo y el ruido muscular son de 10–50 μV. La señal está enterrada en ruido ~50x mayor. El ruido EEG no está sincronizado con el estímulo: en el promedio de N trials, las respuestas evocadas suman coherentemente (escalan con N) mientras que el ruido aleatorio se cancela (escala con √N). La SNR mejora con √N. Para un SNR de 10 se necesitan ~100 trials. Sin promediado, la FFR es invisible en el registro crudo.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Ritmo &amp; Entrainment</div>
+    <div class="module-title">Arnold Tongues &amp; Entrainment</div>
+    <div class="module-sub">Sincronización cerebro-ritmo, teoría de sistemas dinámicos, sincronía 1:1 y 2:1</div>
+  </div>
+
+  <div class="formula">dφ/dt = Δω + K·sin(φ_ext − φ_neural)  (Kuramoto acoplado)<br>
+Δω = diferencia de frecuencias natural vs estímulo. K = fuerza de acoplamiento.</div>
+
+  <div class="card">
+    <h3>Arnold Tongues: regiones de sincronización</h3>
+    <p>Cuando un oscilador biológico (ritmo neural) es forzado por un estímulo externo (ritmo musical), la sincronización ocurre en regiones del espacio (frecuencia_estimulo × amplitud) llamadas "lengüetas de Arnold". Las más estables son las razones simples: 1:1, 2:1, 3:2, 4:3.</p>
+    <ul>
+      <li>EEG delta (1-4Hz) se sincroniza con el tempo musical en sincronía 1:1.</li>
+      <li>EEG theta (4-8Hz) puede sincronizarse en 2:1 respecto al ritmo delta.</li>
+      <li>Musicians tienen acoplamiento más fuerte (mayor K efectivo) que no-músicos.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Lab — Simulación de Arnold Tongue con oscilador de Kuramoto</h3>
+    <pre>import numpy as np
+from scipy.integrate import odeint
+
+def kuramoto_driven(phi, t, omega_nat, omega_stim, K):
+    phi_stim = omega_stim * t
+    dphi = omega_nat + K * np.sin(phi_stim - phi)
+    return dphi
+
+def compute_synchrony(omega_nat, omega_stim, K, T=50, dt=0.01):
+    t = np.arange(0, T, dt)
+    phi = odeint(kuramoto_driven, [0.0], t,
+                 args=(omega_nat, omega_stim, K))[:, 0]
+    phi_stim = omega_stim * t
+    phase_diff = phi - phi_stim
+    std_diff = np.std(phase_diff[len(t)//2:])
+    return 1.0 if std_diff < 0.5 else 0.0
+
+K_range = np.linspace(0, 3, 40)
+df_range = np.linspace(-2, 2, 40)
+omega_base = 2 * np.pi * 2.0  # 2 Hz (delta)
+tongue = np.zeros((len(K_range), len(df_range)))
+for i, K in enumerate(K_range):
+    for j, df in enumerate(df_range):
+        tongue[i, j] = compute_synchrony(omega_base, omega_base + df, K)</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q3 · Arnold Tongues</h4>
+    <p class="quiz-q">¿Por qué las ratios simples (1:1, 2:1) tienen lengüetas de Arnold más anchas que razones complejas como 7:6? Razona desde la teoría de KAM.</p>
+    <details><summary>Ver respuesta</summary><p>Las razones de números enteros pequeños corresponden a resonancias más profundas en el espacio de fase del sistema dinámico. En términos de la teoría de KAM (Kolmogorov-Arnold-Moser), cuanto más simple sea la fracción p/q, mayor es la anchura de la banda de sincronización. Intuitivamente: sincronizarse en 1:1 es "atrapar" el oscilador externo con mínimo esfuerzo de acoplamiento; sincronizarse en 7:6 requiere tanto forzamiento que a esa fuerza ya se habría capturado también la sincronía 1:1. Por eso la música tonal usa octavas (2:1), quintas (3:2) y cuartas (4:3) — son las resonancias más robustas del sistema auditivo-motor.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Ritmo &amp; Entrainment</div>
+    <div class="module-title">Entropía Shannon &amp; Entrainment</div>
+    <div class="module-sub">Información mutua, entropía de transferencia, cuantificación del entrainment</div>
+  </div>
+
+  <div class="formula">H(X) = −Σ p(x)·log₂p(x)  [bits]<br>
+ρ̃ = 1 − H(Δφ)/log₂(N)  ∈ [0,1]<br>
+TE(X→Y) = H(Y_t+1|Y_t) − H(Y_t+1|Y_t,X_t)</div>
+
+  <div class="card">
+    <h3>Entropía de Shannon como métrica de entrainment</h3>
+    <p>ρ̃ = entrainment normalizado. N = número de bins del histograma de diferencia de fase. ρ̃≈1: toda la densidad en un bin = sincronía perfecta. ρ̃≈0: distribución uniforme = sin sincronía.</p>
+    <p><strong>Transferencia de entropía (TE):</strong> Mide cuánta información adicional aporta X pasado al predecir Y futuro. TE positiva: X "dirige" a Y (ej: ritmo musical → EEG delta). Asimétrica → permite inferir causalidad direccional.</p>
+  </div>
+
+  <div class="card">
+    <h3>Lab — Cálculo de ρ̃ y transferencia de entropía</h3>
+    <pre>import numpy as np
+from scipy.signal import hilbert, butter, filtfilt
+
+def normalized_entrainment(eeg, stimulus, fs, band=(1,4), n_bins=36):
+    nyq = fs / 2
+    b, a = butter(4, [band[0]/nyq, band[1]/nyq], btype='band')
+    eeg_filt = filtfilt(b, a, eeg)
+    stim_filt = filtfilt(b, a, stimulus[:len(eeg)])
+    phase_eeg = np.angle(hilbert(eeg_filt))
+    phase_stim = np.angle(hilbert(stim_filt))
+    phase_diff = np.mod(phase_eeg - phase_stim, 2*np.pi)
+    hist, _ = np.histogram(phase_diff, bins=n_bins,
+                           range=(0, 2*np.pi), density=True)
+    hist = hist / hist.sum() + 1e-12
+    H = -np.sum(hist * np.log2(hist))
+    H_max = np.log2(n_bins)
+    rho = 1.0 - H / H_max
+    return float(rho)
+
+def transfer_entropy(X, Y, lag=1, n_bins=8):
+    X_d = np.digitize(X, np.histogram_bin_edges(X, bins=n_bins)) - 1
+    Y_d = np.digitize(Y, np.histogram_bin_edges(Y, bins=n_bins)) - 1
+    X_d = np.clip(X_d, 0, n_bins-1)
+    Y_d = np.clip(Y_d, 0, n_bins-1)
+    n = len(X) - lag
+    joint = np.zeros((n_bins, n_bins, n_bins))
+    for i in range(n):
+        joint[Y_d[i+lag], Y_d[i], X_d[i]] += 1
+    joint /= joint.sum() + 1e-12
+    py_fut_past = joint.sum(axis=2)
+    H_fut_past_x = -np.sum(joint * np.log2(joint + 1e-12))
+    H_fut_past = -np.sum(py_fut_past * np.log2(py_fut_past + 1e-12))
+    return float(H_fut_past - H_fut_past_x)</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q4 · Entropía y causalidad</h4>
+    <p class="quiz-q">¿Por qué la Transferencia de Entropía es mejor que la correlación cruzada para inferir dirección causal entre música y EEG?</p>
+    <details><summary>Ver respuesta</summary><p>La correlación cruzada es simétrica: corr(X,Y) = corr(Y,X) siempre. No puede distinguir si X causa Y o al revés. La TE es fundamentalmente asimétrica porque mide la reducción de incertidumbre futura de Y dada la historia de X: TE(X→Y) ≠ TE(Y→X) en general. Además, la correlación solo captura relaciones lineales, mientras que la TE basada en histogramas captura cualquier dependencia estadística incluyendo no-lineales, lo cual es crucial para señales cerebrales con dinámica caótica.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Neuroimagen</div>
+    <div class="module-title">fMRI Preprocesamiento</div>
+    <div class="module-sub">Pipeline estándar: slice-timing, motion correction, smoothing, GLM</div>
+  </div>
+
+  <div class="formula">HRF(t) = [t^5·e^{-t}/γ(6)] − [t^15·e^{-t}/(6·γ(16))]  (SPM canonical)</div>
+
+  <div class="card">
+    <h3>Pipeline fMRI estándar</h3>
+    <ol>
+      <li><strong>Slice-timing correction:</strong> las rodajas del volumen se adquieren en tiempos distintos; se interpola para alinear al mismo TR.</li>
+      <li><strong>Motion correction:</strong> movimiento de cabeza introduce artefactos enormes. Más de 0.5mm = sujeto excluido en muchos estudios.</li>
+      <li><strong>Coregistración:</strong> alinear funcional (EPI) a anatómica T1 del mismo sujeto.</li>
+      <li><strong>Normalización:</strong> mapear T1 a espacio estándar MNI.</li>
+      <li><strong>Smoothing espacial:</strong> kernel gaussiano FWHM=6-8mm. Mejora SNR.</li>
+      <li><strong>Filtrado temporal:</strong> high-pass &gt;0.01Hz elimina deriva lenta.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h3>Lab — Pipeline nilearn: extracción de señal BOLD de ROI musical</h3>
+    <pre>from nilearn import image, signal
+from nilearn.maskers import NiftiLabelsMasker
+from nilearn.datasets import fetch_development_fmri, fetch_atlas_destrieux_2009
+from nilearn.image import smooth_img
+
+data = fetch_development_fmri(n_subjects=1)
+fmri_img = data.func[0]
+fmri_smooth = smooth_img(fmri_img, fwhm=6)
+atlas = fetch_atlas_destrieux_2009()
+
+masker = NiftiLabelsMasker(
+    labels_img=atlas['maps'],
+    standardize=True,
+    memory='nilearn_cache',
+    verbose=0
+)
+time_series = masker.fit_transform(fmri_smooth)
+print(f"Time series shape: {time_series.shape}")  # (n_timepoints, n_rois)
+
+from nilearn.signal import clean
+ts_clean = clean(time_series, detrend=True, standardize=True,
+                 t_r=2.0, high_pass=0.01, low_pass=0.1)
+print(f"Cleaned: {ts_clean.shape}")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q5 · fMRI y smoothing</h4>
+    <p class="quiz-q">¿Por qué el smoothing espacial mejora el SNR pero destruye la resolución fina? Explica el tradeoff en términos del ruido térmico del scanner.</p>
+    <details><summary>Ver respuesta</summary><p>El ruido térmico del scanner fMRI es espacialmente no correlacionado (ruido blanco): cada vóxel tiene ruido independiente. Al promediar vóxeles vecinos (lo que hace el smoothing gaussiano), los ruidos independientes se cancelan parcialmente mientras que la señal BOLD, que es espacialmente coherente dentro de una región activa, se suma. La SNR mejora aproximadamente con la raíz del número de vóxeles promediados. El costo es que señales de columnas funcionales finas (&lt;1mm) o áreas pequeñas se borran al difuminar la activación sobre los vóxeles vecinos.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Neuroimagen</div>
+    <div class="module-title">Conectividad Funcional Dinámica (dFC)</div>
+    <div class="module-sub">dFC sliding windows, estados cerebrales, k-means clustering</div>
+  </div>
+
+  <div class="formula">Fracción de tiempo en estado k = T_k / T_total → perfil temporal de estado</div>
+
+  <div class="card">
+    <h3>dFC: conectividad que cambia en el tiempo</h3>
+    <p>La <strong>dFC</strong> calcula matrices de conectividad en ventanas deslizantes de 30-60 segundos, revelando cómo las redes cerebrales se reconfiguran durante la experiencia musical.</p>
+    <ul>
+      <li>Ventana típica: 44 TRs (TR=2s → ~88s). Solapamiento: 50%.</li>
+      <li>En cada ventana: matriz de correlación (N_ROI × N_ROI).</li>
+      <li>k-means sobre vectores de conectividad → "estados cerebrales" recurrentes.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Lab — dFC con sliding windows y clustering</h3>
+    <pre>import numpy as np
+from sklearn.cluster import KMeans
+
+def compute_dfc(time_series, window_size=44, step=22):
+    n_tp, n_rois = time_series.shape
+    n_wins = (n_tp - window_size) // step + 1
+    dfc = np.zeros((n_wins, n_rois, n_rois))
+    for w in range(n_wins):
+        start = w * step
+        win_data = time_series[start:start + window_size, :]
+        dfc[w] = np.corrcoef(win_data.T)
+    return dfc
+
+def cluster_brain_states(dfc, k=4):
+    n_wins, n_rois, _ = dfc.shape
+    triu_idx = np.triu_indices(n_rois, k=1)
+    vectors = dfc[:, triu_idx[0], triu_idx[1]]
+    km = KMeans(n_clusters=k, random_state=42, n_init=20)
+    labels = km.fit_predict(vectors)
+    return labels, km.cluster_centers_
+
+np.random.seed(42)
+ts = np.random.randn(200, 20)
+dfc = compute_dfc(ts, window_size=44, step=22)
+labels, states = cluster_brain_states(dfc, k=4)
+print(f"Time in each state: {np.bincount(labels) / len(labels)}")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q6 · dFC y estados cerebrales</h4>
+    <p class="quiz-q">¿Cuál es la crítica principal al método de sliding windows para dFC y qué métodos alternativos son más robustos?</p>
+    <details><summary>Ver respuesta</summary><p>El método asume estacionariedad dentro de cada ventana pero no entre ventanas. Si la ventana es demasiado corta (&lt;30s), la estimación de correlación tiene alta varianza estadística. Si es demasiado larga (&gt;90s), promedia sobre múltiples estados perdiendo la dinámica temporal. La elección de k en k-means es subjetiva. Más fundamentalmente: parte de la variabilidad del dFC puede ser ruido estadístico de la estimación de correlación, no dinámica cerebral real. Métodos alternativos más robustos: Hidden Markov Models (modelan transiciones discretas entre estados) y conectividad basada en fase (phase-based connectivity).</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Neuroimagen</div>
+    <div class="module-title">Teoría de Grafos Neural</div>
+    <div class="module-sub">Métricas de red, small-world, eficiencia global, módulos cerebrales</div>
+  </div>
+
+  <div class="formula">E_glob = (1/N(N-1)) · Σ 1/d(i,j)<br>
+σ (small-world) = (C/C_rand) / (L/L_rand) — σ &gt; 1 → red de pequeño mundo</div>
+
+  <div class="card">
+    <h3>El cerebro como grafo</h3>
+    <p>La matriz de conectividad funcional se puede tratar como un grafo pesado. Las métricas de teoría de grafos cuantifican propiedades globales y locales de la organización de redes cerebrales durante escucha musical.</p>
+    <table>
+      <tr><th>Métrica</th><th>Definición</th><th>Interpretación</th></tr>
+      <tr><td>E_glob</td><td>Inverso longitud camino media</td><td>Alta en pequeño mundo</td></tr>
+      <tr><td>E_loc</td><td>E_glob del subgrafo vecinos</td><td>Resiliente ante fallos</td></tr>
+      <tr><td>C_i</td><td>Triángulos / triángulos posibles</td><td>Interconexión local</td></tr>
+      <tr><td>Betweenness</td><td>Caminos que pasan por nodo i</td><td>Hub nodes</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Lab — Métricas de grafo cerebral con networkx</h3>
+    <pre>import numpy as np
+import networkx as nx
+
+def connectivity_to_graph(conn_matrix, threshold=0.3):
+    n = conn_matrix.shape[0]
+    G = nx.Graph()
+    G.add_nodes_from(range(n))
+    for i in range(n):
+        for j in range(i+1, n):
+            w = conn_matrix[i, j]
+            if abs(w) > threshold:
+                G.add_edge(i, j, weight=float(w))
+    return G
+
+def compute_graph_metrics(G):
+    if not nx.is_connected(G):
+        G = G.subgraph(max(nx.connected_components(G), key=len)).copy()
+    metrics = {}
+    metrics['E_glob'] = nx.global_efficiency(G)
+    metrics['E_loc'] = nx.local_efficiency(G)
+    metrics['C'] = nx.average_clustering(G)
+    metrics['L'] = nx.average_shortest_path_length(G)
+    bc = nx.betweenness_centrality(G)
+    metrics['hubs'] = sorted(bc.items(), key=lambda x: -x[1])[:5]
+    return metrics
+
+np.random.seed(42)
+conn = np.random.rand(30, 30)
+conn = (conn + conn.T) / 2
+np.fill_diagonal(conn, 0)
+G = connectivity_to_graph(conn, threshold=0.6)
+m = compute_graph_metrics(G)
+print(f"E_glob={m['E_glob']:.3f}, C={m['C']:.3f}")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q7 · Teoría de grafos y pequeño mundo</h4>
+    <p class="quiz-q">¿Por qué el cerebro tiene arquitectura de pequeño mundo (small-world)? Compara con red regular y red aleatoria pura.</p>
+    <details><summary>Ver respuesta</summary><p>La arquitectura de pequeño mundo (alta C, baja L) es un óptimo evolutivo entre dos extremos. Una red totalmente regular tiene alta C pero muy alta L (ineficiente para integración global). Una red aleatoria tiene baja L pero baja C (sin módulos especializados). El pequeño mundo combina lo mejor: módulos especializados (alta C local, como el córtex visual procesa visión localmente) y nodos hub que conectan módulos eficientemente (baja L global). Esta arquitectura es robusta ante fallos de nodos aleatorios pero frágil ante fallos de hubs, lo que explica por qué las lesiones en hubs son tan devastadoras.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · Clínico</div>
+    <div class="module-title">Implantes Cocleares — CIS</div>
+    <div class="module-sub">Estrategia Continuous Interleaved Sampling, procesamiento de señal, limitaciones musicales</div>
+  </div>
+
+  <div class="formula">Compresión logarítmica: y = log(1 + C·x) / log(1 + C), C=500–1000<br>
+Tasa de estimulación: 900–3500 pps/canal (típicamente 1000 pps)</div>
+
+  <div class="card">
+    <h3>Estrategia CIS — Continuous Interleaved Sampling</h3>
+    <ol>
+      <li>Banco de filtros paso-banda (8-22 canales).</li>
+      <li>Rectificación + filtro paso-bajo (200Hz) → envolvente de amplitud de cada canal.</li>
+      <li>Compresión logarítmica.</li>
+      <li>Mapeo a corriente eléctrica (THR a MCL).</li>
+      <li>Estimulación interleaved: los pulsos de cada electrodo se intercalan temporalmente para evitar interacción de campo eléctrico.</li>
+    </ol>
+    <p><strong>Limitaciones musicales:</strong> resolución frecuencial 8-22 canales vs 3500 IHCs → discriminación de timbre muy deteriorada. El pitch de sonidos complejos requiere phase-locking fino que los electrodos no proveen bien.</p>
+  </div>
+
+  <div class="card">
+    <h3>Lab — Simulador CIS (vocoder)</h3>
+    <pre>import numpy as np
+from scipy.signal import butter, filtfilt, hilbert
+
+def cis_vocoder(audio, sr=44100, n_channels=8,
+                env_cutoff=200, compression_C=500):
+    f_edges = np.logspace(np.log10(100), np.log10(8000), n_channels + 1)
+    output = np.zeros(len(audio))
+    nyq = sr / 2
+    for i in range(n_channels):
+        fl, fh = f_edges[i], f_edges[i + 1]
+        b, a = butter(4, [fl/nyq, fh/nyq], btype='band')
+        filtered = filtfilt(b, a, audio)
+        envelope = np.abs(hilbert(filtered))
+        b_env, a_env = butter(2, env_cutoff/nyq, btype='low')
+        envelope = filtfilt(b_env, a_env, envelope)
+        envelope_comp = np.log1p(compression_C * envelope) / \
+                        np.log1p(compression_C)
+        noise = np.random.randn(len(audio))
+        b_noise, a_noise = butter(4, [fl/nyq, fh/nyq], btype='band')
+        carrier = filtfilt(b_noise, a_noise, noise)
+        output += envelope_comp * carrier
+    output /= (np.max(np.abs(output)) + 1e-8)
+    return output.astype(np.float32)
+
+print("CIS vocoder listo. Prueba con 4, 8, 16, 22 canales.")
+print("Nota: 8 ch = comprensión del habla buena, pero música difícil.")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q8 · Implantes cocleares</h4>
+    <p class="quiz-q">¿Por qué los usuarios de IC pueden entender el habla bien con 8 canales pero no la música? Relaciona con las demandas de resolución frecuencial y temporal de cada tarea.</p>
+    <details><summary>Ver respuesta</summary><p>El habla se comprende con muy baja resolución frecuencial (4 canales son suficientes para inteligibilidad básica) porque la información lingüística está codificada principalmente en la dinámica temporal de las envolventes (~200Hz), que el CIS preserva. La música requiere: (1) discriminación fina de altura tonal (pitch), que depende de phase-locking o resolución frecuencial para resolver armónicos individuales — ambas muy deterioradas en IC; (2) discriminación de timbre, que requiere forma espectral fina (imposible con 8-22 canales); (3) percepción de consonancia/disonancia, que depende de razones de frecuencia exactas. El habla es más "robusta" porque la evolución nos preparó para comunicarnos en condiciones acústicas adversas.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Clínico</div>
+    <div class="module-title">Simulación Avanzada IC — Modelo LIF</div>
+    <div class="module-sub">Modelos computacionales de nervio auditivo, optimización de estrategias</div>
+  </div>
+
+  <div class="formula">τ_m · dV/dt = −(V − V_rest) + R·I(t)<br>
+Cuando V ≥ θ → spike → reset a V_rest<br>
+Vector-strength: VS = |Σe^{iφ_k}| / N ∈ [0,1]</div>
+
+  <div class="card">
+    <h3>Modelo Leaky Integrate-and-Fire (LIF) para IC</h3>
+    <pre>import numpy as np
+
+def lif_auditory_nerve(I_ext, dt=1e-5, tau_m=1e-3,
+                        V_rest=-70e-3, V_thresh=-55e-3,
+                        V_reset=-75e-3, R_m=10e6, noise_std=1e-3):
+    n = len(I_ext)
+    V = np.full(n, V_rest)
+    spikes = np.zeros(n, dtype=bool)
+    refractory = int(0.5e-3 / dt)
+    last_spike = -refractory * 2
+    for i in range(1, n):
+        if i - last_spike < refractory:
+            V[i] = V_reset
+            continue
+        noise = noise_std * np.random.randn() * np.sqrt(dt / tau_m)
+        dV = dt/tau_m * (-(V[i-1] - V_rest) + R_m * I_ext[i]) + noise
+        V[i] = V[i-1] + dV
+        if V[i] >= V_thresh:
+            spikes[i] = True
+            V[i] = V_reset
+            last_spike = i
+    return spikes, V
+
+fs = 100000
+duration = 0.1
+t = np.arange(0, duration, 1/fs)
+I = np.zeros(len(t))
+pulse_period = int(fs / 1000)
+pulse_width = int(25e-6 * fs)
+for onset in range(0, len(t) - pulse_width, pulse_period):
+    I[onset:onset+pulse_width] = 500e-6
+    if onset + 2*pulse_width &lt; len(t):
+        I[onset+pulse_width:onset+2*pulse_width] = -500e-6
+spikes, V = lif_auditory_nerve(I, dt=1/fs)
+print(f"Spike rate: {np.sum(spikes)/duration:.0f} Hz")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q9 · Modelo LIF y FS4</h4>
+    <p class="quiz-q">¿Qué ventaja tiene la estrategia FS4 sobre CIS para percepción de pitch bajo? Explica qué información temporal preserva FS4 que CIS descarta.</p>
+    <details><summary>Ver respuesta</summary><p>CIS solo preserva la envolvente lenta (200Hz LP): para una fundamental de 220Hz, la envolvente no cambia periódicamente porque 220Hz &gt; 200Hz. El nervio no recibe información temporal sobre la periodicidad del sonido → percepción de pitch muy degradada. FS4 modula la tasa de pulsos del electrodo para seguir los ciclos individuales de las frecuencias bajas (100-1200Hz): así el nervio dispara con tasa que sigue la f0. Esto restaura parcialmente la información temporal de fase que el phase-locking fisiológico codificaría, mejorando la percepción de pitch en graves y, en consecuencia, la percepción musical de melodías.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Clínico</div>
+    <div class="module-title">MIT &amp; Sprechgesang</div>
+    <div class="module-sub">Melodic Intonation Therapy, Sprechgesang, rehabilitación con música</div>
+  </div>
+
+  <div class="formula">Pitch deviation = (1200/log2) · |log(f0_obs/f0_target)|  [cents]<br>
+BPM_target = BPM_baseline × 1.10  (inicio RAS: +10%)</div>
+
+  <div class="card">
+    <h3>MIT: Melodic Intonation Therapy</h3>
+    <p>MIT es una terapia del habla para pacientes con afasia de Broca que consiste en entonar frases con melodías simples. La melodía activa regiones del hemisferio derecho (STG derecho, IFG derecho) que compensan el daño izquierdo. Estudios DTI muestran hipertrofia del fascículo arcuato derecho post-MIT.</p>
+    <h3>Sprechgesang</h3>
+    <p>Técnica vocal de Schoenberg/Expressionismo: pitch indicado pero no exactamente mantenido. Se puede cuantificar computacionalmente la precisión de pitch con extracción de F0 + comparación con pitches notados.</p>
+  </div>
+
+  <div class="card">
+    <h3>Lab — Análisis de MIT: detectar entonación vs habla con F0</h3>
+    <pre>import numpy as np
+import librosa
+
+def analyze_intonation(audio_path, sr=22050, hop_length=512):
+    y, sr = librosa.load(audio_path, sr=sr)
+    f0, voiced_flag, voiced_probs = librosa.pyin(
+        y, fmin=80, fmax=400,
+        frame_length=2048, hop_length=hop_length
+    )
+    times = librosa.frames_to_time(np.arange(len(f0)),
+                                   sr=sr, hop_length=hop_length)
+    f0_voiced = f0[voiced_flag]
+    times_voiced = times[voiced_flag]
+    if len(f0_voiced) &lt; 10:
+        return {'error': 'No enough voiced frames'}
+    voice_ratio = np.mean(voiced_flag)
+    f0_semitones = 12 * np.log2(f0_voiced / np.median(f0_voiced))
+    f0_range_st = np.percentile(f0_semitones, 95) - \
+                  np.percentile(f0_semitones, 5)
+    df0_dt = np.abs(np.diff(f0_voiced)) / np.diff(times_voiced)
+    mean_rate_of_change = np.mean(df0_dt)
+    return {
+        'voice_ratio': float(voice_ratio),
+        'f0_range_semitones': float(f0_range_st),
+        'f0_rate_of_change': float(mean_rate_of_change),
+    }</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q10 · MIT y afasia</h4>
+    <p class="quiz-q">¿Por qué MIT funciona mejor en afasia de Broca que en afasia de Wernicke? Razona desde el mecanismo neurológico de cada tipo de afasia.</p>
+    <details><summary>Ver respuesta</summary><p>La afasia de Broca afecta la producción del habla (área de Broca, IFG izquierdo) pero preserva relativamente la comprensión. El paciente sabe lo que quiere decir pero no puede articularlo. MIT aprovecha que el hemisferio derecho tiene capacidad latente de producción verbal que normalmente está suprimida por el izquierdo dominante — al entonar, se activa el homólogo derecho de Broca (IFG derecho) y el fascículo arcuato derecho. En afasia de Wernicke el daño está en comprensión (STG izquierdo), y el problema no es la producción sino el procesamiento semántico, donde MIT ayuda mucho menos porque el déficit es diferente.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Clínico</div>
+    <div class="module-title">Parkinson &amp; Rhythmic Auditory Stimulation</div>
+    <div class="module-sub">RAS, acoplamiento auditivo-motor, BPM terapéutico, gait analysis</div>
+  </div>
+
+  <div class="formula">BPM_target = BPM_baseline × 1.10  (inicio: +10% sobre cadencia natural)<br>
+STV = (σ_stride / μ_stride) × 100%  — &gt;5% = riesgo de caídas</div>
+
+  <div class="card">
+    <h3>RAS: Rhythmic Auditory Stimulation</h3>
+    <p>RAS usa ritmos externos (metrónomo, música) para estabilizar la marcha en Parkinson. El ritmo auditivo activa el sistema auditivo-motor, bypassing los ganglios basales dañados que normalmente controlan la cadencia de la marcha.</p>
+    <p>El ritmo externo activa el núcleo caudado y putamen via circuitos auditivo-talámico-motor. Los pacientes con Parkinson tienen deficiencia dopaminérgica → el ritmo externo provee la señal de temporización que los ganglios basales no pueden generar.</p>
+  </div>
+
+  <div class="card">
+    <h3>Lab — Análisis de cadencia y variabilidad de marcha</h3>
+    <pre>import numpy as np
+from scipy.signal import find_peaks, butter, filtfilt
+
+def analyze_gait(accel_signal, fs=100, axis=2):
+    signal = accel_signal[:, axis]
+    nyq = fs / 2
+    b, a = butter(4, [0.5/nyq, 5/nyq], btype='band')
+    filtered = filtfilt(b, a, signal)
+    min_distance = int(0.4 * fs)
+    peaks, _ = find_peaks(filtered, height=0.1, distance=min_distance)
+    if len(peaks) &lt; 4:
+        return {'error': 'Too few steps detected'}
+    step_times = np.diff(peaks) / fs
+    stride_times = step_times[::2] + step_times[1::2]
+    cadence = 60 / np.mean(step_times)
+    stv = (np.std(stride_times) / np.mean(stride_times)) * 100
+    return {
+        'cadence_bpm': float(cadence),
+        'stv_percent': float(stv),
+        'n_steps': len(peaks)
+    }
+
+# Simular señal de marcha con Parkinson (alta STV)
+np.random.seed(42)
+fs = 100
+t = np.arange(0, 30, 1/fs)
+base_period = fs * 60/90
+noisy_periods = base_period * (1 + 0.08 * np.random.randn(50))
+signal = np.zeros((len(t), 3))
+current = 0
+for period in noisy_periods:
+    onset = int(current)
+    if onset &lt; len(t):
+        signal[onset, 2] = 0.5
+    current += period
+result = analyze_gait(signal, fs=fs)
+print(f"Cadencia: {result['cadence_bpm']:.1f} bpm, STV: {result['stv_percent']:.2f}%")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q11 · RAS y Parkinson</h4>
+    <p class="quiz-q">¿Por qué RAS es efectivo para la marcha en Parkinson pero no cura los síntomas en reposo como el tremor? Distingue el mecanismo terapéutico.</p>
+    <details><summary>Ver respuesta</summary><p>RAS funciona como una prótesis de temporización externa, no como una restauración del sistema dopaminérgico. Mientras el estímulo auditivo está presente, el paciente puede "engancharse" al ritmo externo y caminar con mayor regularidad. Cuando el estímulo cesa, el paciente vuelve a depender de sus ganglios basales dañados. Los síntomas en reposo (tremor, rigidez) no están mediados por el sistema de temporización métrica sino por circuitos dopaminérgicos de control motor continuo, que el ritmo auditivo no puede reemplazar. RAS es una herramienta de rehabilitación funcional y posiblemente de neuroplasticidad a largo plazo, pero no es farmacológicamente curativa.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Clínico</div>
+    <div class="module-title">Brain.fm &amp; DISE</div>
+    <div class="module-sub">Neuromodulación auditiva, theta/delta para concentración, evidencia científica</div>
+  </div>
+
+  <div class="card">
+    <h3>Neuromodulación auditiva: claims y evidencia</h3>
+    <table>
+      <tr><th>Banda</th><th>Freq</th><th>Estado</th><th>Objetivo DISE</th></tr>
+      <tr><td>Delta</td><td>1-4 Hz</td><td>Sueño profundo</td><td>Recuperación</td></tr>
+      <tr><td>Theta</td><td>4-8 Hz</td><td>Hipnagogia, creatividad</td><td>Concentración profunda</td></tr>
+      <tr><td>Alpha</td><td>8-13 Hz</td><td>Relajación alerta</td><td>Meditación</td></tr>
+      <tr><td>Beta</td><td>13-30 Hz</td><td>Alerta activo</td><td>Motivación</td></tr>
+      <tr><td>Gamma</td><td>30-100 Hz</td><td>Binding cognitivo</td><td>Percepción, memoria</td></tr>
+    </table>
+    <div class="warn-box"><strong>Advertencia:</strong> muchos productos comerciales exageran enormemente los efectos sobre el EEG. El tamaño del efecto en estudios controlados es modesto. Los binaural beats requieren audífonos estéreo; con altavoces el efecto binaural no ocurre.</div>
+  </div>
+
+  <div class="card">
+    <h3>Lab — Generador DISE y binaural beats</h3>
+    <pre>import numpy as np
+import soundfile as sf
+
+def add_dise_modulation(audio, sr, target_freq=6.0,
+                        mod_depth=0.05, fade_in=2.0):
+    if audio.ndim > 1:
+        audio = audio.mean(axis=1)
+    t = np.arange(len(audio)) / sr
+    modulator = 1.0 + mod_depth * np.sin(2 * np.pi * target_freq * t)
+    fade_samples = int(fade_in * sr)
+    fade = np.ones(len(audio))
+    fade[:fade_samples] = np.linspace(0, 1, fade_samples)
+    modulator = 1.0 + (modulator - 1.0) * fade
+    modulated = audio * modulator
+    max_val = np.max(np.abs(modulated))
+    if max_val > 0:
+        modulated = modulated * (np.max(np.abs(audio)) / max_val)
+    return modulated.astype(np.float32)
+
+def generate_binaural_beat(base_freq=200, beat_freq=6.0,
+                            duration=60, sr=44100, amplitude=0.1):
+    t = np.arange(int(duration * sr)) / sr
+    left = amplitude * np.sin(2 * np.pi * base_freq * t)
+    right = amplitude * np.sin(2 * np.pi * (base_freq + beat_freq) * t)
+    return np.stack([left, right], axis=1).astype(np.float32)
+
+bb = generate_binaural_beat(base_freq=200, beat_freq=6.0, duration=30)
+print(f"Binaural beat theta 6Hz generado: {bb.shape}")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q12 · Binaural beats</h4>
+    <p class="quiz-q">¿Por qué los binaural beats requieren audífonos y no funcionan con altavoces? Explica el procesamiento neural involucrado.</p>
+    <details><summary>Ver respuesta</summary><p>Los binaural beats son un fenómeno de procesamiento neural central, no acústico. El oído izquierdo recibe una frecuencia (e.g., 200Hz) y el derecho otra (206Hz). El cerebro — en el núcleo olivar superior — procesa la diferencia entre las señales de ambos oídos y genera una oscilación neuronal a la frecuencia diferencial (6Hz). Con altavoces, ambos tonos se mezclan en el aire antes de llegar a los oídos: el oído izquierdo y el derecho reciben ambas frecuencias simultáneamente, generando un batido acústico ordinario (monaural beat) que no requiere procesamiento binaural. El batido binaural es el resultado de la biofísica de la vía auditiva central, específicamente la detección interaural en el núcleo olivar superior.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Plasticidad</div>
+    <div class="module-title">Neuroplasticidad &amp; VBM</div>
+    <div class="module-sub">Voxel-Based Morphometry, músicos vs no-músicos, plasticidad estructural</div>
+  </div>
+
+  <div class="formula">GM_músicos &gt; GM_no-músicos: p_FWE &lt; 0.05, k &gt; 50 vóxeles</div>
+
+  <div class="card">
+    <h3>VBM: morfometría voxel a voxel</h3>
+    <p>VBM compara la densidad de materia gris vóxel a vóxel entre grupos. Pipeline estándar: segmentación T1 → normalización DARTEL → modulación por jacobiano → smoothing FWHM=10mm → GLM de segundo nivel.</p>
+    <h3>Hallazgos en músicos</h3>
+    <ul>
+      <li><strong>STG bilateral:</strong> mayor GM en músicos, especialmente pianistas.</li>
+      <li><strong>M1 (representación dedos):</strong> mayor GM por efecto uso-dependiente.</li>
+      <li><strong>Cerebelo:</strong> mayor volumen para coordinación motora fina.</li>
+      <li><strong>Cuerpo calloso:</strong> mayor grosor del splenio y genu — mejor conexión interhemisférica.</li>
+      <li><strong>IFG (área de Broca):</strong> mayor GM correlacionada con años de entrenamiento.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Lab — Pipeline VBM con nilearn</h3>
+    <pre>from nilearn import plotting, image
+from nilearn.glm.second_level import SecondLevelModel
+import numpy as np
+import pandas as pd
+
+def simulate_vbm_analysis(n_musicians=20, n_controls=20):
+    """
+    En análisis real, cargar mapas de GM modulados de FSL/CAT12.
+    design_matrix = pd.DataFrame({
+        'musicians': [1]*n_musicians + [0]*n_controls,
+        'intercept': [1]*(n_musicians+n_controls)
+    })
+    model = SecondLevelModel(smoothing_fwhm=None)
+    model.fit(gm_imgs, design_matrix=design_matrix)
+    contrast = model.compute_contrast('musicians', output_type='stat')
+    """
+    print("Pipeline VBM (requiere imágenes reales de CAT12/VBM8):")
+    print("1. Segmentar T1 → GM, WM, CSF")
+    print("2. Normalización DARTEL → espacio MNI")
+    print("3. Modular por jacobiano")
+    print("4. Smooth FWHM=10mm")
+    print("5. GLM de segundo nivel (músicos vs controles)")
+    print("\nHallazgos típicos:")
+    print("- STG bilateral: GM mayor en músicos (T=4.2, k=128 vox)")
+    print("- M1 representación dedos: GM mayor (T=3.8, k=67 vox)")
+    print("- Cerebelo VI/VII: GM mayor (T=4.1, k=89 vox)")
+
+simulate_vbm_analysis()
+
+rois = ['superiortemporal', 'rostralmiddlefrontal', 'precentral']
+musicians = [3.12, 2.87, 2.94]
+controls =  [2.98, 2.79, 2.88]
+for roi, m, c in zip(rois, musicians, controls):
+    print(f"  {roi}: músicos={m:.2f}, controles={c:.2f}, Δ={m-c:+.2f}")</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q13 · VBM y causalidad</h4>
+    <p class="quiz-q">¿Puede el VBM transversal demostrar que la música CAUSA plasticidad cerebral? ¿Qué diseño experimental respondería esta pregunta?</p>
+    <details><summary>Ver respuesta</summary><p>El VBM transversal (músicos vs controles en un punto del tiempo) no puede establecer causalidad. Los músicos podrían tener mayor GM de STG porque (a) el entrenamiento lo indujo [causalidad], o (b) las personas con mayor GM nativa tienen ventaja y persistencia musical [selección]. Para establecer causalidad se necesitan estudios longitudinales: medir GM antes y después de entrenamiento musical (o en niños asignados aleatoriamente a entrenamiento). Hyde et al. (2009) en niños de 6 años mostró cambios estructurales después de 15 meses de entrenamiento, lo que proporciona evidencia más sólida de plasticidad inducida.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto Final — Neuromodulación Auditiva</div>
+    <div class="module-sub">Diseño e implementación de sistema con evaluación Feynman</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica del Proyecto HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>Análisis de señal neural</td><td>FFR, PLV, o dFC implementado correctamente en datos reales o simulados</td><td>25</td></tr>
+        <tr><td>Diseño de estímulo</td><td>Estímulo auditivo (DISE, RAS, MIT, binaural) fundamentado teóricamente</td><td>20</td></tr>
+        <tr><td>Evaluación experimental</td><td>Diseño con condición control, medida de outcome, análisis estadístico</td><td>20</td></tr>
+        <tr><td>Síntesis de literatura</td><td>Revisión de al menos 5 papers relevantes con síntesis crítica</td><td>20</td></tr>
+        <tr><td>Implementación Python</td><td>Pipeline reproducible documentado con requirements.txt y demo funcional</td><td>15</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q1 · FFR y codificación subcortical</h4>
+    <p class="quiz-q">¿Qué estructura neural genera específicamente la FFR que se registra en el vértex (Cz)? ¿Por qué refleja el entrenamiento musical?</p>
+    <details><summary>Ver respuesta</summary><p>La FFR es generada principalmente por el tronco encefálico (núcleo coclear dorsal y colículo inferior), no por la corteza auditiva. Refleja el entrenamiento musical porque el sistema auditivo subcortical no es meramente "periférico" — existe retroalimentación corticofugal masiva del córtex auditivo hacia el colículo inferior y el tronco encefálico. El entrenamiento musical refuerza estas conexiones descendentes, haciendo que el tronco encefálico "aprenda" a representar con más fidelidad los armónicos del sonido que el músico tiene que discriminar habitualmente. La SNR de la FFR mejora en músicos especialmente para las frecuencias de los armónicos que más practican (f0, 2f0, 3f0).</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q2 · Arnold Tongues y RAS</h4>
+    <p class="quiz-q">¿Cómo se relacionan las Arnold Tongues con el mecanismo de RAS en Parkinson? ¿En qué ratio de sincronización opera RAS y por qué?</p>
+    <details><summary>Ver respuesta</summary><p>RAS usa el mecanismo de Arnold Tongue: el ritmo motor (cadencia de marcha, típicamente ~1.5Hz) se sincroniza con el ritmo auditivo externo (metrónomo a BPM similar) cuando la diferencia de frecuencias es pequeña y el acoplamiento (K efectivo via circuitos auditivo-talámico-motor) es suficiente. Opera en sincronía 1:1 — la más robusta por tener la lengüeta de Arnold más ancha, lo que significa que el rango de frecuencias del metrónomo que puede "capturar" la cadencia de marcha es amplio. La deficiencia dopaminérgica de Parkinson reduce el K endógeno del oscilador motor interno, haciendo que el ritmo externo sea más necesario como "fuente" de acoplamiento.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q3 · VBM y plasticidad</h4>
+    <p class="quiz-q">Explica por qué se usa FWHM=10mm en smoothing VBM y no 6mm como en fMRI funcional. ¿Qué se pierde y qué se gana?</p>
+    <details><summary>Ver respuesta</summary><p>El smoothing más agresivo en VBM (10mm vs 6mm en funcional) compensa la mayor variabilidad de registro anatómico entre sujetos. La normalización DARTEL alinea cerebros estructuralmente, pero la variabilidad morfológica interindividual hace que el mismo giro no ocupe exactamente los mismos vóxeles MNI en todos los sujetos — hay un "error de registro residual" de ~5-10mm. Al suavizar con 10mm, señales de la misma región anatómica en diferentes sujetos se superponen y suman coherentemente. Se pierde resolución espacial fina pero se gana sensibilidad para diferencias regionales más grandes. En funcional, la comparación entre sujetos también requiere suavizado, pero el ruido funcional es de naturaleza distinta, con 6mm siendo suficiente.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q4 · Implantes cocleares y estrategias</h4>
+    <p class="quiz-q">¿Qué mide el vector-strength (VS) en el contexto de un implante coclear y por qué FS4 lo mejora respecto a CIS?</p>
+    <details><summary>Ver respuesta</summary><p>El vector-strength (VS = |Σe^{iφ_k}|/N) mide el grado de sincronización de los spikes del nervio auditivo con la fase del estímulo eléctrico: VS=1 significa todos los spikes en la misma fase del ciclo (sincronía perfecta); VS=0 significa spikes distribuidos aleatoriamente. CIS usa pulsos a tasa constante que no sigue la periodicidad del estímulo sonoro en frecuencias bajas → VS bajo respecto a la f0 musical. FS4 modula la tasa de pulsos para seguir los ciclos de la portadora en frecuencias bajas (100-1200Hz) → los spikes se sincronizar con la periodicidad del estímulo → VS mayor → mejor codificación temporal de pitch, mejorando la percepción musical de graves.</p></details>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q5 · Síntesis del campo</h4>
+    <p class="quiz-q">¿Cuál es el hallazgo más robusto y replicado de la neuromusicología? ¿Qué distingue su nivel de evidencia de los efectos de DISE y binaural beats?</p>
+    <details><summary>Ver respuesta</summary><p>El hallazgo más replicado es la diferencia en FFR entre músicos y no-músicos: los músicos tienen respuestas del tronco encefálico más precisas y de mayor amplitud para los armónicos del sonido, especialmente para el f0. Este hallazgo es consistente en docenas de estudios de diferentes laboratorios con distintas metodologías, populations y estímulos. La segunda evidencia más sólida es la mayor GM en córtex motor y auditivo en músicos (VBM). En contraste, los efectos de DISE y binaural beats en cognición tienen efecto de tamaño pequeño, poca replicación independiente, alta heterogeneidad metodológica, y muchos estudios sin condición control adecuada (el efecto nocebo o las expectativas del participante pueden contaminar los resultados). El nivel de evidencia de la FFR en músicos es equiparable a ciencia de sistemas robusta; el de DISE comercial es preliminar y debe tomarse con cautela.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_neuromusicologia_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Briefing'},
+    {id:'m1',  label:'M1 · Transducción Coclear'},
+    {id:'m2',  label:'M2 · Phase-Locking / FFR'},
+    {id:'m3',  label:'M3 · Arnold Tongues'},
+    {id:'m4',  label:'M4 · Entropía Shannon'},
+    {id:'m5',  label:'M5 · fMRI Preprocesamiento'},
+    {id:'m6',  label:'M6 · dFC Sliding Windows'},
+    {id:'m7',  label:'M7 · Teoría de Grafos'},
+    {id:'m8',  label:'M8 · Implantes CIS'},
+    {id:'m9',  label:'M9 · CI Python Sim'},
+    {id:'m10', label:'M10 · MIT / Sprechgesang'},
+    {id:'m11', label:'M11 · Parkinson RAS'},
+    {id:'m12', label:'M12 · Brain.fm / DISE'},
+    {id:'m13', label:'M13 · Neuroplasticidad VBM'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

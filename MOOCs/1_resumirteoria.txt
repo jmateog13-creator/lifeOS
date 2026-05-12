@@ -1,0 +1,19 @@
+Actúa como un Especialista en Minería de Datos Técnicos y Arquitecto de Currículos para Ingeniería de Sonido.
+
+Tu tarea es analizar la TOTALIDAD de las fuentes que he subido y extraer toda la teoría necesaria para construir un MOOC de nivel avanzado 'Zero to Hero' sobre [INSERTAR NOMBRE DEL TEMA].
+
+Por favor, estructura la información de la siguiente manera, manteniendo un nivel de rigor para un Ingeniero de Telecomunicaciones:
+
+Mapa de Conceptos Nucleares (Pareto 20/80): Identifica el 20% de la teoría técnica que explica el 80% del funcionamiento de esta disciplina. Explica los principios físicos, matemáticos o de código que son el corazón del sistema.
+
+Procedimientos y Workflows Detallados: Describe paso a paso los procesos de trabajo que mencionan las fuentes. Desde la configuración inicial hasta la optimización final.
+
+Anatomía de Herramientas y Stack: Haz una lista de todos los softwares, hardwares, lenguajes de programación y librerías mencionadas, especificando su función técnica y por qué se usan.
+
+Casos de Estudio y Aplicaciones Reales: Resume los ejemplos prácticos o proyectos que aparecen en los textos para entender cómo se aplica esto en la industria AAA o el arte tecnológico.
+
+Ejercicios y Retos Sugeridos: Extrae cualquier mención a prácticas, laboratorios o tareas que se propongan en las fuentes para validar el conocimiento.
+
+Glosario para Expertos: Haz una lista de los 15-20 términos más complejos encontrados en los documentos con sus definiciones técnicas precisas.
+
+RESTRICCIÓN CRÍTICA: No resumas de forma superficial. Necesito la densidad técnica máxima. Si hay fórmulas, fragmentos de código o configuraciones específicas de ruteo, inclúyelas tal cual aparecen en las fuentes."

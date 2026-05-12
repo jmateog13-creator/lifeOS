@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ingeniería Lingüística y Antropología Acústica del Tamazight v3</title>
+<style>
+:root {
+  --bg:#0b0f17; --surface:#111827; --surface2:#1e293b;
+  --accent:#06b6d4; --accent2:#67e8f9; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#1e293b;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'JetBrains Mono','Fira Code',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#0d1117;padding:2px 6px;border-radius:4px}
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+.formula{background:rgba(6,182,212,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(0,0,0,.15);border-radius:6px;line-height:1.6}
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>Tamazight — Fonética Comp.</h2>
+    <p>Lingüística e Antropología Acústica · 15 módulos · v3</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introducción</div>
+    <div class="module-title">Briefing — Ecosistema Amazigh</div>
+    <div class="module-sub">Historia, dialectos, Neo-Tifinagh y el pipeline completo de fonética computacional</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 700 280" width="660" height="265" font-family="Inter,sans-serif" font-size="12">
+      <circle cx="350" cy="140" r="48" fill="#06b6d415" stroke="#06b6d4" stroke-width="2"/>
+      <text x="350" y="135" text-anchor="middle" fill="#06b6d4" font-size="12" font-weight="700">TAMAZIGHT</text>
+      <text x="350" y="152" text-anchor="middle" fill="#06b6d4" font-size="10">Fonética Comp.</text>
+      <circle cx="120" cy="60" r="36" fill="#a855f715" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="120" y="55" text-anchor="middle" fill="#a855f7" font-size="10" font-weight="700">Raíces</text>
+      <text x="120" y="70" text-anchor="middle" fill="#a855f7" font-size="9">Trilíteras</text>
+      <line x1="302" y1="111" x2="155" y2="84" stroke="#a855f750" stroke-width="1.5"/>
+      <circle cx="580" cy="60" r="36" fill="#10b98115" stroke="#10b981" stroke-width="1.5"/>
+      <text x="580" y="55" text-anchor="middle" fill="#10b981" font-size="10" font-weight="700">EMA</text>
+      <text x="580" y="70" text-anchor="middle" fill="#10b981" font-size="9">Articulografía</text>
+      <line x1="398" y1="111" x2="545" y2="84" stroke="#10b98150" stroke-width="1.5"/>
+      <circle cx="80" cy="200" r="36" fill="#f59e0b15" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="80" y="195" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="700">OT</text>
+      <text x="80" y="210" text-anchor="middle" fill="#f59e0b" font-size="9">Constraints</text>
+      <line x1="302" y1="168" x2="115" y2="185" stroke="#f59e0b50" stroke-width="1.5"/>
+      <circle cx="620" cy="200" r="36" fill="#ec489915" stroke="#ec4899" stroke-width="1.5"/>
+      <text x="620" y="195" text-anchor="middle" fill="#ec4899" font-size="10" font-weight="700">Tifinagh</text>
+      <text x="620" y="210" text-anchor="middle" fill="#ec4899" font-size="9">OCR SVM</text>
+      <line x1="398" y1="168" x2="585" y2="185" stroke="#ec489950" stroke-width="1.5"/>
+      <circle cx="200" cy="255" r="36" fill="#06b6d415" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="200" y="250" text-anchor="middle" fill="#06b6d4" font-size="10" font-weight="700">Bark</text>
+      <text x="200" y="265" text-anchor="middle" fill="#06b6d4" font-size="9">Psicoacústica</text>
+      <line x1="312" y1="184" x2="225" y2="244" stroke="#06b6d450" stroke-width="1.5"/>
+      <circle cx="500" cy="255" r="36" fill="#a855f715" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="500" y="250" text-anchor="middle" fill="#a855f7" font-size="10" font-weight="700">Ahwash</text>
+      <text x="500" y="265" text-anchor="middle" fill="#a855f7" font-size="9">Antropología</text>
+      <line x1="388" y1="184" x2="475" y2="244" stroke="#a855f750" stroke-width="1.5"/>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">4000</div><div class="metric-label">años de historia oral</div></div>
+    <div class="metric"><div class="metric-val">6</div><div class="metric-label">dialectos principales</div></div>
+    <div class="metric"><div class="metric-val">33</div><div class="metric-label">fonemas Tamazight</div></div>
+    <div class="metric"><div class="metric-val">98.94%</div><div class="metric-label">precisión OCR Tifinagh SVM</div></div>
+    <div class="metric"><div class="metric-val">2003</div><div class="metric-label">estandarización Neo-Tifinagh IRCAM</div></div>
+    <div class="metric"><div class="metric-val">150</div><div class="metric-label">participantes Ahwash coral</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Dialectos del Amazigh</h3>
+    <table>
+      <tr><th>Dialecto</th><th>Región</th><th>Rasgos fonológicos distintivos</th><th>Hablantes</th></tr>
+      <tr><td><strong>Tarifit</strong></td><td>Rif, Marruecos</td><td>Clusters consonánticos masivos, schwa frecuente</td><td>3-4M</td></tr>
+      <tr><td><strong>Tachelhit</strong></td><td>Anti-Atlas, Marruecos</td><td>Núcleos silábicos consonánticos (/r/, /l/ como vocales)</td><td>7-8M</td></tr>
+      <tr><td><strong>Tamazight Central</strong></td><td>Atlas Medio, Marruecos</td><td>Faringalización prominente, sistema vocálico reducido</td><td>3-4M</td></tr>
+      <tr><td><strong>Kabyle</strong></td><td>Cabilia, Argelia</td><td>Préstamos árabe/francés, F2 enfáticas moderadas</td><td>5-6M</td></tr>
+      <tr><td><strong>Tuareg/Tamahaq</strong></td><td>Sahel/Sahara</td><td>Sistema labio-velar /kw/, menos enfáticas</td><td>2-3M</td></tr>
+      <tr><td><strong>Chaoui</strong></td><td>Aurès, Argelia</td><td>Preserva arcaísmos, geminación semántica activa</td><td>1-2M</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Lingüística</div>
+    <div class="module-title">Consonantes Enfáticas y Faringalización</div>
+    <div class="module-sub">IPA /tˤ dˤ sˤ zˤ lˤ nˤ rˤ/, constricción faríngea y colapso del segundo formante F₂</div>
+  </div>
+  <div class="formula">Pipeline: WAV 48kHz → pre-énfasis →1kHz → segmentación MFA → ventana Hamming 40ms → Burg formant → F₁/F₂/F₃ cada 5% → conversión Bark → ΔBark vs ROPE ±0.5</div>
+  <div class="card">
+    <h3>Consonantes Enfáticas — Tabla de Referencia</h3>
+    <table>
+      <tr><th>Consonante IPA</th><th>Lugar base</th><th>Articulación 2ª</th><th>ΔF₂ típico</th><th>Ejemplo</th></tr>
+      <tr><td>/tˤ/</td><td>Dental</td><td>Faríngea + retracción TBO</td><td>-400 a -600 Hz</td><td>iṭṭij "sol"</td></tr>
+      <tr><td>/dˤ/</td><td>Dental voiced</td><td>Ídem</td><td>-350 a -550 Hz</td><td>aḍrar "montaña"</td></tr>
+      <tr><td>/sˤ/</td><td>Alveolar fricativa</td><td>Ídem + espectro oscuro</td><td>-300 a -500 Hz</td><td>iṣṣ "rama"</td></tr>
+      <tr><td>/zˤ/</td><td>Alveolar frica. voz.</td><td>Ídem</td><td>-300 a -480 Hz</td><td>azẓar "raíz"</td></tr>
+      <tr><td>/lˤ/</td><td>Lateral</td><td>Lateralización + faríngea</td><td>-250 a -400 Hz</td><td>aḷḷah (préstamo)</td></tr>
+      <tr><td>/rˤ/</td><td>Vibrante</td><td>Vibrante + faríngea</td><td>-200 a -350 Hz</td><td>aẓẓar "cabello"</td></tr>
+    </table>
+    <p>El efecto faringal se irradia bidireccionalmente: la primera vocal adyacente pierde ~80% del F₂ original, la segunda ~40%, la tercera ~15%.</p>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Lingüística</div>
+    <div class="module-title">Raíces Trilíteras y Melodic Overwriting</div>
+    <div class="module-sub">Morfología no-concatenativa: raíces como vectores semánticos, vocales como compiladores</div>
+  </div>
+  <div class="card">
+    <h3>Arquitectura de Morfología No-Concatenativa</h3>
+    <table>
+      <tr><th>Raíz</th><th>Patrón vocálico</th><th>Forma de superficie</th><th>Significado</th><th>Categoría</th></tr>
+      <tr><td>K-R-Z</td><td>{a_a}</td><td>kraz</td><td>cortó</td><td>Perfectivo transitivo</td></tr>
+      <tr><td>K-R-Z</td><td>{_a_a}</td><td>ttakraza</td><td>estar cortando</td><td>Imperfectivo intensivo</td></tr>
+      <tr><td>K-R-Z</td><td>{a_az}</td><td>akraz</td><td>el corte</td><td>Nomen actoris</td></tr>
+      <tr><td>F-L-S</td><td>{a_a}</td><td>flas</td><td>desató</td><td>Perfectivo</td></tr>
+      <tr><td>N-GH-R</td><td>{a_a}</td><td>ngher</td><td>mató</td><td>Perfectivo</td></tr>
+    </table>
+    <pre><code>class AmazighRoot:
+    def __init__(self, consonants: list):
+        self.C = consonants  # e.g., ['k', 'r', 'z']
+
+    def apply_template(self, template: str) -> str:
+        result = []; c_idx = 0
+        for char in template:
+            if char == '_':
+                result.append(self.C[c_idx]); c_idx += 1
+            else:
+                result.append(char)
+        return ''.join(result)
+
+root_krz = AmazighRoot(['k', 'r', 'z'])
+print(root_krz.apply_template('a_a'))    # kraz
+print(root_krz.apply_template('tt_a_a')) # ttkraza</code></pre>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Lingüística</div>
+    <div class="module-title">Apofonía y Geminación</div>
+    <div class="module-sub">Ablaut i→a, alternancia aspectual interna y geminación como operador semántico</div>
+  </div>
+  <div class="formula">Gemination Ratio = duración_geminada / duración_simple (típico: 1.8–2.5× en Tamazight)</div>
+  <div class="card">
+    <h3>Mecanismos Morfológicos Internos</h3>
+    <table>
+      <tr><th>Mecanismo</th><th>Par mínimo</th><th>Diferencia semántica</th><th>Nivel</th></tr>
+      <tr><td>Apofonía i→a</td><td>irir / irar</td><td>imperfectivo / perfectivo</td><td>Vocálico</td></tr>
+      <tr><td>Geminación</td><td>krez / krezz</td><td>cortar una vez / repetidamente</td><td>Consonántico</td></tr>
+      <tr><td>Prefijo tt-</td><td>flas / ttaflas</td><td>perfectivo / habitual</td><td>Morfema</td></tr>
+      <tr><td>Apofonía u→a</td><td>ur / ar</td><td>negación / aspecto imperfectivo</td><td>Vocálico</td></tr>
+    </table>
+    <p>La geminación duplica temporalmente la clausura consonántica (×2 duración). Es morfológicamente activa — marca aspecto, no solo contraste fonémico.</p>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Morfosintaxis</div>
+    <div class="module-title">Estado Anexado — Construct State</div>
+    <div class="module-sub">Puntero morfosintáctico obligatorio: prefijación, apócope vocálica y contextos de activación</div>
+  </div>
+  <div class="card">
+    <h3>Estado Libre vs Estado Anexado</h3>
+    <table>
+      <tr><th>Estado Libre (EL)</th><th>Estado Anexado (EA)</th><th>Género</th><th>Operación</th></tr>
+      <tr><td>argaz</td><td>urgaz</td><td>Masc.</td><td>a→u (alternancia vocálica)</td></tr>
+      <tr><td>amghar</td><td>umghar</td><td>Masc.</td><td>a→u</td></tr>
+      <tr><td>afus</td><td>ufus</td><td>Masc.</td><td>a→u</td></tr>
+      <tr><td>imi</td><td>umi</td><td>Masc.</td><td>i→u</td></tr>
+      <tr><td>tafruxt</td><td>tfruxt</td><td>Fem.</td><td>Apócope: elisión de /a/ inicial</td></tr>
+      <tr><td>tamghart</td><td>tmghart</td><td>Fem.</td><td>Apócope: elisión de /a/ inicial</td></tr>
+    </table>
+    <p>El EA se activa cuando el sustantivo es: (1) objeto de preposición, (2) sujeto posverbal, (3) segundo elemento de genitivo. Su uso incorrecto produce agramaticalidad percibida como error grave.</p>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Morfosintaxis</div>
+    <div class="module-title">Optimality Theory</div>
+    <div class="module-sub">Constraints, tableaux, ranking y predicción de outputs sin derivaciones intermedias</div>
+  </div>
+  <div class="card">
+    <h3>Arquitectura OT</h3>
+    <p>OT elimina reglas ordenadas secuencialmente. El generador <strong>GEN</strong> produce todos los candidatos posibles; <strong>EVAL</strong> los filtra en una pasada usando el ranking jerárquico de constraints. El output es el candidato que viola menos constraints altamente rankeados.</p>
+    <table>
+      <tr><th>Módulo</th><th>Función</th><th>Analogía computacional</th></tr>
+      <tr><td>GEN</td><td>Produce todos los candidatos posibles desde el input</td><td>Generador exhaustivo</td></tr>
+      <tr><td>CON</td><td>Conjunto de constraints universales</td><td>Función de coste multidimensional</td></tr>
+      <tr><td>EVAL</td><td>Filtra por ranking jerárquico</td><td>Búsqueda del óptimo por ranking</td></tr>
+    </table>
+    <p>Constraints clave para Tamazight: <strong>MAX-IO</strong> (no elisión), <strong>DEP-IO</strong> (no epéntesis), <strong>IDENT-IO[place]</strong> (preservar lugar de articulación).</p>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Morfosintaxis</div>
+    <div class="module-title">Schwa Epentética</div>
+    <div class="module-sub">Inserción de [ə] en clusters consonánticos: duración, contextos y análisis OT</div>
+  </div>
+  <div class="card">
+    <h3>El Schwa Ultra-Breve en Tachelhit</h3>
+    <p>Tachelhit permite clusters consonánticos de hasta CCCCV. El schwa epentético [ə] se inserta en algunos contextos para reparar clusters no permitidos, pero su duración es ultra-breve (16-24ms) — no fonémico, sub-perceptivo para hablantes no nativos.</p>
+    <table>
+      <tr><th>Parámetro</th><th>Valor típico</th><th>Contraste</th></tr>
+      <tr><td>Duración schwa</td><td>16–24ms</td><td>Vocal plena: 80–120ms</td></tr>
+      <tr><td>F₁ schwa</td><td>450–550 Hz</td><td>Vocales plenas: 300–800Hz por timbre</td></tr>
+      <tr><td>Contexto de inserción</td><td>CC+obstruyente+obstruyente</td><td>No antes de sonorant</td></tr>
+    </table>
+    <p>Análisis OT: la inserción es el candidato óptimo cuando <strong>SONORITY-SEQ</strong> (clusters no silabificables) ranka sobre <strong>DEP-IO</strong> (no inserción).</p>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Fonética Computacional</div>
+    <div class="module-title">Análisis de Formantes</div>
+    <div class="module-sub">Parselmouth, algoritmo Burg, F₁/F₂/F₃ y ventanas Hamming</div>
+  </div>
+  <div class="card">
+    <h3>Pipeline de Extracción con Parselmouth</h3>
+    <pre><code>import parselmouth
+import numpy as np
+
+def extract_f2_trajectory(wav_path, start_s, end_s):
+    sound = parselmouth.Sound(wav_path)
+    formant = sound.to_formant_burg(
+        time_step=0.01,
+        max_number_of_formants=5,
+        maximum_formant=5500,
+        window_length=0.04,   # 40ms ventana Hamming
+        pre_emphasis_from=50
+    )
+    times = np.arange(start_s, end_s, 0.002)
+    f2 = [formant.get_value_at_time(2, t) for t in times]
+    return times, np.array(f2)
+
+# Aplicar a pares mínimos enfáticos /izi/ vs /izˤi/
+t_plain, f2_plain = extract_f2_trajectory("izi.wav", 0.05, 0.25)
+t_phar,  f2_phar  = extract_f2_trajectory("izi_phar.wav", 0.05, 0.25)
+print(f"ΔF₂ medio (Hz): {np.nanmean(f2_plain - f2_phar):.1f}")</code></pre>
+    <table>
+      <tr><th>Formante</th><th>Rango Hz típico</th><th>Controlado por</th><th>Sensible a</th></tr>
+      <tr><td>F₁</td><td>300–800</td><td>Apertura de mandíbula</td><td>Altura vocálica</td></tr>
+      <tr><td>F₂</td><td>700–2500</td><td>Posición anteroposterior lengua</td><td>Faringalización (−400Hz)</td></tr>
+      <tr><td>F₃</td><td>1800–3200</td><td>Cuerpo lingual + labios</td><td>Labialización</td></tr>
+    </table>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · Fonética Computacional</div>
+    <div class="module-title">Escala Bark y Psicoacústica</div>
+    <div class="module-sub">Conversión Hz→Bark, corrección Traunmüller, HDI+ROPE para significancia</div>
+  </div>
+  <div class="formula">Bark (Traunmüller): z = 26.81·f/(1960+f) − 0.53<br>
+z' = z + 0.15·(2−z)  si z &lt; 2.0<br>
+z' = z + 0.22·(z−20.1)  si z &gt; 20.1</div>
+  <div class="card">
+    <h3>Implementación de Conversión Bark</h3>
+    <pre><code>def hz_to_bark(f: float) -> float:
+    if f &lt;= 0: return 0.0
+    z = 26.81 * f / (1960 + f) - 0.53
+    if z &lt; 2.0:    z += 0.15 * (2.0 - z)
+    elif z &gt; 20.1: z += 0.22 * (z - 20.1)
+    return z
+
+# ROPE para significancia clínica: ±0.5 Bark
+# Si ΔBark > 0.5 → efecto lingüísticamente significativo
+delta_bark = hz_to_bark(1350) - hz_to_bark(820)
+print(f"ΔBark = {delta_bark:.3f}")  # ~1.85 → SIGNIFICATIVO</code></pre>
+    <p>La decisión HDI+ROPE compara el intervalo de alta densidad del posterior bayesiano con la región de equivalencia práctica (±0.5 Bark). Si el HDI cae fuera del ROPE: efecto real.</p>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Fonética Computacional</div>
+    <div class="module-title">EMA y Articulografía Electromagnética</div>
+    <div class="module-sub">EMA AG501, sensores ULIP/TTIP/TBO, tracking de articuladores en ms</div>
+  </div>
+  <div class="card">
+    <h3>Sistema EMA AG501</h3>
+    <table>
+      <tr><th>Parámetro</th><th>Valor</th><th>Relevancia</th></tr>
+      <tr><td>Frecuencia de muestreo</td><td>1250 Hz</td><td>Resolución temporal sub-ms</td></tr>
+      <tr><td>Sensores principales</td><td>ULIP, TTIP, TBO</td><td>Punta/dorso/raíz de lengua</td></tr>
+      <tr><td>Precisión espacial</td><td>&lt;0.5 mm RMS</td><td>Detecta retracción TBO de 2-5mm</td></tr>
+      <tr><td>Dimensiones capturadas</td><td>X, Y, Z + rotación</td><td>Movimiento 3D completo</td></tr>
+    </table>
+    <p>El TBO (tongue body/back) captura la retracción faríngea que produce el colapso de F₂. La correlación EMA-acústica valida que el ΔF₂ es causado por movimiento articulatorio real, no por artefactos.</p>
+    <pre><code>from scipy.signal import butter, filtfilt
+import numpy as np
+
+def filter_ema_signal(data: np.ndarray, fs=1250, cutoff=20) -> np.ndarray:
+    """Butterworth LP 20Hz para señales EMA (elimina ruido de alta frecuencia)."""
+    b, a = butter(4, cutoff / (fs / 2), btype='low')
+    return filtfilt(b, a, data, axis=0)</code></pre>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Visión y Producción</div>
+    <div class="module-title">OCR Tifinagh con SVM</div>
+    <div class="module-sub">Skeletonización Zhang-Wang, extracción de keypoints y clasificación SVM</div>
+  </div>
+  <div class="card">
+    <h3>Pipeline OCR Tifinagh</h3>
+    <pre><code>from skimage.morphology import thin
+from skimage.feature import corner_harris, corner_peaks
+from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
+import numpy as np
+
+def extract_tifinagh_features(glyph_binary: np.ndarray) -> np.ndarray:
+    """
+    Pipeline Zhang-Wang + keypoints para features de OCR Tifinagh.
+    1. Skeletonización: reduce glifo a esqueleto de 1 píxel
+    2. Branch points: vecinos >= 3 en el esqueleto
+    3. End points: vecinos == 1 en el esqueleto
+    """
+    skeleton = thin(glyph_binary)
+    peaks = corner_peaks(corner_harris(skeleton.astype(float)), min_distance=3)
+    n_branches = 0; n_ends = 0
+    for (r, c) in peaks:
+        neighborhood = skeleton[max(0,r-1):r+2, max(0,c-1):c+2].sum() - 1
+        if neighborhood >= 3: n_branches += 1
+        elif neighborhood == 1: n_ends += 1
+    return np.array([n_branches, n_ends, skeleton.sum(),
+                     glyph_binary.mean(), peaks.shape[0]])
+
+# SVM con kernel RBF — precisión objetivo: F1 >= 0.90
+clf = SVC(kernel='rbf', C=10, gamma='scale')
+# scores = cross_val_score(clf, X, y, cv=5, scoring='f1_macro')
+# print(f"F1 CV: {scores.mean():.3f} ± {scores.std():.3f}")</code></pre>
+    <table>
+      <tr><th>Métrica</th><th>Resultado típico</th><th>Referencia IRCAM</th></tr>
+      <tr><td>F1-score (5-fold CV)</td><td>0.94–0.97</td><td>&gt;0.90</td></tr>
+      <tr><td>Precisión global</td><td>98.94%</td><td>Corpus Neo-Tifinagh</td></tr>
+      <tr><td>Features por glifo</td><td>5 (branches, ends, etc.)</td><td>Zhang-Wang skeleton</td></tr>
+    </table>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Visión y Producción</div>
+    <div class="module-title">Pharyngealization Spread</div>
+    <div class="module-sub">Propagación faringal bidireccional, HSGP y modelado bayesiano de trayectorias</div>
+  </div>
+  <div class="formula">Spread decay: ΔF₂(n) ≈ ΔF₂(0) · e^(−λ·n)<br>
+Primera vocal adyacente: ~80% del ΔF₂. Segunda: ~40%. Tercera: ~15%.</div>
+  <div class="card">
+    <h3>HSGP — Hilbert Space GP para Trayectorias de Formantes</h3>
+    <p>El GP exacto requiere invertir K de N×N. Para EMA a 1250Hz durante 5min, N=375000 → imposible. El HSGP proyecta el GP sobre las primeras m eigenfunciones del Laplaciano. Con m=8, captura &gt;99% de la varianza de trayectorias articulatorias suaves.</p>
+    <pre><code>import pymc as pm
+import numpy as np
+
+def build_hsgp_spread_model(times, f2_obs, m=8):
+    with pm.Model() as model:
+        # Hiperparámetros del GP
+        ls = pm.HalfNormal("ls", sigma=0.05)      # longitud de escala (s)
+        eta = pm.HalfNormal("eta", sigma=200)     # amplitud (Hz)
+        sigma = pm.HalfNormal("sigma", sigma=30)  # ruido de medida
+
+        # HSGP con m bases en el intervalo [0, max(times)]
+        L = max(times) * 1.2
+        cov = eta**2 * pm.gp.cov.ExpQuad(1, ls=ls)
+        gp = pm.gp.HSGP(m=[m], L=[L], cov_func=cov)
+        f = gp.prior("f", X=times[:, None])
+
+        # Likelihood
+        pm.Normal("obs", mu=f, sigma=sigma, observed=f2_obs)
+    return model</code></pre>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Visión y Producción</div>
+    <div class="module-title">Producción Musical Amazigh</div>
+    <div class="module-sub">Espectrograma de Bendir, análisis microtonal, hemiola rítmica</div>
+  </div>
+  <div class="card">
+    <h3>Análisis Acústico de Música Amazigh</h3>
+    <pre><code>import librosa, numpy as np
+
+def analyze_amazigh_music(wav_path: str):
+    y, sr = librosa.load(wav_path, sr=22050)
+
+    # 1. Espectrograma del Bendir
+    D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
+
+    # 2. Análisis de IOI (Inter-Onset Intervals) para hemiola
+    onset_frames = librosa.onset.onset_detect(y=y, sr=sr)
+    onset_times = librosa.frames_to_time(onset_frames, sr=sr)
+    ioi = np.diff(onset_times)
+
+    # 3. Pitch microtonal con YIN (resolución ~1 cent)
+    f0, voiced_flag, _ = librosa.pyin(y, fmin=60, fmax=800)
+    f0_voiced = f0[voiced_flag]
+
+    return {"ioi_mean_ms": np.mean(ioi)*1000,
+            "f0_median_hz": np.nanmedian(f0_voiced),
+            "n_onsets": len(onset_times)}
+
+# Hemiola: relación 3:2 entre niveles métricos
+# IOI típico Ahwash 120-150 BPM → 400-500ms/beat</code></pre>
+    <p>La hemiola amazigh crea un polirritmo 3:2 entre el Tbel (tambor) y el coro vocal. El análisis de IOI detecta esta relación matemáticamente: si IOI_A / IOI_B ≈ 1.5, existe hemiola.</p>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Visión y Producción</div>
+    <div class="module-title">El Ahwash — Sincronización Colectiva</div>
+    <div class="module-sub">Modelo de Kuramoto, parámetro de orden R, entrainment de 150 participantes</div>
+  </div>
+  <div class="formula">Kuramoto: dθᵢ/dt = ωᵢ + (K/N)·Σⱼ sin(θⱼ−θᵢ)<br>
+Parámetro de orden: R·e^(iΨ) = (1/N)·Σⱼ e^(iθⱼ)<br>
+R=1 → sincronía perfecta | R=0 → desincronización total</formula>
+  <div class="card">
+    <h3>Robustez del Ahwash como Sistema de Transmisión Cultural</h3>
+    <p>El Ahwash implementa tres mecanismos de robustez simultáneos:</p>
+    <ul>
+      <li><strong>Redundancia masiva:</strong> 150 nodos transmiten el mismo contenido simultáneamente.</li>
+      <li><strong>Corrección de errores distribuida:</strong> Si un participante comete un error, los otros 149 lo corrigen por presión auditiva y social.</li>
+      <li><strong>Memoria procedural motora:</strong> El ritmo del palmar y la melodía del coro se almacenan en memoria motora — extraordinariamente persistente (como andar en bicicleta).</li>
+    </ul>
+    <p>Resultado: un protocolo de transmisión cultural que ha sobrevivido 4000 años sin escritura.</p>
+    <pre><code>import numpy as np
+
+def kuramoto_order_parameter(phases: np.ndarray) -> float:
+    """Calcula R (parámetro de orden de Kuramoto) dado array de fases."""
+    return abs(np.mean(np.exp(1j * phases)))
+
+# Simulación: 150 participantes con frecuencias ligeramente distintas
+N = 150; K = 3.0; dt = 0.01; T = 30
+omega = np.random.normal(2*np.pi*2.0, 0.1, N)  # ~2 Hz ± variación
+theta = np.random.uniform(0, 2*np.pi, N)
+for _ in range(int(T/dt)):
+    coupling = (K/N) * np.sum(np.sin(theta[:,None] - theta[None,:]), axis=1)
+    theta += (omega + coupling) * dt
+print(f"R final = {kuramoto_order_parameter(theta):.3f}")</code></pre>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto Final — Síntesis Lingüística y Acústica Amazigh</div>
+    <div class="module-sub">Pipeline fonético completo + OCR Tifinagh + análisis musical integrado</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica del Proyecto HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>Pipeline acústico (formantes + Bark + HDI+ROPE)</td><td>F1/F2/F3 extraídos; Bark con corrección Traunmüller; decisión HDI+ROPE justificada</td><td>25</td></tr>
+        <tr><td>Análisis morfológico OT (tableaux)</td><td>3 tableaux correctos con candidatos y violaciones; ganador justificado</td><td>20</td></tr>
+        <tr><td>OCR Tifinagh (SVM + validación)</td><td>F1 ≥ 0.90 en 5-fold CV; features Zhang-Wang; matriz de confusión incluida</td><td>20</td></tr>
+        <tr><td>Modelo HSGP spread faringal</td><td>Modelo PyMC converge; HDI calculado; interpretación fonológica del spread</td><td>20</td></tr>
+        <tr><td>Análisis musical Amazigh</td><td>IOI + clasificación metro; espectrograma Bendir; análisis microtonal con pyin()</td><td>10</td></tr>
+        <tr><td>Documentación y reproducibilidad</td><td>Código comentado; environment.yml; seeds fijadas; figuras publication-ready</td><td>5</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman — Explica sin notas</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Morfología No-Concatenativa</h4>
+      <p class="quiz-q">¿Por qué la morfología no-concatenativa del Tamazight es un reto computacional único para el NLP y qué tipo de formalismo matemático requiere?</p>
+      <details><summary>Ver respuesta</summary><p>Los stemmers concatenativos (Snowball, Porter) asumen que los morfemas son cadenas lineales. En Tamazight, las vocales no se concatenan — se proyectan simultáneamente sobre el esqueleto consonántico. La raíz K-R-Z ocupa nodos C del esqueleto; el patrón {a_a} ocupa nodos V. No hay orden temporal de concatenación: ambos se superponen sobre la misma estructura. Computacionalmente se requieren gramáticas bidimensionales o de árboles adjuntos (TAG), no FSTs lineales. Por eso cualquier NLP estándar aplicado al Tamazight produce outputs sin sentido.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · F₂ como Formante Diagnóstico</h4>
+      <p class="quiz-q">¿Por qué el F₂ es el formante diagnóstico de la faringalización y no el F₁ o el F₃?</p>
+      <details><summary>Ver respuesta</summary><p>F₁ es controlado por la apertura mandibular — la faringalización no mueve la mandíbula, así que F₁ cambia poco. F₃ está controlado por el cuerpo lingual y labialización — la señal es débil. F₂ es directamente sensible a la posición anteroposterior del dorso lingual: un TBO retraído aumenta el volumen de la cavidad posterior y disminuye F₂ de forma dramática (−400 a −600 Hz para /tˤ/). Además, F₂ está en un rango (700-2500 Hz) donde el sistema auditivo tiene alta resolución, haciendo el contraste perceptivamente saliente.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · Optimality Theory sin Reglas Ordenadas</h4>
+      <p class="quiz-q">¿Por qué la Optimality Theory predice outputs sin reglas ordenadas secuencialmente? ¿Qué ventaja computacional ofrece?</p>
+      <details><summary>Ver respuesta</summary><p>Los modelos SPE aplican reglas secuencialmente: el orden importa y produce paradojas de bleeding/feeding. OT elimina este problema: GEN produce todos los candidatos simultáneamente, y EVAL los filtra en una única pasada usando el ranking jerárquico. El output es el candidato que gana el torneo de restricciones. La ventaja computacional: el problema se reduce a buscar el óptimo en un conjunto de candidatos mediante un algoritmo de ranking — sin el colapso de parsing de gramáticas ordenadas.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · HSGP vs GP Exacto</h4>
+      <p class="quiz-q">¿Por qué el HSGP es preferible a un GP exacto para modelar trayectorias EMA en estudios de faringalización?</p>
+      <details><summary>Ver respuesta</summary><p>Un GP exacto requiere invertir la matriz K de N×N. Para señal EMA a 1250 Hz durante 5 min, N=375000 → invertir requiere O(N³) = ~5×10¹⁶ flops, imposible en cualquier hardware disponible. El HSGP proyecta el GP sobre las primeras m eigenfunciones del Laplaciano (m=8). Solo necesita m×N = 3 millones de operaciones — factible en segundos. Para trayectorias articulatorias suaves (sin discontinuidades), m=8 captura &gt;99% de la varianza: el trade-off es óptimo por diseño.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · Ahwash como Sistema sin Escritura</h4>
+      <p class="quiz-q">¿Por qué el Ahwash de 150 participantes es un sistema robusto de preservación cultural sin escritura? Nombra los tres mecanismos de robustez.</p>
+      <details><summary>Ver respuesta</summary><p>El Ahwash implementa: (1) <strong>Redundancia masiva</strong>: 150 nodos transmiten simultáneamente — para que se pierda información, deben fallar todos a la vez. (2) <strong>Corrección de errores distribuida en tiempo real</strong>: un error rítmico o léxico es corregido instantáneamente por presión auditiva y social de los 149 restantes — es un ECC distribuido. (3) <strong>Embodiment en memoria motora</strong>: el ritmo y melodía se almacenan en memoria procedural (no declarativa) — extremadamente persistente, como montar en bicicleta. Los tres mecanismos combinados explican 4000 años de persistencia sin escritura.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_tamazight_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Briefing'},
+    {id:'m1',  label:'M1 · Consonantes Enfáticas'},
+    {id:'m2',  label:'M2 · Raíces y Melodic Overwriting'},
+    {id:'m3',  label:'M3 · Apofonía y Geminación'},
+    {id:'m4',  label:'M4 · Estado Anexado'},
+    {id:'m5',  label:'M5 · Optimality Theory'},
+    {id:'m6',  label:'M6 · Schwa Epentética'},
+    {id:'m7',  label:'M7 · Análisis de Formantes'},
+    {id:'m8',  label:'M8 · Escala Bark'},
+    {id:'m9',  label:'M9 · EMA y Articulografía'},
+    {id:'m10', label:'M10 · OCR Tifinagh'},
+    {id:'m11', label:'M11 · Pharyngealization Spread'},
+    {id:'m12', label:'M12 · Producción Musical Amazigh'},
+    {id:'m13', label:'M13 · El Ahwash'},
+    {id:'m14', label:'M14 · HERO — Síntesis Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

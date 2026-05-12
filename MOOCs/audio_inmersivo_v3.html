@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio Inmersivo — Zero to Hero v3</title>
+<style>
+:root {
+  --bg:#0b0f17; --surface:#111827; --surface2:#1e293b;
+  --accent:#06b6d4; --accent2:#22d3ee; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#1e293b;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'JetBrains Mono','Fira Code',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter','Segoe UI',sans-serif;display:flex;min-height:100vh}
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav#nav-list{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(6,182,212,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+pre{background:#060a12;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#060a12;padding:2px 6px;border-radius:4px}
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+/* V3 ADDITIONS */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(0,0,0,.15);border-radius:6px;line-height:1.6}
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>Audio Inmersivo</h2>
+    <p>Zero to Hero · v3 · 15 módulos</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introducción</div>
+    <div class="module-title">Briefing & Arquitectura del Espacio Sonoro</div>
+    <div class="module-sub">El audio inmersivo no es "más canales" — es ingeniería de escena tridimensional</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 720 400" width="100%" style="max-width:720px;">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#475569"/>
+        </marker>
+      </defs>
+      <rect x="295" y="175" width="130" height="50" rx="8" fill="#0891b2" opacity=".9"/>
+      <text x="360" y="200" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Audio Inmersivo</text>
+      <text x="360" y="215" text-anchor="middle" fill="white" font-size="10">3D Field</text>
+      <rect x="40" y="50" width="140" height="40" rx="6" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="110" y="74" text-anchor="middle" fill="#94a3b8" font-size="11">Psicoacústica / HRTF</text>
+      <line x1="180" y1="70" x2="295" y2="195" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+      <rect x="40" y="130" width="140" height="40" rx="6" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="110" y="154" text-anchor="middle" fill="#94a3b8" font-size="11">Ambisonics / HOA</text>
+      <line x1="180" y1="150" x2="295" y2="200" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+      <rect x="40" y="210" width="140" height="40" rx="6" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="110" y="234" text-anchor="middle" fill="#94a3b8" font-size="11">Dolby Atmos / ADM</text>
+      <line x1="180" y1="230" x2="295" y2="210" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+      <rect x="40" y="290" width="140" height="40" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+      <text x="110" y="314" text-anchor="middle" fill="#94a3b8" font-size="11">Captura: AMBEO/Zylia</text>
+      <line x1="180" y1="310" x2="295" y2="215" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+      <rect x="540" y="50" width="140" height="40" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="610" y="74" text-anchor="middle" fill="#94a3b8" font-size="11">VBAP / WFS / Binaural</text>
+      <line x1="540" y1="70" x2="425" y2="195" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+      <rect x="540" y="130" width="140" height="40" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="610" y="154" text-anchor="middle" fill="#94a3b8" font-size="11">Wwise / FMOD / Unity</text>
+      <line x1="540" y1="150" x2="425" y2="200" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+      <rect x="540" y="210" width="140" height="40" rx="6" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="610" y="234" text-anchor="middle" fill="#94a3b8" font-size="11">MPEG-H / ADM BWF</text>
+      <line x1="540" y1="230" x2="425" y2="210" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+      <rect x="540" y="290" width="140" height="40" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+      <text x="610" y="314" text-anchor="middle" fill="#94a3b8" font-size="11">VR / AR / XR / Meta</text>
+      <line x1="540" y1="310" x2="425" y2="215" stroke="#475569" stroke-width="1" marker-end="url(#arr)"/>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">15</div><div class="metric-label">Módulos</div></div>
+    <div class="metric"><div class="metric-val">3D</div><div class="metric-label">Espacio sonoro</div></div>
+    <div class="metric"><div class="metric-val">7.1.4</div><div class="metric-label">Config. Atmos mínima</div></div>
+    <div class="metric"><div class="metric-val">HOA 7</div><div class="metric-label">Higher Order Ambisonics</div></div>
+    <div class="metric"><div class="metric-val">-18 LUFS</div><div class="metric-label">Target Atmos Music</div></div>
+    <div class="metric"><div class="metric-val">(N+1)²</div><div class="metric-label">Canales HOA orden N</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa de Paradigmas</h3>
+    <table>
+      <tr><th>Paradigma</th><th>Metáfora</th><th>Herramienta</th><th>Fortaleza</th></tr>
+      <tr><td>Channel-based</td><td>Altavoces fijos en el mundo</td><td>5.1, 7.1, 22.2</td><td>Predictible, broadcast</td></tr>
+      <tr><td>Object-based</td><td>Fuentes en el espacio, el render decide</td><td>Dolby Atmos, MPEG-H</td><td>Escalable a cualquier sistema</td></tr>
+      <tr><td>Scene-based</td><td>Campo acústico completo capturado</td><td>Ambisonics, HOA</td><td>Compatible con rotación de cabeza (6DoF)</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Stack del MOOC</h3>
+    <ul>
+      <li><strong>DAW:</strong> Pro Tools Ultimate / Nuendo 13 / Logic Pro — producción y mezcla inmersiva</li>
+      <li><strong>Ambisonics:</strong> IEM Suite / SPARTA / ATK — encode, decode y procesado HOA</li>
+      <li><strong>Object:</strong> Dolby Atmos Renderer — render binaural y de sala</li>
+      <li><strong>VR/XR:</strong> Resonance Audio / Steam Audio — spatial audio en Unity/Unreal</li>
+      <li><strong>Videojuegos:</strong> Wwise / FMOD — middleware de audio interactivo</li>
+      <li><strong>Análisis:</strong> SPAT Revolution — espacialización en tiempo real</li>
+    </ul>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Fundamentos</div>
+    <div class="module-title">Psicoacústica & HRTF</div>
+    <div class="module-sub">ITD, ILD, efecto pinna, HRTF databases y percepción de elevación</div>
+  </div>
+
+  <div class="card">
+    <h3>Localización Horizontal: ITD e ILD</h3>
+    <table>
+      <tr><th>Clave</th><th>Mecanismo</th><th>Rango</th><th>Frecuencias</th></tr>
+      <tr><td><strong>ITD</strong></td><td>Diferencia de llegada entre oídos (≤0.63ms)</td><td>±90° azimut</td><td>&lt;1.5kHz</td></tr>
+      <tr><td><strong>ILD</strong></td><td>Diferencia de nivel por sombra acústica de la cabeza</td><td>±90° azimut</td><td>&gt;1kHz</td></tr>
+      <tr><td><strong>Pinna</strong></td><td>Reflexiones en pabellón → notches espectrales de elevación</td><td>Elevación/frontal-trasero</td><td>4–16kHz</td></tr>
+      <tr><td><strong>Movimiento</strong></td><td>Rotación de cabeza resuelve "cone of confusion"</td><td>Delantera/trasera</td><td>todas</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>HRTF: Head-Related Transfer Function</h3>
+    <p>Captura cómo una fuente en dirección (θ,φ) es filtrada por cabeza, torso y pabellón antes de llegar al tímpano. Se mide individualmente en cámara anecoica.</p>
+    <pre>import scipy.signal as sig
+import numpy as np
+
+def apply_hrtf(mono, hrtf_l, hrtf_r):
+    """Convolucion binaural: mono + par HRTF → stereo."""
+    left  = sig.fftconvolve(mono, hrtf_l, mode='full')
+    right = sig.fftconvolve(mono, hrtf_r, mode='full')
+    return np.stack([left, right], axis=-1)  # (N,2)</pre>
+    <p>Bases de datos: <strong>KEMAR</strong> (maniquí estándar, 710 posiciones), <strong>CIPIC</strong> (200+ sujetos), <strong>SADIE II</strong> (formato SOFA), <strong>Listen</strong> (IRCAM, 51 sujetos, 187 posiciones). Formato de intercambio: <strong>SOFA (AES69)</strong>.</p>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q · HRTF y Elevación</h4>
+    <p class="quiz-q">¿Por qué es difícil percibir elevación sin movimiento de cabeza con una HRTF genérica?</p>
+    <details><summary>Ver respuesta</summary><p>Sin mover la cabeza, ITD e ILD son idénticos para fuentes en el mismo cono de confusión. La única pista son los notches espectrales de pinna (4–16kHz). Si la HRTF usada no coincide con la anatomía del oyente, esos notches no encajan con lo que el cerebro espera y la fuente se internaliza o se percibe siempre enfrente.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Paradigmas</div>
+    <div class="module-title">Channel / Object / Scene</div>
+    <div class="module-sub">Diferencias fundamentales, casos de uso y herramientas de cada paradigma</div>
+  </div>
+
+  <div class="card">
+    <h3>Los Tres Paradigmas del Audio Espacial</h3>
+    <table>
+      <tr><th>Paradigma</th><th>Qué codifica</th><th>Ventaja clave</th><th>Limitación</th><th>Ejemplos</th></tr>
+      <tr><td><strong>Channel-based</strong></td><td>Señales para altavoces fijos predefinidos</td><td>Sin ambigüedad; latencia mínima</td><td>Atado al layout exacto</td><td>5.1, 7.1, 7.1.4, 22.2</td></tr>
+      <tr><td><strong>Object-based</strong></td><td>Audio mono + metadatos de posición 3D</td><td>Adapta a cualquier sala en playback</td><td>Requiere renderer</td><td>Dolby Atmos, DTS:X, MPEG-H</td></tr>
+      <tr><td><strong>Scene-based</strong></td><td>Campo acústico completo (esférico)</td><td>Speaker-agnostic; re-mezcla libre</td><td>Mayor ancho de banda</td><td>FOA B-format, HOA orden 3–7</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Object-Based: Posición en Esfera</h3>
+    <pre>audioObject: "Violin 1"
+  position: {azimuth: -30, elevation: 0, distance: 1.0}
+  width: 0.05
+  gain: 0.85
+  duration: 00:02:15</pre>
+    <p>Cada objeto lleva <code>audioPackFormat</code> con coordenadas (azimut, elevación, distancia), ganancia, tamaño y curvas de automatización en tiempo. El renderer mapea el objeto al layout disponible en tiempo real.</p>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q · Elección de Paradigma</h4>
+    <p class="quiz-q">¿Cuándo elegir Object-based vs Scene-based (Ambisonics)?</p>
+    <details><summary>Ver respuesta</summary><p>Object-based es ideal cuando las fuentes son discretas y necesitas control editorial preciso (diálogo, efectos de cine) y el destino tiene un renderer Atmos/MPEG-H. Scene-based (Ambisonics) es mejor cuando capturas un campo difuso real (grabación de ambiente, música electroacústica) o cuando el destino es incierto y quieres un master speaker-agnostic. Mezclar ambos (Atmos beds + Ambisonics como fuente de campo) es práctica habitual en producción profesional.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Ambisonics</div>
+    <div class="module-title">Ambisonics & Higher Order Ambisonics</div>
+    <div class="module-sub">B-format, FOA, HOA, encoding/decoding y plugins IEM/SPARTA</div>
+  </div>
+
+  <div class="card">
+    <h3>B-Format: Los Cuatro Canales FOA</h3>
+    <table>
+      <tr><th>Canal</th><th>Patrón</th><th>Orientación</th><th>Función</th></tr>
+      <tr><td><strong>W</strong></td><td>Omnidireccional</td><td>—</td><td>Presión total (referencia de energía)</td></tr>
+      <tr><td><strong>X</strong></td><td>Fig-8</td><td>Frente-Atrás</td><td>Componente de velocidad eje frontal</td></tr>
+      <tr><td><strong>Y</strong></td><td>Fig-8</td><td>Izquierda-Derecha</td><td>Componente de velocidad eje lateral</td></tr>
+      <tr><td><strong>Z</strong></td><td>Fig-8</td><td>Arriba-Abajo</td><td>Componente de velocidad eje vertical</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Encoding: Fuente Puntual a B-Format</h3>
+    <pre>import numpy as np
+
+def encode_foa(mono, azimuth_deg, elevation_deg):
+    az = np.radians(azimuth_deg)
+    el = np.radians(elevation_deg)
+    W = mono * 0.7071
+    X = mono * np.cos(el) * np.cos(az)
+    Y = mono * np.cos(el) * np.sin(az)
+    Z = mono * np.sin(el)
+    return np.stack([W, X, Y, Z], axis=0)  # (4, N)</pre>
+    <table>
+      <tr><th>Orden</th><th>Canales</th><th>Resolución espacial</th><th>Uso</th></tr>
+      <tr><td>FOA (orden 1)</td><td>4</td><td>Baja</td><td>VR360, streaming, mezcla básica</td></tr>
+      <tr><td>HOA orden 3</td><td>16</td><td>Media</td><td>Sala de conciertos, instalaciones</td></tr>
+      <tr><td>HOA orden 5</td><td>36</td><td>Alta</td><td>Domo de 20+ altavoces</td></tr>
+      <tr><td>HOA orden 7</td><td>64</td><td>Muy alta</td><td>Research, salas especializadas</td></tr>
+    </table>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q · Speaker-Agnostic</h4>
+    <p class="quiz-q">¿Por qué Ambisonics es "speaker-agnostic" y un mix 5.1 no?</p>
+    <details><summary>Ver respuesta</summary><p>Ambisonics codifica el campo sonoro como coeficientes de armónicas esféricas, no como feeds para altavoces específicos. La decodificación ocurre en playback: dado el layout físico de altavoces disponible, el decoder calcula las ganancias óptimas. El mismo fichero B-format se reproduce en un cubo de 8 altavoces, un domo de 24, o auriculares binaural. Un mix 5.1 sí lleva canales fijos: si no tienes los 6 altavoces exactos en las posiciones especificadas, la imagen se degrada.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Captura</div>
+    <div class="module-title">Captura Espacial</div>
+    <div class="module-sub">Micrófonos Ambisonics (AMBEO, Zylia, Zoom H3-VR), técnicas MS y arrays de cápsulas</div>
+  </div>
+
+  <div class="card">
+    <h3>Micrófonos Ambisonics Comerciales</h3>
+    <table>
+      <tr><th>Micrófono</th><th>Cápsulas</th><th>Formato nativo</th><th>Características</th></tr>
+      <tr><td>Sennheiser AMBEO VR Mic</td><td>4 cardoides en tetraedro</td><td>A-format → B-format</td><td>Referencia profesional, 24bit/48kHz</td></tr>
+      <tr><td>Zoom H3-VR</td><td>4 cápsulas</td><td>B-format directo</td><td>Portátil, económico, grabadora integrada</td></tr>
+      <tr><td>Zylia ZM-1</td><td>19 cápsulas esféricas</td><td>HOA hasta orden 3</td><td>Software de beamforming avanzado</td></tr>
+      <tr><td>Eigenmike EM32</td><td>32 cápsulas esféricas</td><td>HOA hasta orden 4</td><td>Referencia de investigación</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>A-format a B-format</h3>
+    <pre>import numpy as np
+
+def a_to_b_format(lfu, rfd, lbd, rbu):
+    """LFU=Left-Front-Up, RFD=Right-Front-Down,
+    LBD=Left-Back-Down, RBU=Right-Back-Up"""
+    W = 0.5 * (lfu + rfd + lbd + rbu)
+    X = 0.5 * (lfu + rfd - lbd - rbu)
+    Y = 0.5 * (lfu - rfd + lbd - rbu)
+    Z = 0.5 * (lfu - rfd - lbd + rbu)
+    return W, X, Y, Z</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q · A-format vs B-format</h4>
+    <p class="quiz-q">¿Por qué se capta en A-format y se convierte a B-format en post?</p>
+    <details><summary>Ver respuesta</summary><p>El A-format son las señales crudas de las cápsulas físicas, dependientes del alineamiento mecánico exacto del micrófono. Convertir a B-format matemáticamente compensa las variaciones de fabricación, corrige el phase-match entre cápsulas y produce componentes WXYZ con interpretación física clara y universal. Trabajar directamente en A-format haría imposible la interoperabilidad entre distintos micrófonos tetraédricos.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Dolby Atmos</div>
+    <div class="module-title">Dolby Atmos</div>
+    <div class="module-sub">Beds, Objects, ADM metadata, Atmos Renderer, formatos TrueHD / DD+ JOC</div>
+  </div>
+
+  <div class="card">
+    <h3>Arquitectura Dolby Atmos</h3>
+    <p><strong>Atmos = Beds + Objects + Renderer.</strong> <strong>Bed:</strong> canales de audio fijos mapeados a posiciones de altavoces predefinidas (7.1, 7.1.2, 7.1.4). <strong>Objects:</strong> audio mono + metadatos de posición 3D con automatización en el tiempo. <strong>Renderer:</strong> mezcla beds y objetos al layout destino en tiempo real.</p>
+    <table>
+      <tr><th>Formato</th><th>Codec</th><th>Destino</th><th>Bitrate</th></tr>
+      <tr><td>Dolby TrueHD + Atmos</td><td>Lossless + metadata</td><td>Blu-ray</td><td>~18 Mbps</td></tr>
+      <tr><td>DD+ JOC</td><td>Lossy + Joint Object Coding</td><td>Streaming (Netflix, Disney+)</td><td>768–1024 kbps</td></tr>
+      <tr><td>Atmos Music</td><td>DD+ JOC a 768kbps</td><td>Apple Music, Tidal HiRes</td><td>768 kbps</td></tr>
+      <tr><td>Binaural Atmos</td><td>Stereo renderizado HRTF</td><td>AirPods, auriculares</td><td>256 kbps AAC</td></tr>
+    </table>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q · Bed vs Objeto</h4>
+    <p class="quiz-q">¿Qué diferencia hay entre un bed y un objeto en Atmos?</p>
+    <details><summary>Ver respuesta</summary><p>Un bed es audio multi-canal con canales fijos asignados a posiciones de altavoces predefinidas (como 7.1.4). No tiene posición dinámica; el canal L siempre va al L. Un objeto es audio mono con metadatos de posición 3D que cambian en el tiempo. El renderer interpreta esos metadatos y genera ganancias en los altavoces disponibles en la sala de reproducción. Un objeto "encima" se reproduce por los height speakers en un 7.1.4 o se aproxima con L/R elevados en un 5.1.2.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Render</div>
+    <div class="module-title">Render: VBAP / WFS / Binaural</div>
+    <div class="module-sub">Vector Base Amplitude Panning, Wave Field Synthesis, binaural con HRTF</div>
+  </div>
+
+  <div class="card">
+    <h3>VBAP: Vector Base Amplitude Panning</h3>
+    <pre>import numpy as np
+
+def vbap_2d(az_source, az_l, az_r):
+    """Calcula ganancias g_l, g_r para source entre l y r."""
+    az_s = np.radians(az_source)
+    L = np.array([np.cos(np.radians(az_l)), np.sin(np.radians(az_l))])
+    R = np.array([np.cos(np.radians(az_r)), np.sin(np.radians(az_r))])
+    M = np.column_stack([L, R])
+    p = np.array([np.cos(az_s), np.sin(az_s)])
+    g = np.linalg.pinv(M) @ p
+    g = np.maximum(g, 0)
+    g /= np.linalg.norm(g)
+    return g[0], g[1]</pre>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa de Métodos de Render</h3>
+    <table>
+      <tr><th>Método</th><th>Sweet spot</th><th>Hardware req.</th><th>Calidad</th><th>Uso típico</th></tr>
+      <tr><td>Stereo panning</td><td>Muy estrecho</td><td>2 altavoces</td><td>Solo azimut ±30°</td><td>Producción convencional</td></tr>
+      <tr><td>VBAP 3D</td><td>Medio</td><td>8–24 altavoces</td><td>Buena localización puntual</td><td>Concerts, instalaciones</td></tr>
+      <tr><td>Ambisonics HOA</td><td>Grande</td><td>8+ altavoces esférico</td><td>Campo difuso excelente</td><td>Domos, museos</td></tr>
+      <tr><td>WFS</td><td>Universal</td><td>64–512 altavoces</td><td>Físicamente correcto</td><td>Teatros especializados</td></tr>
+      <tr><td>Binaural HRTF</td><td>1 persona</td><td>Auriculares stereo</td><td>Alta con HRTF personal</td><td>VR, mobile, gaming</td></tr>
+    </table>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q · WFS vs VBAP</h4>
+    <p class="quiz-q">¿Por qué WFS no tiene sweet spot pero VBAP sí?</p>
+    <details><summary>Ver respuesta</summary><p>VBAP sólo garantiza la dirección correcta en el punto de cruce de los ejes de los altavoces adyacentes; alejarse de ese punto cambia las distancias relativas y distorsiona la imagen. WFS reconstituye físicamente el frente de onda mediante el principio de Huygens: la onda viaja con la forma e intensidad de la fuente virtual en cualquier punto del área de escucha, sin depender de la posición del oyente.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Distribución</div>
+    <div class="module-title">MPEG-H & Distribución</div>
+    <div class="module-sub">MPEG-H 3D Audio, ADM BWF, IMF, plataformas streaming y entrega broadcast</div>
+  </div>
+
+  <div class="card">
+    <h3>MPEG-H vs Dolby Atmos</h3>
+    <table>
+      <tr><th>Característica</th><th>MPEG-H</th><th>Dolby Atmos (DD+ JOC)</th></tr>
+      <tr><td>Paradigma</td><td>Channel + Object + HOA</td><td>Bed (channel) + Objects</td></tr>
+      <tr><td>Codec base</td><td>xHE-AAC (USAC)</td><td>DD+ (E-AC-3) + JOC metadata</td></tr>
+      <tr><td>Interactividad</td><td>Sí — grupos de audio seleccionables</td><td>Limitada</td></tr>
+      <tr><td>Adopción</td><td>Broadcast, NHK 8K, ARD, TRT</td><td>Netflix, Disney+, Apple Music</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>ADM BWF: Estructura del Máster</h3>
+    <pre>BWF file (.wav / .bwav)
+├── fmt  chunk   — samplerate, bit depth, canales
+├── bext chunk   — metadata broadcast (description, originator)
+├── axml chunk   — ADM XML (audioContent, audioObjects, posiciones)
+├── chna chunk   — mapa canal → trackUID
+└── data chunk   — audio PCM multi-canal entrelazado</pre>
+  </div>
+
+  <div class="card">
+    <h3>Plataformas de Distribución Inmersiva</h3>
+    <table>
+      <tr><th>Plataforma</th><th>Formato</th><th>Codec</th><th>LUFS</th></tr>
+      <tr><td>Netflix</td><td>Dolby Atmos</td><td>DD+ JOC 768kbps</td><td>-27 LUFS (max)</td></tr>
+      <tr><td>Apple TV+ / Apple Music</td><td>Dolby Atmos / Spatial Audio</td><td>DD+ JOC / AAC binaural</td><td>-16 LUFS (Music)</td></tr>
+      <tr><td>Tidal / Qobuz</td><td>Dolby Atmos Music</td><td>DD+ JOC 768kbps</td><td>-18 LUFS</td></tr>
+      <tr><td>YouTube / VR360</td><td>Ambisonics FOA</td><td>Opus multichannel</td><td>-14 LUFS</td></tr>
+      <tr><td>Broadcast UHD</td><td>MPEG-H / Atmos</td><td>xHE-AAC / TrueHD</td><td>-23 LUFS EBU R128</td></tr>
+    </table>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q · IMF vs BWF</h4>
+    <p class="quiz-q">¿Por qué se necesita IMF si ya existe BWF?</p>
+    <details><summary>Ver respuesta</summary><p>BWF es un contenedor de audio aislado — sirve para intercambiar un máster de audio entre estudios. IMF es un paquete de distribución completo (SMPTE ST 2067) que agrupa video, audio (Atmos, MPEG-H), subtítulos y metadata editorial en un único Package versionado con hashes de integridad y perfiles de output. Netflix o Disney+ reciben un IMF Package y pueden generar automáticamente versiones para streaming HD, 4K, audio binaural y subtítulos de distintos idiomas sin necesidad de re-entrega de elementos sueltos.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · Mezcla DAW</div>
+    <div class="module-title">Mezcla Inmersiva en DAW</div>
+    <div class="module-sub">Workflow Atmos en Pro Tools/Nuendo: panning, nearfield, loudness LUFS y monitoring</div>
+  </div>
+
+  <div class="card">
+    <h3>Workflow Atmos en Pro Tools / Nuendo</h3>
+    <table>
+      <tr><th>Paso</th><th>Acción</th><th>Herramienta</th></tr>
+      <tr><td>1</td><td>Crear sesión con Atmos Renderer activado</td><td>Setup → Audio Hardware → Dolby Atmos Renderer</td></tr>
+      <tr><td>2</td><td>Configurar beds: asignar pistas a 7.1.4 o 5.1</td><td>Track format selector → 7.1.4</td></tr>
+      <tr><td>3</td><td>Crear pistas objeto mono con Atmos Panner</td><td>New Track → Mono → Atmos Object Output</td></tr>
+      <tr><td>4</td><td>Automatizar posición XYZ en timeline</td><td>Atmos Panner → Enable Automation → Write</td></tr>
+      <tr><td>5</td><td>Loudness check: integrated, short-term, peaks</td><td>Nugen Mastercheck / Dolby Atmos Renderer meters</td></tr>
+      <tr><td>6</td><td>Export ADM BWF o Dolby Master</td><td>Export → Dolby Atmos Master .atmos</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Targets de Loudness</h3>
+    <table>
+      <tr><th>Destino</th><th>Integrated</th><th>True Peak</th><th>Standard</th></tr>
+      <tr><td>Atmos Music (Apple/Tidal)</td><td>-18 LUFS</td><td>-1 dBTP</td><td>Atmos Music spec</td></tr>
+      <tr><td>Streaming stereo</td><td>-14 LUFS</td><td>-1 dBTP</td><td>AES streaming</td></tr>
+      <tr><td>Broadcast EBU</td><td>-23 LUFS ±1</td><td>-1 dBTP</td><td>EBU R128</td></tr>
+      <tr><td>Cine (theatrical)</td><td>Variable</td><td>-2 dBTP</td><td>SMPTE RP200</td></tr>
+    </table>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q · LUFS Atmos vs Streaming</h4>
+    <p class="quiz-q">¿Por qué Atmos Music usa -18 LUFS y no -14 como streaming stereo?</p>
+    <details><summary>Ver respuesta</summary><p>Atmos Music mezcla en 3D incluye más headroom dinámico porque los transientes y la imagen espacial necesitan espacio sin comprimir para mantener la sensación de profundidad y envolvimiento. A -14 LUFS esa dinámica se aplanaría para competir en loudness wars. Apple y Tidal normalizan Atmos a -16 LUFS en playback, así que masterizar a -18 deja 2 dB de margen antes del limiting, preservando la dinámica sin que el playback vuelva a subir la ganancia en perjuicio del campo espacial.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Videojuegos</div>
+    <div class="module-title">Videojuegos: Wwise / FMOD</div>
+    <div class="module-sub">Audio espacial interactivo, spatializer plugins, HRTF en runtime y occlusion/reverb</div>
+  </div>
+
+  <div class="card">
+    <h3>Wwise vs FMOD</h3>
+    <table>
+      <tr><th>Característica</th><th>Wwise (Audiokinetic)</th><th>FMOD Studio</th></tr>
+      <tr><td>Spatializer 3D</td><td>Wwise Spatial Audio + Reflect</td><td>FMOD Spatializer (resonance)</td></tr>
+      <tr><td>HRTF binaural</td><td>Wwise Binaural Plugin (Oculus/Resonance)</td><td>FMOD Resonance Audio Plugin</td></tr>
+      <tr><td>Integración Unity</td><td>SDK oficial, Wwise Unity Integration</td><td>SDK oficial, FMOD for Unity</td></tr>
+      <tr><td>Integración Unreal</td><td>Wwise UE plugin oficial</td><td>FMOD for Unreal plugin</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Código Unity + Wwise: Emisor Espacial</h3>
+    <pre>// C# Unity: sonido 3D con atenuación y HRTF en Wwise
+using AK.Wwise;
+
+public class SpatialSoundEmitter : MonoBehaviour
+{
+    [SerializeField] AK.Wwise.Event soundEvent;
+
+    void Start() {
+        AkSoundEngine.RegisterGameObj(gameObject, gameObject.name);
+        AkSoundEngine.SetSwitch("Headphone_Mode", "Binaural", gameObject);
+        soundEvent.Post(gameObject);
+    }
+
+    void Update() {
+        AkSoundEngine.SetObjectPosition(gameObject,
+            gameObject.transform.position,
+            gameObject.transform.forward,
+            gameObject.transform.up);
+    }
+}</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q · Oclusión vs Obstrucción</h4>
+    <p class="quiz-q">¿Qué diferencia oclusión de obstrucción en audio de videojuegos?</p>
+    <details><summary>Ver respuesta</summary><p>Oclusión ocurre cuando la línea de visión entre fuente y oyente atraviesa un material sólido (paredes, suelo). Atenúa tanto el nivel como las altas frecuencias porque la energía se absorbe en la masa del material. Obstrucción es cuando un objeto está en la línea directa pero permite paso parcial (una columna, una puerta entreabierta). Filtra principalmente las altas frecuencias sin atenuar tanto el nivel global. En engines de juego, ambos se calculan con ray casting desde la fuente hacia el oyente.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Pure Data</div>
+    <div class="module-title">Pure Data + VBAP</div>
+    <div class="module-sub">Espacialización en tiempo real con PureData: VBAP, ambisonics y síntesis espacial</div>
+  </div>
+
+  <div class="card">
+    <h3>VBAP en Pure Data</h3>
+    <pre>; Patch básico VBAP 2D en Pure Data
+; Requiere: librería vbap (pd-vbap)
+
+[osc~]                     ; oscilador fuente
+|
+[vbap~ 8 1]                ; 8 altavoces, 2D
+|     |     |     |
+[dac~ 1 2 3 4 5 6 7 8]    ; salidas a altavoces
+
+; Control de posición:
+[hsl 0 360]               ; slider azimut 0-360°
+|
+[vbap_speaker_set]        ; actualiza posición de panning</pre>
+  </div>
+
+  <div class="card">
+    <h3>Control via OSC</h3>
+    <pre>; Recepción OSC para control de posición en tiempo real
+[udpreceive 9001]           ; escuchar puerto OSC
+|
+[oscparse]
+|
+[route /source/azimuth /source/elevation /source/gain]
+|              |                    |
+[vbap_azi]  [vbap_elev]        [*~ gain]</pre>
+    <p>Librerías espaciales: <strong>pd-vbap</strong> (VBAP 2D/3D), <strong>ambix</strong> (Ambisonics FOA/HOA), <strong>IEM Pd externals</strong> (encoder/binaural decoder).</p>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q · Pure Data vs DAW para Instalaciones</h4>
+    <p class="quiz-q">¿Por qué usar Pure Data para espacialización en instalaciones interactivas y no un DAW con plugins?</p>
+    <details><summary>Ver respuesta</summary><p>Pure Data permite control programático y reactivo en tiempo real sin las limitaciones de una timeline. En una instalación interactiva, la posición de los sonidos puede depender de datos de sensores (Kinect, OSC, acelerómetros) que cambian en tiempo real y requieren lógica condicional. Un DAW es ideal para mezcla fija con automatización predefinida, pero no puede responder dinámicamente a eventos de sensores sin un middleware adicional. Pd integra el motor de audio y la lógica de control en el mismo entorno.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · VR/AR/XR</div>
+    <div class="module-title">Audio VR / AR / XR</div>
+    <div class="module-sub">Resonance Audio, Steam Audio, Meta XR, 6DoF y head-tracking en Unity/Unreal</div>
+  </div>
+
+  <div class="card">
+    <h3>3DoF vs 6DoF en XR</h3>
+    <table>
+      <tr><th>Tipo</th><th>Movimientos</th><th>Uso</th><th>Audio requerido</th></tr>
+      <tr><td>3DoF</td><td>Rotación: pitch, yaw, roll</td><td>VR 360° vídeo, viewers pasivos</td><td>Ambisonics FOA con head-tracking de orientación</td></tr>
+      <tr><td>6DoF</td><td>3DoF + translación XYZ</td><td>VR interactivo, AR, juegos</td><td>Audio basado en objetos con actualización de posición y HRTF por frame</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>SDKs y Motores XR</h3>
+    <ul>
+      <li><strong>Resonance Audio (Google):</strong> Open-source, HOA orden 3, Unity/Unreal/Android, buena calidad binaural</li>
+      <li><strong>Steam Audio (Valve):</strong> Ray-traced acoustics, oclusión por geometría, Unity/Unreal/Wwise/FMOD, gratuito</li>
+      <li><strong>Meta XR Audio SDK:</strong> HRTF personalizado Meta Quest, AR passthrough, HOA orden 3</li>
+      <li><strong>Unreal Engine MetaSounds:</strong> Sistema de audio procedural de UE5 con soporte Atmos, binaural y OSC nativo</li>
+    </ul>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q · Head-tracking y Latencia</h4>
+    <p class="quiz-q">¿Por qué la latencia de head-tracking debe ser menor de 20ms?</p>
+    <details><summary>Ver respuesta</summary><p>El sistema vestibular detecta la rotación de cabeza con latencia de ~1ms. Si el audio espacial tarda más de 20ms en actualizarse para reflejar la nueva orientación, el cerebro recibe información conflictiva: el sentido del equilibrio dice "giré 30°" pero el audio dice "la fuente sigue en el mismo sitio". Este desacuerdo sensorial produce cinetosis (mareo de VR) y rompe la sensación de presencia. Por debajo de 20ms el cerebro integra los dos sistemas como coherentes.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Evaluación</div>
+    <div class="module-title">Listening Tests ITU-R</div>
+    <div class="module-sub">Métodos ITU-R BS.1534 (MUSHRA), BS.1116, ABX y evaluación perceptiva de calidad</div>
+  </div>
+
+  <div class="card">
+    <h3>Métodos de Evaluación Perceptiva</h3>
+    <table>
+      <tr><th>Método</th><th>Estándar</th><th>Uso</th><th>Oyentes</th><th>Escala</th></tr>
+      <tr><td>MUSHRA</td><td>ITU-R BS.1534</td><td>Calidad media (codecs, procesado)</td><td>Min. 7 expertos</td><td>0–100 continua</td></tr>
+      <tr><td>BS.1116</td><td>ITU-R BS.1116</td><td>Diferencias sutiles vs referencia</td><td>Min. 10 expertos</td><td>SDG -4 a 0</td></tr>
+      <tr><td>ABX</td><td>—</td><td>Discriminación: ¿A y B suenan diferente?</td><td>Variable</td><td>% acierto &gt;70%</td></tr>
+      <tr><td>PEAQ</td><td>ITU-R BS.1387</td><td>Evaluación algorítmica objetiva</td><td>—(automático)</td><td>ODG -4 a 0</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>MUSHRA: Protocolo</h3>
+    <p>Multi Stimulus test with Hidden Reference and Anchor: (1) Referencia oculta, (2) Al menos 2 anchors de calidades distintas, (3) Todos los estímulos comparables en tiempo real, (4) Puntuación 0–100, (5) Se descarta oyente si puntúa la referencia oculta &lt; 90.</p>
+    <pre>import numpy as np
+from scipy import stats
+
+def mushra_analysis(scores):
+    results = {}
+    for cond, vals in scores.items():
+        vals = np.array(vals)
+        n = len(vals)
+        mean = vals.mean()
+        se = stats.sem(vals)
+        ci95 = stats.t.interval(0.95, df=n-1, loc=mean, scale=se)
+        results[cond] = {'mean': mean, 'ci95': ci95}
+    all_vals = list(scores.values())
+    stat, p = stats.friedmanchisquare(*all_vals)
+    return results, p</pre>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q · Anchors en MUSHRA</h4>
+    <p class="quiz-q">¿Por qué MUSHRA exige al menos 2 anchors?</p>
+    <details><summary>Ver respuesta</summary><p>Un único anchor no contextualiza la escala para el oyente: sin saber qué es "malo" en este experimento específico, diferentes oyentes calibran su escala subjetiva de forma diferente. Con dos anchors de calidades distintas (ej: lowpass 3.5kHz como "muy malo" y lowpass 7kHz como "malo") el oyente ancla los extremos inferiores de la escala de forma compartida, haciendo los datos inter-oyente comparables.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Pipeline</div>
+    <div class="module-title">Pipeline & Entrega</div>
+    <div class="module-sub">ADM BWF master, Dolby Vision+Atmos IMF, stems, QC y entrega a plataformas</div>
+  </div>
+
+  <div class="card">
+    <h3>Creación del Máster ADM BWF desde DAW</h3>
+    <pre>Pro Tools / Nuendo
+    ↓ [Export → Dolby Atmos Master]
+.atmos package (Pro Tools) / ADM BWF .wav (Nuendo)
+    ↓ [Dolby Atmos Renderer]
+Validación: loudness, peaks, metadata integridad
+    ↓ [export]
+├── ADM BWF .wav     → master universal
+├── TrueHD .thd      → Blu-ray
+├── DD+ JOC .ec3     → streaming
+└── stems 7.1.4 PCM  → re-mezcla futura</pre>
+  </div>
+
+  <div class="card">
+    <h3>Stems: Qué Exportar</h3>
+    <table>
+      <tr><th>Stem</th><th>Contenido</th><th>Formato</th><th>Uso</th></tr>
+      <tr><td>Full Mix</td><td>Mezcla completa Atmos</td><td>ADM BWF / .atmos</td><td>Máster definitivo</td></tr>
+      <tr><td>M&amp;E</td><td>Music &amp; Effects sin diálogo</td><td>7.1.4 PCM</td><td>Doblaje versiones internacionales</td></tr>
+      <tr><td>Dialog</td><td>Voces limpias</td><td>Mono / LCR</td><td>Accesibilidad, doblaje</td></tr>
+      <tr><td>Music</td><td>Solo música</td><td>Stereo / 7.1</td><td>BSO, licensing</td></tr>
+      <tr><td>Effects</td><td>Efectos sin música ni diálogo</td><td>7.1.4 PCM</td><td>Re-mezcla para versiones</td></tr>
+    </table>
+  </div>
+
+  <div class="quiz-block">
+    <h4>Q · Stems M&amp;E</h4>
+    <p class="quiz-q">¿Por qué exportar stems M&amp;E además del full mix?</p>
+    <details><summary>Ver respuesta</summary><p>Los stems M&amp;E (Music &amp; Effects sin diálogo) son imprescindibles para versiones internacionales del contenido: cuando se dobla al japonés, al árabe o al alemán, el equipo de doblaje necesita la mezcla sin el diálogo original para reemplazarlo por las voces nuevas. Si solo existe el full mix, cualquier re-doblaje requiere rehacer toda la mezcla desde cero. Los stems M&amp;E permiten que el estudio de doblaje añada el nuevo diálogo sobre una mezcla espacial ya aprobada, preservando la intención artística original.</p></details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto Final — Producción Inmersiva Completa</div>
+    <div class="module-sub">Pieza de audio inmersivo de mínimo 5 minutos con entrega multiformat</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica del Proyecto HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>Uso del espacio 3D</td><td>Elevación, profundidad y anchura usadas narrativamente con fuentes en posiciones distribuidas</td><td>20</td></tr>
+        <tr><td>Calidad técnica Atmos</td><td>Loudness correcto (-18 LUFS int, -1 dBTP), dinámica adecuada al género</td><td>20</td></tr>
+        <tr><td>Versión binaural</td><td>Externalización convincente en headphones, sin internalización de fuentes</td><td>20</td></tr>
+        <tr><td>Versión Ambisonics</td><td>B-format correctamente codificado y decodificable con IEM BinauralDecoder</td><td>15</td></tr>
+        <tr><td>Objects con movimiento</td><td>≥3 fuentes con trayectorias dinámicas fluidas, sin clicks de automatización</td><td>15</td></tr>
+        <tr><td>ADM BWF + Informe técnico</td><td>Metadata correcta validada con ebu-adm-toolbox, informe de decisiones creativas</td><td>10</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman — Explica sin notas</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · ITD vs ILD</h4>
+      <p class="quiz-q">¿Cuál es la diferencia entre ITD e ILD y para qué frecuencias domina cada uno? Razona por qué.</p>
+      <details><summary>Ver respuesta</summary><p>ITD (Interaural Time Difference) es la diferencia de tiempo de llegada entre el oído izquierdo y el derecho. Domina para frecuencias por debajo de ~1.5 kHz, donde la longitud de onda es suficientemente grande para que el cerebro detecte la diferencia de fase entre ambos oídos. ILD (Interaural Level Difference) es la diferencia de amplitud causada por la sombra de la cabeza. Domina para frecuencias por encima de ~1.5 kHz, donde la cabeza actúa como obstáculo acústico. Para la localización en bandas media-alta, el cerebro usa principalmente ILD; para bajas frecuencias y pequeños ángulos, ITD es el mecanismo más preciso.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · Ambisonics Speaker-Agnostic</h4>
+      <p class="quiz-q">¿Por qué Ambisonics es "speaker-agnostic" y Dolby Atmos no puede considerarse completamente speaker-agnostic?</p>
+      <details><summary>Ver respuesta</summary><p>Ambisonics codifica el campo acústico como armónicos esféricos (B-format) independiente del sistema de reproducción. Un decoder adapta esa representación a cualquier disposición de altavoces en post. Dolby Atmos describe objetos con posición 3D que el renderer de Dolby convierte según las especificaciones de la sala — pero depende del ecosistema Dolby para ese render. Ambisonics es un estándar abierto; Atmos es un formato propietario. Sin embargo, Atmos también logra cierta adaptabilidad gracias al renderer, que puede mapear objetos a diferentes layouts.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · VBAP vs WFS</h4>
+      <p class="quiz-q">¿Qué es VBAP y cuál es su limitación frente a WFS en términos de sweet spot?</p>
+      <details><summary>Ver respuesta</summary><p>VBAP (Vector Base Amplitude Panning) posiciona una fuente activando solo los 2–3 altavoces más cercanos y calculando sus amplitudes por álgebra vectorial. Es computacionalmente eficiente y produce localización precisa en el ángulo correcto. Su limitación: la ilusión colapsa si el oyente se aleja del sweet spot, porque el "phantom image" entre altavoces solo es estable desde el punto equidistante. WFS (Wave Field Synthesis) recrea físicamente el frente de onda de la fuente usando un array denso de altavoces — la ilusión es válida en toda el área de escucha, pero requiere docenas o cientos de altavoces y potencia de procesado masiva.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · ADM BWF</h4>
+      <p class="quiz-q">¿Qué contiene un ADM BWF y por qué es clave para la distribución multi-plataforma?</p>
+      <details><summary>Ver respuesta</summary><p>ADM (Audio Definition Model, EBU Tech 3364) es un estándar de metadata que describe objetos de audio, sus posiciones, trayectorias y propiedades en el tiempo, embebido en un archivo BWF. Un ADM BWF contiene: (1) el audio PCM multicanal raw, (2) los XML chunks con el mapa de objetos (AudioObject, AudioTrackUID, AudioBlockFormat con coordenadas X/Y/Z por frame) en el chunk axml, (3) el mapa canal-UID en el chunk chna, y (4) la estructura de presentaciones. Es el formato de interchange universal entre DAWs, renderers y plataformas de distribución — permite que un broadcaster con 5.1 y un cine con Dolby Atmos usen el mismo master.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · Head-tracking 6DoF</h4>
+      <p class="quiz-q">¿Cómo funciona el head-tracking en audio 6DoF para VR y en qué se diferencia de 3DoF?</p>
+      <details><summary>Ver respuesta</summary><p>En VR con head tracking, el sistema conoce en tiempo real la orientación de la cabeza (yaw, pitch, roll). Con audio 3DoF, el decoder Ambisonics rota el campo acústico en el sentido opuesto a la cabeza — si giras 30° a la derecha, el campo gira 30° a la izquierda, manteniendo las fuentes estáticas en el mundo. Con 6DoF (añadiendo traslación: adelante/atrás, arriba/abajo, izquierda/derecha), la posición física del oyente cambia dentro de la escena — una fuente suena más fuerte conforme te acercas. Esto requiere rendering por objetos en tiempo real con actualización de distancia, HRTF y oclusión por frame.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← Anterior</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_audio_inmersivo_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Briefing & Arquitectura'},
+    {id:'m1',  label:'M1 · Psicoacústica & HRTF'},
+    {id:'m2',  label:'M2 · Paradigmas: Ch/Obj/Scene'},
+    {id:'m3',  label:'M3 · Ambisonics & HOA'},
+    {id:'m4',  label:'M4 · Captura Espacial'},
+    {id:'m5',  label:'M5 · Dolby Atmos'},
+    {id:'m6',  label:'M6 · Render: VBAP/WFS/Binaural'},
+    {id:'m7',  label:'M7 · MPEG-H & Distribución'},
+    {id:'m8',  label:'M8 · Mezcla Inmersiva en DAW'},
+    {id:'m9',  label:'M9 · Videojuegos: Wwise/FMOD'},
+    {id:'m10', label:'M10 · Pure Data + VBAP'},
+    {id:'m11', label:'M11 · Audio VR/AR/XR'},
+    {id:'m12', label:'M12 · Listening Tests ITU-R'},
+    {id:'m13', label:'M13 · Pipeline & Entrega'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

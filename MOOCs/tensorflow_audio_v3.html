@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TensorFlow Audio Deep Learning v3</title>
+<style>
+:root {
+  --bg:#0f172a; --surface:#1e293b; --surface2:#334155;
+  --accent:#f97316; --accent2:#fb923c; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#334155;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'Fira Code',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(249,115,22,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#0d1117;padding:2px 6px;border-radius:4px}
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+.formula{background:rgba(249,115,22,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:22px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.hero-rubric th{background:var(--surface2);padding:10px 16px}
+.hero-rubric td{padding:10px 16px;font-size:13px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(249,115,22,.07);border-radius:6px;line-height:1.6}
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>TensorFlow Audio DL</h2>
+    <p>Deep Learning para Señales de Audio</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introducción</div>
+    <div class="module-title">Ecosistema TensorFlow Audio</div>
+    <div class="module-sub">Pipeline completo desde señal cruda hasta inferencia en edge</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg width="820" height="280" viewBox="0 0 820 280" font-family="Inter,sans-serif" font-size="11">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 Z" fill="#f97316"/>
+        </marker>
+      </defs>
+      <!-- Row 1: Ingestion -->
+      <text x="10" y="22" fill="#94a3b8" font-size="10" font-weight="600">INGESTA</text>
+      <rect x="10" y="28" width="110" height="50" rx="6" fill="#1e293b" stroke="#f97316" stroke-width="1.5"/>
+      <text x="65" y="52" text-anchor="middle" fill="#fb923c" font-weight="600">WAV / MP3</text>
+      <text x="65" y="67" text-anchor="middle" fill="#94a3b8" font-size="10">tf.io.read_file</text>
+      <line x1="120" y1="53" x2="148" y2="53" stroke="#f97316" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="148" y="28" width="120" height="50" rx="6" fill="#1e293b" stroke="#334155"/>
+      <text x="208" y="49" text-anchor="middle" fill="#e2e8f0" font-weight="600">tf.audio.decode</text>
+      <text x="208" y="64" text-anchor="middle" fill="#94a3b8" font-size="10">_wav / decode_mp3</text>
+      <line x1="268" y1="53" x2="296" y2="53" stroke="#f97316" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="296" y="28" width="130" height="50" rx="6" fill="#1e293b" stroke="#334155"/>
+      <text x="361" y="49" text-anchor="middle" fill="#e2e8f0" font-weight="600">tf.data.Dataset</text>
+      <text x="361" y="64" text-anchor="middle" fill="#94a3b8" font-size="10">interleave + prefetch</text>
+      <line x1="426" y1="53" x2="454" y2="53" stroke="#f97316" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="454" y="28" width="120" height="50" rx="6" fill="#1e293b" stroke="#334155"/>
+      <text x="514" y="49" text-anchor="middle" fill="#e2e8f0" font-weight="600">Augmentation</text>
+      <text x="514" y="64" text-anchor="middle" fill="#94a3b8" font-size="10">SpecAugment / Noise</text>
+
+      <!-- Row 2: Features -->
+      <text x="10" y="110" fill="#94a3b8" font-size="10" font-weight="600">FEATURES</text>
+      <rect x="10" y="116" width="130" height="60" rx="6" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="75" y="142" text-anchor="middle" fill="#3b82f6" font-weight="600">tf.signal.stft</text>
+      <text x="75" y="157" text-anchor="middle" fill="#94a3b8" font-size="10">X(m,k)=STFT(x)</text>
+      <text x="75" y="170" text-anchor="middle" fill="#94a3b8" font-size="10">|X|² spectrogram</text>
+      <line x1="140" y1="146" x2="168" y2="146" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="168" y="116" width="130" height="60" rx="6" fill="#1e293b" stroke="#334155"/>
+      <text x="233" y="137" text-anchor="middle" fill="#e2e8f0" font-weight="600">Mel Filterbank</text>
+      <text x="233" y="152" text-anchor="middle" fill="#94a3b8" font-size="10">tf.signal.linear_to_mel</text>
+      <text x="233" y="167" text-anchor="middle" fill="#94a3b8" font-size="10">128 bands</text>
+      <line x1="298" y1="146" x2="326" y2="146" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arr)"/>
+      <rect x="326" y="116" width="130" height="60" rx="6" fill="#1e293b" stroke="#334155"/>
+      <text x="391" y="137" text-anchor="middle" fill="#e2e8f0" font-weight="600">Log-Mel / MFCC</text>
+      <text x="391" y="152" text-anchor="middle" fill="#94a3b8" font-size="10">tf.math.log + DCT</text>
+      <text x="391" y="167" text-anchor="middle" fill="#94a3b8" font-size="10">RaggedTensor varlen</text>
+
+      <!-- Row 3: Models -->
+      <text x="10" y="208" fill="#94a3b8" font-size="10" font-weight="600">MODELOS</text>
+      <rect x="10" y="214" width="100" height="52" rx="6" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+      <text x="60" y="238" text-anchor="middle" fill="#22c55e" font-weight="600">CNN</text>
+      <text x="60" y="253" text-anchor="middle" fill="#94a3b8" font-size="10">EfficientNet/MN10</text>
+      <rect x="124" y="214" width="100" height="52" rx="6" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+      <text x="174" y="238" text-anchor="middle" fill="#22c55e" font-weight="600">RNN/CTC</text>
+      <text x="174" y="253" text-anchor="middle" fill="#94a3b8" font-size="10">ASR / VAD</text>
+      <rect x="238" y="214" width="100" height="52" rx="6" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+      <text x="288" y="238" text-anchor="middle" fill="#22c55e" font-weight="600">AST / ViT</text>
+      <text x="288" y="253" text-anchor="middle" fill="#94a3b8" font-size="10">16×16 patches</text>
+      <rect x="352" y="214" width="100" height="52" rx="6" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+      <text x="402" y="238" text-anchor="middle" fill="#22c55e" font-weight="600">HiFi-GAN</text>
+      <text x="402" y="253" text-anchor="middle" fill="#94a3b8" font-size="10">MPD vocoder</text>
+      <!-- Edge -->
+      <rect x="560" y="214" width="110" height="52" rx="6" fill="#1e293b" stroke="#f97316" stroke-width="1.5"/>
+      <text x="615" y="238" text-anchor="middle" fill="#fb923c" font-weight="600">TFLite</text>
+      <text x="615" y="253" text-anchor="middle" fill="#94a3b8" font-size="10">QAT int8 / Micro</text>
+      <rect x="688" y="214" width="120" height="52" rx="6" fill="#1e293b" stroke="#334155"/>
+      <text x="748" y="238" text-anchor="middle" fill="#e2e8f0" font-weight="600">Mixed Precision</text>
+      <text x="748" y="253" text-anchor="middle" fill="#94a3b8" font-size="10">FP16+FP32 LossScale</text>
+      <!-- Arrow model → edge -->
+      <line x1="460" y1="240" x2="556" y2="240" stroke="#f97316" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="508" y="233" text-anchor="middle" fill="#94a3b8" font-size="9">QAT/PTQ</text>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">128</div><div class="metric-label">Mel filterbank bands</div></div>
+    <div class="metric"><div class="metric-val">16×16</div><div class="metric-label">AST patch size</div></div>
+    <div class="metric"><div class="metric-val">int8</div><div class="metric-label">TFLite quantization</div></div>
+    <div class="metric"><div class="metric-val">FP16</div><div class="metric-label">Mixed precision matmul</div></div>
+    <div class="metric"><div class="metric-val">M</div><div class="metric-label">FFT sizes MR-STFT Loss</div></div>
+    <div class="metric"><div class="metric-val">STE</div><div class="metric-label">Straight-Through Estimator</div></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · STFT</div>
+    <div class="module-title">STFT en el Grafo TensorFlow</div>
+    <div class="module-sub">tf.signal.stft, espectrograma, phase vocoder, RaggedTensor</div>
+  </div>
+
+  <div class="formula">X̂(m,k) = Σₙ x[n]·w[n−m] · e^{−ikn}<br>
+Spectrogram = |X(m,k)|²<br>
+Log-Mel: S_mel = log(Mel_filterbank · |X|²)</div>
+
+  <div class="card">
+    <h3>STFT Differentiable en tf.signal</h3>
+    <pre>
+import tensorflow as tf
+import numpy as np
+
+def compute_stft_spectrogram(waveform: tf.Tensor,
+                              frame_length: int = 1024,
+                              frame_step: int = 256,
+                              fft_length: int = 1024) -> tf.Tensor:
+    """
+    STFT completamente dentro del grafo TF — diferenciable.
+    Parámetros:
+        waveform: [batch, samples] float32
+    Returns:
+        magnitude: [batch, frames, fft_length//2+1] float32
+    """
+    # Análisis STFT: ventana Hann
+    stfts = tf.signal.stft(
+        waveform,
+        frame_length=frame_length,
+        frame_step=frame_step,
+        fft_length=fft_length,
+        window_fn=tf.signal.hann_window,
+        pad_end=True
+    )
+    # stfts: complex64 [batch, frames, fft_length//2+1]
+    magnitude = tf.abs(stfts)
+    power = tf.square(magnitude)  # |X|²
+    return power
+
+def compute_log_mel(waveform: tf.Tensor,
+                    sample_rate: int = 16000,
+                    num_mel_bins: int = 128,
+                    lower_edge_hz: float = 80.0,
+                    upper_edge_hz: float = 7600.0) -> tf.Tensor:
+    """Log-Mel spectrogram: feature estándar para clasificación."""
+    power = compute_stft_spectrogram(waveform)
+
+    # Mel filterbank matrix: [fft_length//2+1, num_mel_bins]
+    num_spectrogram_bins = power.shape[-1]
+    mel_matrix = tf.signal.linear_to_mel_weight_matrix(
+        num_mel_bins, num_spectrogram_bins, sample_rate,
+        lower_edge_hz, upper_edge_hz
+    )
+    mel_power = tf.tensordot(power, mel_matrix, axes=1)  # [..., frames, mel]
+
+    log_mel = tf.math.log(mel_power + 1e-6)  # +eps para estabilidad numérica
+    return log_mel  # [batch, frames, num_mel_bins]</pre>
+  </div>
+
+  <div class="card">
+    <h3>RaggedTensor para Audio de Longitud Variable</h3>
+    <pre>
+# El problema: audios de diferente duración → no se pueden apilar en tensor denso
+# Solución: tf.RaggedTensor — flat_values + row_splits
+
+def process_variable_length_audio(audio_files: list[str]) -> tf.RaggedTensor:
+    """
+    Procesa archivos de audio de longitud variable sin padding.
+    Estructura: flat_values (todas las muestras concatenadas) + row_splits
+    """
+    waveforms = []
+    for path in audio_files:
+        audio_binary = tf.io.read_file(path)
+        waveform, sr = tf.audio.decode_wav(audio_binary)  # [samples, channels]
+        waveform = tf.squeeze(waveform, axis=-1)           # [samples]
+        waveforms.append(waveform)
+
+    # Crear RaggedTensor automáticamente desde lista de tensores
+    ragged = tf.ragged.stack(waveforms)
+    # ragged.flat_values: todas las muestras concatenadas
+    # ragged.row_splits: índices de inicio/fin de cada audio
+
+    # Extraer STFT con map (cada fila independiente)
+    def extract_features(wav):
+        stft = tf.signal.stft(wav, frame_length=1024, frame_step=256)
+        return tf.abs(stft)
+
+    features = tf.map_fn(extract_features, ragged, fn_output_signature=tf.RaggedTensorSpec(
+        shape=[None, 513], dtype=tf.float32
+    ))
+    return features</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← M0</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Pérdida</div>
+    <div class="module-title">Multi-Resolution STFT Loss</div>
+    <div class="module-sub">L_sc + L_mag sobre M tamaños de FFT — generación de audio de alta calidad</div>
+  </div>
+
+  <div class="formula">L_MR-STFT = (1/M) · Σₘ [L_sc(m) + L_mag(m)]<br>
+L_sc(m) = ||STFT(x)| − |STFT(x̂)|| / ||STFT(x)||   (spectral convergence)<br>
+L_mag(m) = ||log|STFT(x)| − log|STFT(x̂)||₁         (log-magnitude)</div>
+
+  <div class="card">
+    <h3>Implementación MR-STFT Loss</h3>
+    <pre>
+import tensorflow as tf
+
+class MultiResolutionSTFTLoss(tf.keras.losses.Loss):
+    """
+    Multi-Scale STFT Loss — usado en HiFi-GAN, DDSP, EnCodec.
+    Múltiples resoluciones tiempo-frecuencia capturan:
+    - FFT pequeña (256): buena resolución temporal, pobre freq.
+    - FFT grande (2048): buena resolución freq., pobre temporal.
+    """
+    def __init__(self, fft_sizes=(256, 512, 1024, 2048),
+                       hop_sizes=(64, 128, 256, 512),
+                       win_sizes=(256, 512, 1024, 2048)):
+        super().__init__()
+        assert len(fft_sizes) == len(hop_sizes) == len(win_sizes)
+        self.configs = list(zip(fft_sizes, hop_sizes, win_sizes))
+
+    def _stft_magnitude(self, wav, fft_size, hop_size, win_size):
+        stft = tf.signal.stft(wav, frame_length=win_size,
+                               frame_step=hop_size, fft_length=fft_size,
+                               window_fn=tf.signal.hann_window)
+        return tf.abs(stft)
+
+    def call(self, y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+        total_loss = 0.0
+        for fft_size, hop_size, win_size in self.configs:
+            mag_true = self._stft_magnitude(y_true, fft_size, hop_size, win_size)
+            mag_pred = self._stft_magnitude(y_pred, fft_size, hop_size, win_size)
+
+            # Spectral Convergence Loss
+            sc_loss = tf.norm(mag_true - mag_pred, ord='fro', axis=[-2,-1])
+            sc_loss /= (tf.norm(mag_true, ord='fro', axis=[-2,-1]) + 1e-7)
+
+            # Log-Magnitude Loss (L1)
+            log_mag_true = tf.math.log(mag_true + 1e-7)
+            log_mag_pred = tf.math.log(mag_pred + 1e-7)
+            mag_loss = tf.reduce_mean(tf.abs(log_mag_true - log_mag_pred))
+
+            total_loss += tf.reduce_mean(sc_loss) + mag_loss
+
+        return total_loss / len(self.configs)</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← M1</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · Transformer</div>
+    <div class="module-title">Audio Spectrogram Transformer (AST)</div>
+    <div class="module-sub">Patches 16×16, positional embeddings, self-attention, fine-tuning</div>
+  </div>
+
+  <div class="formula">Patches: P = (T/16, F/16) del espectrograma resized a 128×1024<br>
+Attention(Q,K,V) = softmax(QKᵀ / √d_k) · V<br>
+d_k = d_model / num_heads (típico: 768 / 12 = 64)</div>
+
+  <div class="card">
+    <h3>AST — Audio Spectrogram Transformer</h3>
+    <pre>
+import tensorflow as tf
+
+class AudioPatchEmbedding(tf.keras.layers.Layer):
+    """Divide el espectrograma en patches 16×16 y proyecta a d_model."""
+    def __init__(self, patch_size=16, d_model=768):
+        super().__init__()
+        self.patch_size = patch_size
+        self.proj = tf.keras.layers.Dense(d_model)
+
+    def call(self, x: tf.Tensor) -> tf.Tensor:
+        # x: [batch, time_frames, freq_bins, 1]
+        B, T, F, C = x.shape
+        ps = self.patch_size
+        # Reshape a patches
+        patches = tf.image.extract_patches(
+            x, sizes=[1,ps,ps,1], strides=[1,ps,ps,1], rates=[1,1,1,1], padding='VALID'
+        )
+        # patches: [B, T//ps, F//ps, ps*ps*C]
+        patches = tf.reshape(patches, [B, -1, ps*ps*C])
+        return self.proj(patches)  # [B, num_patches, d_model]
+
+class AudioSpectrogramTransformer(tf.keras.Model):
+    """AST: ViT aplicado a espectrogramas de audio."""
+    def __init__(self, num_classes=527, d_model=768, num_heads=12, num_layers=12):
+        super().__init__()
+        self.patch_embed = AudioPatchEmbedding(16, d_model)
+        self.cls_token = self.add_weight('cls', [1,1,d_model], initializer='zeros')
+        self.pos_embed = self.add_weight('pos', [1, 513, d_model], initializer='zeros')
+        self.transformer_blocks = [
+            tf.keras.layers.MultiHeadAttention(num_heads, d_model//num_heads)
+            for _ in range(num_layers)
+        ]
+        self.layer_norms = [tf.keras.layers.LayerNormalization() for _ in range(num_layers)]
+        self.head = tf.keras.layers.Dense(num_classes, activation='sigmoid')  # AudioSet multi-label
+
+    def call(self, x, training=False):
+        B = tf.shape(x)[0]
+        x = self.patch_embed(x)                    # [B, N, d_model]
+        cls = tf.broadcast_to(self.cls_token, [B, 1, x.shape[-1]])
+        x = tf.concat([cls, x], axis=1)            # prepend [CLS]
+        x += self.pos_embed[:, :tf.shape(x)[1]]
+        for attn, norm in zip(self.transformer_blocks, self.layer_norms):
+            residual = x
+            x = norm(x)
+            x = attn(x, x) + residual              # self-attention + skip
+        return self.head(x[:, 0])                  # [CLS] token → logits</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← M2</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Pipeline</div>
+    <div class="module-title">tf.data — Pipeline de Alta Performance</div>
+    <div class="module-sub">interleave, prefetch(AUTOTUNE), augmentation, cache, shuffle</div>
+  </div>
+
+  <div class="card">
+    <h3>Pipeline tf.data Optimizado</h3>
+    <pre>
+import tensorflow as tf
+import numpy as np
+
+AUTOTUNE = tf.data.AUTOTUNE
+
+def load_and_decode_wav(filepath: tf.Tensor, label: tf.Tensor):
+    """Carga un archivo WAV y retorna waveform + label."""
+    audio_binary = tf.io.read_file(filepath)
+    waveform, sr = tf.audio.decode_wav(audio_binary, desired_channels=1)
+    waveform = tf.squeeze(waveform, -1)
+    # Pad/truncate a longitud fija (4 seg @ 16kHz)
+    target_len = 64000
+    waveform = waveform[:target_len]
+    waveform = tf.pad(waveform, [[0, tf.maximum(0, target_len - tf.shape(waveform)[0])]])
+    return waveform, label
+
+def audio_augment(waveform: tf.Tensor, label: tf.Tensor):
+    """Augmentación en el dominio de la señal (on-the-fly)."""
+    # 1. Gaussian noise
+    noise = tf.random.normal(tf.shape(waveform), stddev=0.005)
+    waveform = waveform + noise
+    # 2. Random gain
+    gain = tf.random.uniform([], 0.8, 1.2)
+    waveform = waveform * gain
+    # 3. Random pitch shift no disponible en tf.signal → usar scipy en preprocessing
+    return tf.clip_by_value(waveform, -1.0, 1.0), label
+
+def specaugment(log_mel: tf.Tensor, label: tf.Tensor,
+                time_mask_param=40, freq_mask_param=20) -> tuple:
+    """SpecAugment: máscaras temporales y de frecuencia."""
+    # Time mask
+    t = tf.shape(log_mel)[0]
+    t0 = tf.random.uniform([], 0, t - time_mask_param, dtype=tf.int32)
+    mask_t = tf.concat([tf.ones([t0]), tf.zeros([time_mask_param]),
+                         tf.ones([t - t0 - time_mask_param])], axis=0)
+    log_mel = log_mel * mask_t[:, tf.newaxis]
+    # Freq mask
+    f = tf.shape(log_mel)[1]
+    f0 = tf.random.uniform([], 0, f - freq_mask_param, dtype=tf.int32)
+    mask_f = tf.concat([tf.ones([f0]), tf.zeros([freq_mask_param]),
+                         tf.ones([f - f0 - freq_mask_param])], axis=0)
+    log_mel = log_mel * mask_f[tf.newaxis, :]
+    return log_mel, label
+
+def build_dataset(file_paths: list, labels: list, batch_size: int = 32,
+                  training: bool = True) -> tf.data.Dataset:
+    ds = tf.data.Dataset.from_tensor_slices((file_paths, labels))
+
+    if training:
+        ds = ds.shuffle(10000, reshuffle_each_iteration=True)
+
+    # Carga paralela con interleave (evita bottleneck de I/O)
+    ds = ds.interleave(
+        lambda f, l: tf.data.Dataset.from_tensors(load_and_decode_wav(f, l)),
+        cycle_length=16,
+        num_parallel_calls=AUTOTUNE
+    )
+
+    if training:
+        ds = ds.map(audio_augment, num_parallel_calls=AUTOTUNE)
+
+    # Calcular Log-Mel
+    ds = ds.map(lambda w, l: (tf.math.log(
+        tf.tensordot(tf.square(tf.abs(tf.signal.stft(w, 1024, 256))),
+                     tf.signal.linear_to_mel_weight_matrix(128, 513, 16000, 80, 7600), 1) + 1e-6
+    ), l), num_parallel_calls=AUTOTUNE)
+
+    if training:
+        ds = ds.map(specaugment, num_parallel_calls=AUTOTUNE)
+
+    ds = ds.batch(batch_size).prefetch(AUTOTUNE)
+    return ds</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← M3</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Quantización</div>
+    <div class="module-title">QAT — Quantization-Aware Training</div>
+    <div class="module-sub">Fake quantization, Straight-Through Estimator (STE), int8 inference</div>
+  </div>
+
+  <div class="formula">Q(x) = Δ · round(clip(x/Δ, l, u))<br>
+Δ = (x_max − x_min) / (2^b − 1)   (escala de cuantización)<br>
+STE: ∂L/∂x ≈ ∂L/∂Q(x)  (gradiente pasa directamente en backprop)</div>
+
+  <div class="card">
+    <h3>QAT con TensorFlow Model Optimization</h3>
+    <pre>
+import tensorflow as tf
+import tensorflow_model_optimization as tfmot
+
+# ====================================================
+# QAT: entrenar con "fake quantization" nodes
+# ====================================================
+def apply_qat(model: tf.keras.Model) -> tf.keras.Model:
+    """
+    Aplica QAT: inserta FakeQuant nodes antes de cada capa cuantizable.
+    Los FakeQuant simulan el error de cuantización int8 durante el entrenamiento.
+    STE asegura que el gradiente fluye como si no hubiera cuantización.
+    """
+    quantize_model = tfmot.quantization.keras.quantize_model
+    qat_model = quantize_model(model)
+    return qat_model
+
+# ====================================================
+# Ejemplo manual de Straight-Through Estimator (STE)
+# ====================================================
+@tf.custom_gradient
+def fake_quantize(x: tf.Tensor):
+    """Cuantización round-to-nearest con STE en backprop."""
+    # Forward: cuantizar a 8 bits
+    x_min = tf.reduce_min(x)
+    x_max = tf.reduce_max(x)
+    scale = (x_max - x_min) / 255.0  # int8: 256 niveles
+    x_q = tf.round(tf.clip_by_value(x / scale, -128, 127)) * scale
+
+    def grad(upstream):
+        # STE: gradiente de la función identidad (no de round)
+        # Solo en rango de cuantización: clip implícito
+        pass_through = tf.where(
+            tf.logical_and(x >= x_min, x <= x_max),
+            upstream, tf.zeros_like(upstream)
+        )
+        return pass_through
+
+    return x_q, grad
+
+# ====================================================
+# Post-Training Quantization (PTQ) — más rápido, menor calidad
+# ====================================================
+def ptq_to_tflite(model: tf.keras.Model,
+                   representative_dataset) -> bytes:
+    """Convierte a TFLite int8 con calibración."""
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    converter.representative_dataset = representative_dataset
+    converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+    converter.inference_input_type = tf.int8
+    converter.inference_output_type = tf.int8
+    return converter.convert()
+
+def representative_audio_dataset():
+    """100 samples representativas para calibración PTQ."""
+    for _ in range(100):
+        sample = tf.random.normal([1, 128, 128, 1])  # log-mel
+        yield [sample]</pre>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa QAT vs PTQ</h3>
+    <table>
+      <tr><th>Método</th><th>Precisión</th><th>Coste</th><th>Cuándo usar</th></tr>
+      <tr><td>Float32 base</td><td>Referencia</td><td>—</td><td>Servidor GPU</td></tr>
+      <tr><td>PTQ int8</td><td>−1–3%</td><td>Minutos</td><td>Prototipado rápido</td></tr>
+      <tr><td>QAT int8</td><td>−0.1–0.5%</td><td>Re-entrenamiento</td><td>Producción edge</td></tr>
+      <tr><td>QAT int4</td><td>−1–2%</td><td>Re-entrenamiento</td><td>MCU muy limitado</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← M4</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Precisión</div>
+    <div class="module-title">Mixed Precision Training</div>
+    <div class="module-sub">FP16 matmul + FP32 accumulation + LossScaleOptimizer</div>
+  </div>
+
+  <div class="card">
+    <h3>Mixed Precision en Keras</h3>
+    <pre>
+import tensorflow as tf
+
+# Activar mixed precision globalmente
+tf.keras.mixed_precision.set_global_policy('mixed_float16')
+
+# Las capas Dense/Conv usan FP16 para las computaciones
+# pero acumulan en FP32 para mantener precisión numérica
+
+# LossScaleOptimizer previene underflow de gradientes FP16
+# (FP16: rango [-65504, 65504], gradientes pequeños → 0 sin scaling)
+base_optimizer = tf.keras.optimizers.Adam(1e-4)
+optimizer = tf.keras.mixed_precision.LossScaleOptimizer(base_optimizer)
+
+# Entrenar con escalado de pérdida manual (eager mode)
+@tf.function
+def train_step(model, x, y):
+    with tf.GradientTape() as tape:
+        y_pred = model(x, training=True)
+        loss = compute_loss(y, y_pred)
+        scaled_loss = optimizer.get_scaled_loss(loss)
+
+    scaled_grads = tape.gradient(scaled_loss, model.trainable_variables)
+    grads = optimizer.get_unscaled_gradients(scaled_grads)
+    optimizer.apply_gradients(zip(grads, model.trainable_variables))
+    return loss
+
+# Beneficios en A100/V100: ~2x throughput (Tensor Cores FP16)
+# Modelo ocupa ~50% memoria → batch size 2x mayor</pre>
+  </div>
+
+  <div class="card">
+    <h3>Reglas de Mixed Precision</h3>
+    <ul>
+      <li><strong>Matmul/Conv en FP16:</strong> Tensor Cores → 2-8x más rápido</li>
+      <li><strong>Acumulación en FP32:</strong> Evita errores de redondeo en sumas largas</li>
+      <li><strong>BatchNorm en FP32:</strong> La varianza con FP16 puede ser inestable</li>
+      <li><strong>Loss Scaling:</strong> Multiplica la pérdida por 2^7–2^17, divide gradientes → evita underflow</li>
+      <li><strong>Softmax en FP32:</strong> exponenciales FP16 pueden desbordarse</li>
+    </ul>
+    <div class="warn-box"><strong>Cuidado:</strong> Si el loss scale baja continuamente (overflow de gradientes), el modelo tiene NaN. Verificar con <code>optimizer.loss_scale</code> durante entrenamiento.</div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← M5</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · TFLite</div>
+    <div class="module-title">TFLite para Audio en Edge</div>
+    <div class="module-sub">tensor_arena, MicroMutableOpResolver, inferencia en MCU</div>
+  </div>
+
+  <div class="card">
+    <h3>TFLite Micro para MCU</h3>
+    <pre>
+// TensorFlow Lite Micro — inferencia en ARM Cortex-M4/M7
+// Sin heap dinámico, sin sistema de archivos, sin OS requerido
+#include "tensorflow/lite/micro/micro_interpreter.h"
+#include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
+#include "tensorflow/lite/schema/schema_generated.h"
+
+// Modelo embebido como array constante (generado por xxd)
+#include "audio_classifier_model.h"  // extern const uint8_t model_data[]
+
+// Arena estática — NO usar malloc en MCU
+constexpr int kTensorArenaSize = 100 * 1024;  // 100KB
+static uint8_t tensor_arena[kTensorArenaSize];
+
+// Solo registrar las ops necesarias (reduce tamaño de flash)
+tflite::MicroMutableOpResolver&lt;6&gt; resolver;
+resolver.AddConv2D();
+resolver.AddDepthwiseConv2D();
+resolver.AddReshape();
+resolver.AddSoftmax();
+resolver.AddMean();
+resolver.AddPad();
+
+// Cargar modelo
+const tflite::Model* model = tflite::GetModel(model_data);
+
+// Intérprete
+tflite::MicroInterpreter interpreter(
+    model, resolver, tensor_arena, kTensorArenaSize
+);
+interpreter.AllocateTensors();
+
+// Input: log-mel spectrogram [1, 32, 64, 1] int8
+TfLiteTensor* input = interpreter.input(0);
+
+// Llenar con datos de micrófono (cuantizados)
+void run_inference(int8_t* log_mel_data, int len) {
+    memcpy(input->data.int8, log_mel_data, len);
+    interpreter.Invoke();
+    TfLiteTensor* output = interpreter.output(0);
+    // output->data.int8 → índice de clase con max = predicción
+    int predicted_class = 0;
+    for (int i = 1; i &lt; output->dims->data[1]; i++) {
+        if (output->data.int8[i] &gt; output->data.int8[predicted_class])
+            predicted_class = i;
+    }
+}</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← M6</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · Generación</div>
+    <div class="module-title">HiFi-GAN en TensorFlow</div>
+    <div class="module-sub">Multi-Period Discriminator, ConvTranspose1d upsampling, residual blocks</div>
+  </div>
+
+  <div class="formula">HiFi-GAN: G(mel) → waveform<br>
+MPD: D_p(x) = Discriminador sobre períodos primos p ∈ {2,3,5,7,11}<br>
+MSD: Discriminador multi-escala sobre raw/downsampled waveforms</div>
+
+  <div class="card">
+    <h3>Generador HiFi-GAN en Keras</h3>
+    <pre>
+import tensorflow as tf
+
+class ResBlock(tf.keras.layers.Layer):
+    """Bloque residual con convoluciones dilatadas."""
+    def __init__(self, channels, kernel_size=3, dilations=(1,3,5)):
+        super().__init__()
+        self.convs = []
+        for d in dilations:
+            self.convs.append(tf.keras.Sequential([
+                tf.keras.layers.LeakyReLU(0.1),
+                tf.keras.layers.Conv1D(channels, kernel_size, padding='same', dilation_rate=d),
+                tf.keras.layers.LeakyReLU(0.1),
+                tf.keras.layers.Conv1D(channels, kernel_size, padding='same'),
+            ]))
+
+    def call(self, x):
+        for conv in self.convs:
+            x = x + conv(x)  # skip connection
+        return x
+
+class HiFiGANGenerator(tf.keras.Model):
+    """
+    Generador HiFi-GAN V1:
+    mel spectrogram → waveform via ConvTranspose1d upsamplers
+    """
+    def __init__(self, upsample_rates=(8,8,2,2),
+                       upsample_kernels=(16,16,4,4),
+                       resblock_channels=512,
+                       resblock_kernels=(3,7,11),
+                       resblock_dilations=((1,3,5),(1,3,5),(1,3,5))):
+        super().__init__()
+        self.pre_conv = tf.keras.layers.Conv1D(resblock_channels, 7, padding='same')
+
+        self.ups = []
+        self.resblocks = []
+        ch = resblock_channels
+        for rate, kernel in zip(upsample_rates, upsample_kernels):
+            ch //= 2
+            self.ups.append(tf.keras.layers.Conv1DTranspose(
+                ch, kernel, strides=rate, padding='same'
+            ))
+            for k, d in zip(resblock_kernels, resblock_dilations):
+                self.resblocks.append(ResBlock(ch, k, d))
+
+        self.post_conv = tf.keras.layers.Conv1D(1, 7, padding='same', activation='tanh')
+
+    def call(self, mel, training=False):
+        # mel: [B, T_mel, mel_channels]
+        x = self.pre_conv(mel)
+        rb_idx = 0
+        for up in self.ups:
+            x = tf.nn.leaky_relu(x, 0.1)
+            x = up(x)
+            # Suma de resblocks paralelos
+            xs = sum(self.resblocks[rb_idx + j](x) for j in range(3))
+            x = xs / 3
+            rb_idx += 3
+        x = tf.nn.leaky_relu(x, 0.1)
+        return self.post_conv(x)  # [B, T_wav, 1]</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← M7</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · Separación</div>
+    <div class="module-title">Separación de Fuentes — SI-SDR y Máscaras</div>
+    <div class="module-sub">Scale-Invariant SDR, Ideal Ratio Mask, Conv-TasNet en TF</div>
+  </div>
+
+  <div class="formula">SI-SDR = 10·log₁₀(||αs||² / ||αs − ŝ||²)<br>
+donde α = ⟨ŝ,s⟩/||s||² (proyección de ŝ sobre s)<br>
+IRM: M(f,t) = |S(f,t)|² / (|S(f,t)|² + |N(f,t)|²)</div>
+
+  <div class="card">
+    <h3>SI-SDR Loss</h3>
+    <pre>
+import tensorflow as tf
+
+def si_sdr_loss(target: tf.Tensor, estimate: tf.Tensor,
+                eps: float = 1e-8) -> tf.Tensor:
+    """
+    Scale-Invariant SDR — métrica estándar para separación de fuentes.
+    Invariante a la escala: mide solo la forma, no la amplitud.
+    target, estimate: [batch, samples]
+    Retorna: loss escalar (negativo del SI-SDR, para minimizar)
+    """
+    # Restar media (zero-mean)
+    target   = target   - tf.reduce_mean(target,   axis=-1, keepdims=True)
+    estimate = estimate - tf.reduce_mean(estimate, axis=-1, keepdims=True)
+
+    # Proyección
+    dot = tf.reduce_sum(target * estimate, axis=-1, keepdims=True)
+    s_norm_sq = tf.reduce_sum(tf.square(target), axis=-1, keepdims=True) + eps
+    alpha = dot / s_norm_sq
+
+    s_target = alpha * target
+    e_noise = estimate - s_target
+
+    si_sdr = 10 * tf.math.log(
+        tf.reduce_sum(tf.square(s_target), axis=-1) /
+        (tf.reduce_sum(tf.square(e_noise), axis=-1) + eps) + eps
+    ) / tf.math.log(10.0)
+
+    return -tf.reduce_mean(si_sdr)  # negativo para minimizar
+
+# Conv-TasNet simplificado para separación en TF
+class ConvTasNetEncoder(tf.keras.layers.Layer):
+    """Encoder: mapea waveform a representación latente."""
+    def __init__(self, N=512, L=16):
+        super().__init__()
+        self.conv = tf.keras.layers.Conv1D(N, L, strides=L//2, use_bias=False)
+    def call(self, x):
+        return tf.nn.relu(self.conv(x))</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← M8</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · Transfer</div>
+    <div class="module-title">Transfer Learning para Audio</div>
+    <div class="module-sub">YAMNet, VGGish, AudioSet pretraining, fine-tuning</div>
+  </div>
+
+  <div class="card">
+    <h3>Fine-tuning YAMNet para clasificación personalizada</h3>
+    <pre>
+import tensorflow as tf
+import tensorflow_hub as hub
+
+# Cargar YAMNet pre-entrenado en AudioSet (521 clases)
+yamnet_model = hub.load('https://tfhub.dev/google/yamnet/1')
+
+# Extraer embeddings de 1024-dim del penúltimo layer
+def extract_yamnet_embeddings(waveform: tf.Tensor) -> tf.Tensor:
+    """
+    YAMNet procesa audio a 16kHz, mono.
+    Retorna embeddings [frames, 1024] por cada 0.48s de audio.
+    """
+    scores, embeddings, spectrogram = yamnet_model(waveform)
+    return embeddings  # [num_frames, 1024]
+
+# Modelo de fine-tuning sobre embeddings
+class AudioClassifier(tf.keras.Model):
+    def __init__(self, num_classes: int):
+        super().__init__()
+        self.yamnet = yamnet_model
+        # Congelar YAMNet durante las primeras épocas
+        self.dense1 = tf.keras.layers.Dense(256, activation='relu')
+        self.dropout = tf.keras.layers.Dropout(0.3)
+        self.head = tf.keras.layers.Dense(num_classes, activation='softmax')
+
+    def call(self, waveform, training=False):
+        _, embeddings, _ = self.yamnet(waveform)
+        x = tf.reduce_mean(embeddings, axis=0, keepdims=True)  # mean pooling
+        x = self.dense1(x)
+        x = self.dropout(x, training=training)
+        return self.head(x)
+
+# Estrategia: 10 épocas frozen → descongelar capas superiores → 20 épocas más
+def fine_tune(model, train_ds, val_ds, num_classes):
+    # Fase 1: solo entrenar head
+    model.yamnet.trainable = False
+    model.compile(optimizer=tf.keras.optimizers.Adam(1e-3),
+                  loss='categorical_crossentropy', metrics=['accuracy'])
+    model.fit(train_ds, validation_data=val_ds, epochs=10)
+
+    # Fase 2: descongelar y LR bajo
+    model.yamnet.trainable = True
+    model.compile(optimizer=tf.keras.optimizers.Adam(1e-5),
+                  loss='categorical_crossentropy', metrics=['accuracy'])
+    model.fit(train_ds, validation_data=val_ds, epochs=20)</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← M9</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · ASR</div>
+    <div class="module-title">ASR con CTC — Reconocimiento de Voz End-to-End</div>
+    <div class="module-sub">CTC Loss, beam search, Whisper fine-tuning en TF</div>
+  </div>
+
+  <div class="card">
+    <h3>CTC Loss en TensorFlow</h3>
+    <pre>
+import tensorflow as tf
+
+# Connectionist Temporal Classification (CTC)
+# Permite entrenar sin alineación explícita audio↔texto
+# La red aprende el alignment implícitamente
+
+# Input: log-mel spectrogram [batch, time, mel_bins]
+# Output: distribución sobre caracteres + blank token
+
+class CTCModel(tf.keras.Model):
+    def __init__(self, num_chars: int, mel_bins: int = 128):
+        super().__init__()
+        # Encoder convolucional
+        self.conv1 = tf.keras.layers.Conv2D(32, (3,3), activation='relu', padding='same')
+        self.pool1 = tf.keras.layers.MaxPool2D((1,2))
+        self.conv2 = tf.keras.layers.Conv2D(64, (3,3), activation='relu', padding='same')
+        self.pool2 = tf.keras.layers.MaxPool2D((1,2))
+        # RNN bidireccional
+        self.birnn = tf.keras.layers.Bidirectional(
+            tf.keras.layers.LSTM(256, return_sequences=True)
+        )
+        # Proyección a vocabulario
+        self.fc = tf.keras.layers.Dense(num_chars + 1)  # +1 para blank
+
+    def call(self, x, training=False):
+        # x: [B, T, F] → [B, T, F, 1]
+        x = x[..., tf.newaxis]
+        x = self.pool1(self.conv1(x))
+        x = self.pool2(self.conv2(x))
+        # Reshape: [B, T, F//4 * 64]
+        B, T = tf.shape(x)[0], tf.shape(x)[1]
+        x = tf.reshape(x, [B, T, -1])
+        x = self.birnn(x, training=training)
+        return self.fc(x)  # [B, T, vocab+1] logits
+
+@tf.function
+def ctc_train_step(model, optimizer, x_batch, labels, label_lengths, input_lengths):
+    with tf.GradientTape() as tape:
+        logits = model(x_batch, training=True)
+        log_probs = tf.nn.log_softmax(logits)
+        # CTC Loss (tensorflow incluye implementación nativa)
+        loss = tf.nn.ctc_loss(
+            labels=tf.cast(labels, tf.int32),
+            logits=tf.transpose(log_probs, [1,0,2]),  # [T,B,V]
+            label_length=label_lengths,
+            logit_length=input_lengths,
+            blank_index=0
+        )
+    grads = tape.gradient(loss, model.trainable_variables)
+    optimizer.apply_gradients(zip(grads, model.trainable_variables))
+    return tf.reduce_mean(loss)</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← M10</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · Multimodal</div>
+    <div class="module-title">Audio-Text Contrastive Learning — CLAP y SAP</div>
+    <div class="module-sub">Contrastive learning, SAP loss, embeddings audio-texto</div>
+  </div>
+
+  <div class="card">
+    <h3>SAP Loss — Sentence-Audio Prediction</h3>
+    <pre>
+import tensorflow as tf
+
+def contrastive_audio_text_loss(audio_emb: tf.Tensor,
+                                 text_emb: tf.Tensor,
+                                 temperature: float = 0.07) -> tf.Tensor:
+    """
+    Pérdida contrastiva InfoNCE para pares (audio, texto).
+    Similar a CLIP pero para audio + transcripciones / descripciones.
+
+    audio_emb: [B, d_audio] — embeddings de audio
+    text_emb:  [B, d_text]  — embeddings de texto (BERT/T5)
+    """
+    # Proyectar a espacio común
+    # (asumimos ya proyectados a misma dimensión d)
+
+    # Normalizar a esfera unitaria
+    audio_emb = tf.math.l2_normalize(audio_emb, axis=-1)
+    text_emb  = tf.math.l2_normalize(text_emb,  axis=-1)
+
+    # Matriz de similitud [B, B]
+    logits = tf.matmul(audio_emb, text_emb, transpose_b=True) / temperature
+
+    # Labels: diagonal (pares positivos)
+    B = tf.shape(logits)[0]
+    labels = tf.range(B)
+
+    # Loss simétrica: audio→texto + texto→audio
+    loss_a2t = tf.keras.losses.sparse_categorical_crossentropy(
+        labels, logits, from_logits=True
+    )
+    loss_t2a = tf.keras.losses.sparse_categorical_crossentropy(
+        labels, tf.transpose(logits), from_logits=True
+    )
+    return (tf.reduce_mean(loss_a2t) + tf.reduce_mean(loss_t2a)) / 2</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← M11</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Producción</div>
+    <div class="module-title">Serving y Producción</div>
+    <div class="module-sub">TF Serving, SavedModel, TFX pipeline, monitoreo de modelos</div>
+  </div>
+
+  <div class="card">
+    <h3>TF Serving para Inferencia en Producción</h3>
+    <pre>
+# Guardar modelo para TF Serving
+model.save('/models/audio_classifier/1', save_format='tf')
+
+# Iniciar TF Serving con Docker
+# docker run -p 8501:8501 \
+#   -v /models/audio_classifier:/models/audio_classifier \
+#   -e MODEL_NAME=audio_classifier \
+#   tensorflow/serving
+
+# Inferencia via REST API
+import requests, numpy as np, json
+
+def classify_audio_via_serving(log_mel: np.ndarray) -> dict:
+    """Enviar log-mel spectrogram a TF Serving."""
+    payload = {
+        "instances": log_mel.tolist()  # [1, T, 128]
+    }
+    response = requests.post(
+        "http://localhost:8501/v1/models/audio_classifier:predict",
+        json=payload
+    )
+    return response.json()
+
+# TFX Pipeline para MLOps completo
+# from tfx.components import CsvExampleGen, Trainer, Evaluator, Pusher
+# Incluye: data validation (TFDV), model analysis (TFMA), serving automático</pre>
+  </div>
+
+  <div class="card">
+    <h3>Benchmarks — GPU vs Edge</h3>
+    <table>
+      <tr><th>Dispositivo</th><th>Modelo</th><th>Latencia/audio</th><th>TOPS</th></tr>
+      <tr><td>A100 GPU</td><td>AST-Large</td><td>2ms</td><td>312</td></tr>
+      <tr><td>RTX 4090</td><td>YAMNet</td><td>1ms</td><td>82</td></tr>
+      <tr><td>Raspberry Pi 4</td><td>EfficientNet-B0</td><td>120ms</td><td>0.013</td></tr>
+      <tr><td>Coral TPU</td><td>MobileNet-V2 int8</td><td>2ms</td><td>4</td></tr>
+      <tr><td>STM32H7 (MCU)</td><td>Tiny CNN int8</td><td>50ms</td><td>0.001</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← M12</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto Final — Clasificador de Audio End-to-End</div>
+    <div class="module-sub">Desde tf.data hasta TFLite con QAT y evaluación Feynman</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>tf.data Pipeline</td><td>interleave + prefetch + SpecAugment, sin bottleneck I/O</td><td>20</td></tr>
+        <tr><td>MR-STFT Loss</td><td>≥3 resoluciones, convergencia demostrada en val loss</td><td>20</td></tr>
+        <tr><td>QAT int8</td><td>Degradación &lt;1% vs float32, TFLite generado y funcional</td><td>25</td></tr>
+        <tr><td>Mixed Precision</td><td>FP16+FP32 sin NaN, throughput medido vs baseline</td><td>15</td></tr>
+        <tr><td>Inferencia edge</td><td>Modelo corriendo en Raspberry Pi o MCU, latencia medida</td><td>20</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · STFT en el grafo</h4>
+      <p class="quiz-q">¿Por qué es importante que tf.signal.stft sea diferenciable? ¿Qué permite hacer esto en el entrenamiento de modelos generativos como DDSP?</p>
+      <details><summary>Ver respuesta</summary><p>Si la STFT es diferenciable, podemos calcular gradientes ∂L/∂x donde L es la MR-STFT Loss en el dominio espectral y x es la forma de onda generada. Esto permite entrenar DDSP y HiFi-GAN con la pérdida directamente sobre el espectrograma sin necesidad de una discriminador adversarial, lo que hace el entrenamiento más estable. En tf.signal, todas las operaciones (ventana Hann, FFT, módulo) son diferenciables, por lo que el gradiente fluye desde el espectrograma hasta los parámetros del sintetizador.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · STE en QAT</h4>
+      <p class="quiz-q">¿Por qué la función round() no se puede usar directamente en backpropagation y cómo el Straight-Through Estimator resuelve esto?</p>
+      <details><summary>Ver respuesta</summary><p>round(x) tiene derivada 0 en casi todos los puntos (es una función escalonada). Si se usara en backprop, los gradientes serían 0 en todas partes → el modelo no aprendería nada. El STE reemplaza ∂round(x)/∂x por 1 (identidad) durante backprop: los gradientes pasan directamente como si round() no existiera. En forward, se hace la cuantización real (simula el error int8). En backward, gradiente fluye como si fuera un nodo de identidad. Matemáticamente es incorrecto pero empíricamente funciona muy bien para entrenar redes cuantizadas.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · MR-STFT Loss</h4>
+      <p class="quiz-q">¿Por qué usar múltiples tamaños de FFT en MR-STFT Loss en lugar de un solo tamaño grande?</p>
+      <details><summary>Ver respuesta</summary><p>Un FFT grande (2048) tiene buena resolución en frecuencia pero mala resolución temporal → no puede capturar ataques rápidos (&lt;1ms). Un FFT pequeño (256) tiene buena resolución temporal pero bandas de frecuencia anchas → no distingue armónicos cercanos. Con múltiples resoluciones, la pérdida penaliza errores tanto en la estructura de pitch (FFT largo) como en la envolvente temporal (FFT corto). Esto produce vocoder generados con calidad perceptual superior en todo el espectro.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · Mixed Precision</h4>
+      <p class="quiz-q">¿Por qué se acumula en FP32 incluso si los cálculos se hacen en FP16? ¿Qué pasaría si se acumulara en FP16?</p>
+      <details><summary>Ver respuesta</summary><p>FP16 tiene precisión de ~3 dígitos decimales y rango hasta 65504. En una suma de N términos, el error de redondeo crece como O(N·ε_mach). En una matmul de matrices 512×512, hay 512 sumas parciales → el error acumulado en FP16 puede ser significativo, causando divergencia del entrenamiento o pérdida de precisión. FP32 tiene precisión de ~7 dígitos, suficiente para acumular sumas largas. Los Tensor Cores hacen la multiplicación en FP16 pero acumulan internamente en FP32 antes de escribir el resultado.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · RaggedTensor</h4>
+      <p class="quiz-q">¿Qué estructura de datos usa tf.RaggedTensor internamente para representar tensores de longitud variable sin desperdicio de memoria?</p>
+      <details><summary>Ver respuesta</summary><p>Un RaggedTensor tiene dos componentes: <strong>flat_values</strong> (un tensor 1D denso que contiene todas las muestras concatenadas sin padding) y <strong>row_splits</strong> (un tensor de índices enteros que marca dónde empieza y termina cada "fila"). Para 3 audios de 10000, 8000 y 15000 muestras: flat_values tiene 33000 elementos, row_splits=[0, 10000, 18000, 33000]. Esto evita el padding que desperdiciaría hasta 2× la memoria en casos de longitud muy variable.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← M13</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_tensorflow_audio_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Ecosistema TF Audio'},
+    {id:'m1',  label:'M1 · STFT en el Grafo'},
+    {id:'m2',  label:'M2 · MR-STFT Loss'},
+    {id:'m3',  label:'M3 · AST Transformer'},
+    {id:'m4',  label:'M4 · tf.data Pipeline'},
+    {id:'m5',  label:'M5 · QAT / STE'},
+    {id:'m6',  label:'M6 · Mixed Precision'},
+    {id:'m7',  label:'M7 · TFLite Edge'},
+    {id:'m8',  label:'M8 · HiFi-GAN'},
+    {id:'m9',  label:'M9 · SI-SDR Separación'},
+    {id:'m10', label:'M10 · Transfer Learning'},
+    {id:'m11', label:'M11 · ASR + CTC'},
+    {id:'m12', label:'M12 · Audio-Text CLAP'},
+    {id:'m13', label:'M13 · TF Serving'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>

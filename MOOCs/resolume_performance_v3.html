@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resolume Arena — VJing y Sistemas Visuales v3</title>
+<style>
+:root {
+  --bg:#0f172a; --surface:#1e293b; --surface2:#334155;
+  --accent:#f43f5e; --accent2:#fb7185; --warn:#f59e0b;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#334155;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+  --font-mono:'Fira Code',monospace; --font-sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);display:flex;min-height:100vh}
+#sidebar{width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;overflow-y:auto}
+#sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+#sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+#sidebar-header p{font-size:11px;color:var(--muted);margin-top:4px}
+.progress-ring{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ring-label{font-size:11px;color:var(--muted)}
+.ring-val{font-size:20px;font-weight:700;color:var(--accent)}
+#progress-bar-wrap{height:4px;background:var(--surface2);border-radius:2px;flex:1}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .4s}
+nav{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{border-left-color:var(--accent);background:rgba(244,63,94,.1);color:var(--accent)}
+.nav-item.done .nav-dot{background:var(--green)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
+.nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#main{margin-left:260px;flex:1;max-width:calc(100vw - 260px)}
+.module{display:none;padding:40px 48px;max-width:900px;animation:fadeIn .3s}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.module-header{margin-bottom:32px}
+.module-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.module-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.module-sub{font-size:15px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:12px;color:var(--accent2)}
+.card p,.card li{font-size:14px;color:var(--text);line-height:1.7}
+.card ul,.card ol{padding-left:18px;margin-top:8px}
+.card li{margin-bottom:6px}
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:20px;overflow-x:auto;margin:16px 0;font-size:12.5px;line-height:1.7;font-family:var(--font-mono)}
+code{font-family:var(--font-mono);font-size:12.5px;background:#0d1117;padding:2px 6px;border-radius:4px}
+.svg-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto;text-align:center}
+.formula{background:rgba(244,63,94,.08);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--accent2);margin:16px 0}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--surface2);color:var(--accent);padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.metric{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:20px;font-weight:800;color:var(--accent)}
+.metric-label{font-size:11px;color:var(--muted);margin-top:4px}
+.warn-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.warn-box strong{color:var(--warn)}
+.info-box{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.info-box strong{color:#93c5fd}
+.hero-rubric{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.quiz-block h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.quiz-q{font-size:13px;margin-bottom:8px;line-height:1.6}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+details[open] summary{color:var(--accent)}
+details p{font-size:13px;margin-top:8px;padding:10px;background:rgba(244,63,94,.07);border-radius:6px;line-height:1.6}
+.blend-demo{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+.blend-card{background:var(--surface2);border-radius:8px;padding:14px;text-align:center}
+.blend-card .formula-mini{font-family:var(--font-mono);font-size:12px;color:var(--accent2);margin-top:6px}
+.blend-card .name{font-weight:700;font-size:13px;color:var(--text)}
+.blend-card .use{font-size:11px;color:var(--muted);margin-top:4px}
+.btn-row{display:flex;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2);color:#000}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>Resolume Arena — VJing</h2>
+    <p>Sistemas Visuales en Tiempo Real</p>
+  </div>
+  <div class="progress-ring">
+    <span class="ring-label">Progreso</span>
+    <span class="ring-val" id="pct">0%</span>
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+  <nav id="nav-list"></nav>
+</nav>
+
+<main id="main">
+
+<!-- M0 -->
+<section class="module active" id="m0">
+  <div class="module-header">
+    <div class="module-tag">M0 · Introducción</div>
+    <div class="module-title">Arquitectura del Sistema Visual en Vivo</div>
+    <div class="module-sub">GPU pipeline, codecs, blend modes, FFT y sincronización temporal</div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg width="820" height="290" viewBox="0 0 820 290" font-family="Inter,sans-serif" font-size="11">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 Z" fill="#f43f5e"/>
+        </marker>
+        <marker id="arr-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 Z" fill="#3b82f6"/>
+        </marker>
+      </defs>
+
+      <!-- Storage -->
+      <rect x="10" y="30" width="100" height="55" rx="6" fill="#1e293b" stroke="#f43f5e" stroke-width="1.5"/>
+      <text x="60" y="55" text-anchor="middle" fill="#f43f5e" font-weight="700">NVMe M.2</text>
+      <text x="60" y="70" text-anchor="middle" fill="#94a3b8" font-size="10">HAP/DXV .mov</text>
+      <text x="60" y="82" text-anchor="middle" fill="#94a3b8" font-size="10">Intra-frame</text>
+
+      <!-- PCI-E bus -->
+      <line x1="110" y1="57" x2="140" y2="57" stroke="#f43f5e" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="125" y="50" text-anchor="middle" fill="#94a3b8" font-size="9">PCIe</text>
+
+      <!-- GPU / VRAM -->
+      <rect x="140" y="18" width="130" height="80" rx="6" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+      <text x="205" y="42" text-anchor="middle" fill="#22c55e" font-weight="700">GPU / VRAM</text>
+      <text x="205" y="57" text-anchor="middle" fill="#94a3b8" font-size="10">DXT1/DXT5 decode</text>
+      <text x="205" y="71" text-anchor="middle" fill="#94a3b8" font-size="10">Blend Mode math</text>
+      <text x="205" y="85" text-anchor="middle" fill="#94a3b8" font-size="10">FFGL plugins</text>
+
+      <!-- Resolume -->
+      <rect x="310" y="18" width="140" height="80" rx="6" fill="#0d1117" stroke="#f43f5e" stroke-width="1.5"/>
+      <text x="380" y="42" text-anchor="middle" fill="#fb7185" font-weight="700">Resolume Arena</text>
+      <text x="380" y="57" text-anchor="middle" fill="#94a3b8" font-size="10">Layer compositor</text>
+      <text x="380" y="71" text-anchor="middle" fill="#94a3b8" font-size="10">Slice routing (L2S)</text>
+      <text x="380" y="85" text-anchor="middle" fill="#94a3b8" font-size="10">Advanced Output</text>
+      <line x1="270" y1="57" x2="308" y2="57" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <!-- Output hardware -->
+      <rect x="498" y="18" width="130" height="80" rx="6" fill="#1e293b" stroke="#334155"/>
+      <text x="563" y="42" text-anchor="middle" fill="#e2e8f0" font-weight="600">Output HW</text>
+      <text x="563" y="57" text-anchor="middle" fill="#94a3b8" font-size="10">Datapath Fx4</text>
+      <text x="563" y="71" text-anchor="middle" fill="#94a3b8" font-size="10">Blackmagic Quad2</text>
+      <text x="563" y="85" text-anchor="middle" fill="#94a3b8" font-size="10">MST Hub / SDI</text>
+      <line x1="450" y1="57" x2="497" y2="57" stroke="#f43f5e" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <!-- LED / Projector -->
+      <rect x="678" y="30" width="130" height="55" rx="6" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="743" y="55" text-anchor="middle" fill="#a855f7" font-weight="700">Pantalla / LED</text>
+      <text x="743" y="70" text-anchor="middle" fill="#94a3b8" font-size="10">400m² / 7.9mm</text>
+      <line x1="628" y1="57" x2="676" y2="57" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <!-- Audio / FFT row -->
+      <rect x="10" y="130" width="120" height="55" rx="6" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="70" y="153" text-anchor="middle" fill="#3b82f6" font-weight="700">Audio Engine</text>
+      <text x="70" y="168" text-anchor="middle" fill="#94a3b8" font-size="10">48kHz input</text>
+      <text x="70" y="180" text-anchor="middle" fill="#94a3b8" font-size="10">1024 bins FFT</text>
+
+      <line x1="130" y1="157" x2="158" y2="157" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+
+      <rect x="158" y="130" width="140" height="55" rx="6" fill="#1e293b" stroke="#334155"/>
+      <text x="228" y="153" text-anchor="middle" fill="#e2e8f0" font-weight="600">FFT Analysis</text>
+      <text x="228" y="168" text-anchor="middle" fill="#94a3b8" font-size="10">df = (Fs/2)/1024</text>
+      <text x="228" y="180" text-anchor="middle" fill="#94a3b8" font-size="10">≈23Hz/bin @ 48kHz</text>
+
+      <line x1="298" y1="157" x2="326" y2="157" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+
+      <rect x="326" y="130" width="120" height="55" rx="6" fill="#1e293b" stroke="#334155"/>
+      <text x="386" y="153" text-anchor="middle" fill="#e2e8f0" font-weight="600">Modulación</text>
+      <text x="386" y="168" text-anchor="middle" fill="#94a3b8" font-size="10">Opacity / Speed</text>
+      <text x="386" y="180" text-anchor="middle" fill="#94a3b8" font-size="10">Color / Scale</text>
+
+      <!-- Sync row -->
+      <rect x="10" y="220" width="120" height="55" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="70" y="243" text-anchor="middle" fill="#f59e0b" font-weight="700">Ableton Link</text>
+      <text x="70" y="258" text-anchor="middle" fill="#94a3b8" font-size="10">P2P UDP consensus</text>
+      <text x="70" y="270" text-anchor="middle" fill="#94a3b8" font-size="10">Quantum/beat align</text>
+
+      <rect x="160" y="220" width="120" height="55" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="220" y="243" text-anchor="middle" fill="#f59e0b" font-weight="700">SMPTE LTC</text>
+      <text x="220" y="258" text-anchor="middle" fill="#94a3b8" font-size="10">Biphase mark audio</text>
+      <text x="220" y="270" text-anchor="middle" fill="#94a3b8" font-size="10">HH:MM:SS:FF</text>
+
+      <rect x="310" y="220" width="130" height="55" rx="6" fill="#1e293b" stroke="#334155"/>
+      <text x="375" y="243" text-anchor="middle" fill="#e2e8f0" font-weight="600">OSC / MIDI</text>
+      <text x="375" y="258" text-anchor="middle" fill="#94a3b8" font-size="10">32-bit float URI</text>
+      <text x="375" y="270" text-anchor="middle" fill="#94a3b8" font-size="10">/composition/..</text>
+
+      <!-- NDI/Spout -->
+      <rect x="480" y="220" width="130" height="55" rx="6" fill="#1e293b" stroke="#334155"/>
+      <text x="545" y="243" text-anchor="middle" fill="#e2e8f0" font-weight="600">NDI / Spout</text>
+      <text x="545" y="258" text-anchor="middle" fill="#94a3b8" font-size="10">Texture sharing</text>
+      <text x="545" y="270" text-anchor="middle" fill="#94a3b8" font-size="10">0-latency GPU</text>
+    </svg>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">1024</div><div class="metric-label">Bins FFT Resolume</div></div>
+    <div class="metric"><div class="metric-val">≈23Hz</div><div class="metric-label">Resolución/bin @ 48kHz</div></div>
+    <div class="metric"><div class="metric-val">DXT1/5</div><div class="metric-label">Compresión nativa GPU</div></div>
+    <div class="metric"><div class="metric-val">32-bit</div><div class="metric-label">Precisión float OSC</div></div>
+    <div class="metric"><div class="metric-val">L2S</div><div class="metric-label">Layer-to-Slice routing</div></div>
+    <div class="metric"><div class="metric-val">intra</div><div class="metric-label">Tipo de frame HAP/DXV</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Pareto del sistema visual en vivo</h3>
+    <p>El 80% del rendimiento y fiabilidad recae en el 20% de la teoría técnica: <strong>gestión GPU vs CPU</strong> (elección de codec), <strong>álgebra de blend modes</strong> (composición matemática de píxeles), <strong>análisis FFT</strong> (modulación audio-reactiva) y <strong>protocolos de sincronización</strong> (Ableton Link, SMPTE LTC). Dominar estos cuatro ejes elimina el 80% de los problemas que aparecen en escenario.</p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completeAndNext('m0','m1')">Completar M0 →</button>
+  </div>
+</section>
+
+<!-- M1 -->
+<section class="module" id="m1">
+  <div class="module-header">
+    <div class="module-tag">M1 · Codecs</div>
+    <div class="module-title">DXV / HAP vs H.264 — GPU Decompression</div>
+    <div class="module-sub">Intra-frame vs inter-frame, DXT1/DXT5, PCIe pipeline, batch encoding</div>
+  </div>
+
+  <div class="formula">Inter-frame (H.264): GOP → vectores predictivos → CPU reconstruye frames → stuttering<br>
+Intra-frame (HAP/DXV): cada frame = imagen completa DXT1/DXT5 → GPU descomprime en paralelo<br>
+Seek latency: H.264 O(GOP size) vs HAP/DXV O(1) — acceso directo a cualquier frame</div>
+
+  <div class="card">
+    <h3>¿Por qué H.264 mata el rendimiento en VJ?</h3>
+    <p>H.264 usa compresión inter-frame con Group of Pictures (GOP). Para decodificar el frame 87, la CPU necesita el frame I más cercano (quizás el 60) y todos los frames P/B intermedios. En VJ, el scrubbing (cambio de velocidad, bucles no lineales, trigger de clip) obliga a decodificaciones fuera de orden → la CPU no puede seguir el ritmo → dropped frames.</p>
+    <ul>
+      <li><strong>DXV 3 (Resolume native):</strong> Compresión LZF + DXT1/DXT5. El archivo .mov viaja por PCIe a VRAM; los núcleos de textura de la GPU descomprimen en paralelo sin tocar la CPU.</li>
+      <li><strong>HAP (open source):</strong> Usa Snappy compression + DXT1/DXT5. Compatible con múltiples VJ software. HAP Q = mayor calidad (mayor bitrate). HAP Alpha = canal alfa transparente.</li>
+      <li><strong>Ratio de bitrate:</strong> HAP es 5-10× más pesado en disco que H.264, pero el acceso es instantáneo (O(1) seek).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>DXT1 vs DXT5 — Compresión de Texturas GPU</h3>
+    <table>
+      <tr><th>Algoritmo</th><th>Canales</th><th>Relación compresión</th><th>Codec</th></tr>
+      <tr><td>DXT1</td><td>RGB (sin alfa)</td><td>8:1 vs RGB sin comprimir</td><td>HAP / DXV (sin transparencia)</td></tr>
+      <tr><td>DXT5</td><td>RGBA (con alfa)</td><td>4:1 vs RGBA sin comprimir</td><td>HAP Alpha / DXV (con transparencia)</td></tr>
+      <tr><td>BC7 (DX11+)</td><td>RGBA alta calidad</td><td>3:1</td><td>DXV 3 calidad máxima</td></tr>
+    </table>
+    <p>Estas son las mismas instrucciones de hardware que usa el motor de un videojuego para texturas. La GPU ya tiene circuitería dedicada → descompresión sin coste de ciclos de cómputo general.</p>
+  </div>
+
+  <div class="card">
+    <h3>Pipeline Completo: Disco → Pantalla</h3>
+    <pre>
+# ======================================================
+# RUTA DE DATOS SIN CUELLO DE BOTELLA (HAP/DXV)
+# ======================================================
+# 1. NVMe M.2 (3000-7000 MB/s) → archivo .mov HAP
+# 2. PCIe Gen4 x16 (64 GB/s) → DMA directo a VRAM
+# 3. GPU Texture Units → decompress DXT1/DXT5 en paralelo
+# 4. VRAM (RTX 4090: 24GB GDDR6X) → frame en VRAM
+# 5. Resolume Compositor → blend modes en shader
+# 6. DisplayPort/HDMI → Datapath Fx4 → LED/Projector
+
+# ======================================================
+# RUTA CON CUELLO DE BOTELLA (H.264)
+# ======================================================
+# 1. NVMe → archivo .mp4 H.264
+# 2. CPU (decodificación software) → 4-8 núcleos saturados
+#    • reconstrucción GOP: I-frame + N P-frames + B-frames
+#    • seek no-lineal = reconstrucción desde I-frame más cercano
+# 3. RAM (sistema) → copia por memcpy
+# 4. PCIe → upload a VRAM (copia extra)
+# 5. GPU compositor → frame disponible con latencia variable
+
+# CONCLUSIÓN: H.264 añade 2 copias de datos extra + saturación CPU
+# HAP/DXV: 0 copias CPU, descompresión directa en GPU</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m0')">← M0</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m1','m2')">Completar M1 →</button>
+  </div>
+</section>
+
+<!-- M2 -->
+<section class="module" id="m2">
+  <div class="module-header">
+    <div class="module-tag">M2 · Blend Modes</div>
+    <div class="module-title">Álgebra de Modos de Fusión</div>
+    <div class="module-sub">Add, Multiply, Alpha, Screen — operaciones matriciales sobre píxeles [0,1]</div>
+  </div>
+
+  <div class="formula">Valores normalizados: R,G,B,A ∈ [0,1]<br>
+Add:      Z = min(1.0, A + B)              — suma lumínica, negro = neutro<br>
+Multiply: Z = A × B                         — modulación de amplitud, VCA visual<br>
+Alpha:    Z = A_color×A_alpha + B_color×(1−A_alpha)  — crossfade con antialiasing<br>
+Screen:   Z = 1 − ((1−B) × (1−A))          — luminosidad limpia, inversión doble</div>
+
+  <div class="blend-demo">
+    <div class="blend-card">
+      <div class="name">Add</div>
+      <div class="formula-mini">Z = min(1, A+B)</div>
+      <div class="use">Sumar fotones de capas sin máscaras. Negro (0,0,0) = neutro. Riesgo: clipping en blanco.</div>
+    </div>
+    <div class="blend-card">
+      <div class="name">Multiply</div>
+      <div class="formula-mini">Z = A × B</div>
+      <div class="use">VCA visual: valores oscuros de A suprimen B. Blanco (1,1,1) = neutro. Oscurece siempre.</div>
+    </div>
+    <div class="blend-card">
+      <div class="name">Alpha</div>
+      <div class="formula-mini">Z = Ac·Aα + Bc·(1−Aα)</div>
+      <div class="use">Crossfade por píxel conservando antialiasing. Requiere canal alfa en la capa superior.</div>
+    </div>
+    <div class="blend-card">
+      <div class="name">Screen</div>
+      <div class="formula-mini">Z = 1−(1−B)(1−A)</div>
+      <div class="use">Luminosidad limpia. Equivale a Add pero sin clipping abrupto. Negro = neutro.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Implementación en Shader GLSL</h3>
+    <pre>
+// Fragment shader — todos los blend modes
+// A = textura capa superior, B = textura capa inferior
+uniform sampler2D texA;
+uniform sampler2D texB;
+uniform int blend_mode;  // 0=Add, 1=Multiply, 2=Alpha, 3=Screen
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / iResolution.xy;
+    vec4 A = texture2D(texA, uv);
+    vec4 B = texture2D(texB, uv);
+
+    vec3 result;
+
+    if (blend_mode == 0) {
+        // ADD — suma lumínica, clamp para evitar HDR overflow
+        result = min(vec3(1.0), A.rgb + B.rgb);
+
+    } else if (blend_mode == 1) {
+        // MULTIPLY — modulación de amplitud (equivalente a VCA en audio)
+        // Negro (0) anula cualquier valor de B → efecto máscara
+        result = A.rgb * B.rgb;
+
+    } else if (blend_mode == 2) {
+        // ALPHA COMPOSITING (Porter-Duff "over")
+        // A_alpha controla cuánto de A y B se mezcla
+        result = A.rgb * A.a + B.rgb * (1.0 - A.a);
+
+    } else if (blend_mode == 3) {
+        // SCREEN — inversión multiplicativa
+        // Equivale a: 1 - (invA * invB)
+        result = 1.0 - (1.0 - A.rgb) * (1.0 - B.rgb);
+    }
+
+    gl_FragColor = vec4(result, 1.0);
+}
+
+// Otros blend modes útiles en VJ:
+// Difference: abs(A - B)      → inversión en zonas iguales
+// Overlay:   A<0.5 ? 2AB : 1-2(1-A)(1-B)  → contraste extremo
+// Subtract:  max(0, B - A)    → sustracción de color</pre>
+  </div>
+
+  <div class="card">
+    <h3>Estrategia VJ — Blend Modes en Escenario</h3>
+    <table>
+      <tr><th>Situación</th><th>Blend Mode</th><th>Razón</th></tr>
+      <tr><td>Texto / logo sobre video</td><td>Add o Screen</td><td>El fondo negro del texto desaparece</td></tr>
+      <tr><td>Máscara de forma</td><td>Multiply</td><td>Las zonas negras de la máscara bloquean</td></tr>
+      <tr><td>Transición suave entre clips</td><td>Alpha (crossfade)</td><td>Interpolación lineal por píxel</td></tr>
+      <tr><td>Overlay de efectos de luz</td><td>Screen</td><td>Aditivo pero sin clipping duro</td></tr>
+      <tr><td>Glitch / inversión</td><td>Difference</td><td>Áreas iguales se vuelven negras</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m1')">← M1</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m2','m3')">Completar M2 →</button>
+  </div>
+</section>
+
+<!-- M3 -->
+<section class="module" id="m3">
+  <div class="module-header">
+    <div class="module-tag">M3 · FFT Reactivo</div>
+    <div class="module-title">Análisis Audio-Reactivo por FFT</div>
+    <div class="module-sub">1024 bins, resolución de banda, mapping de frecuencias a parámetros visuales</div>
+  </div>
+
+  <div class="formula">Ancho de bin: df = (Fs/2) / N_bins<br>
+Con Fs=48kHz, N=1024: df = 24000/1024 ≈ 23.4 Hz/bin<br>
+Bin de frecuencia f: bin_index = round(f / df)<br>
+Energía de banda: E = Σ |X[k]|² para k en rango de la banda</div>
+
+  <div class="card">
+    <h3>Los 1024 Bins de Resolume Arena</h3>
+    <p>Resolume ejecuta una FFT de 1024 puntos sobre el audio de entrada (típicamente 48kHz mono). Divide el espectro audible (0–24kHz) en 1024 bandas de ≈23.4Hz cada una. Estas bandas se agrupan en rangos frecuenciales que se pueden asignar a parámetros de clip:</p>
+    <table>
+      <tr><th>Banda</th><th>Rango Hz</th><th>Bins aprox.</th><th>Parámetro VJ típico</th></tr>
+      <tr><td>Sub-bass</td><td>20–80Hz</td><td>1–3</td><td>Escala global, flash blanco</td></tr>
+      <tr><td>Bass</td><td>80–300Hz</td><td>3–13</td><td>Opacidad capa, trigger de clip</td></tr>
+      <tr><td>Low-mid</td><td>300–1kHz</td><td>13–43</td><td>Velocidad de playback</td></tr>
+      <tr><td>Mid</td><td>1k–4kHz</td><td>43–171</td><td>Rotación, distorsión</td></tr>
+      <tr><td>High</td><td>4k–20kHz</td><td>171–855</td><td>Color shift, brillo</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Audio Análisis en Resolume — Configuración Práctica</h3>
+    <pre>
+# En Resolume Arena:
+# 1. AUDIO → Audio Analysis panel
+#    • Seleccionar fuente: ASIO / Core Audio input channel
+#    • FFT size: 1024 (por defecto) → df ≈ 23Hz/bin
+#
+# 2. Asignar banda a parámetro de clip:
+#    • Click derecho sobre parámetro (ej. Opacity de una capa)
+#    • "Link to Audio Analysis" → seleccionar banda frecuencial
+#    • Configurar:
+#      - Sensitivity (ganancia del análisis)
+#      - Smoothing (attack/release del envelope)
+#      - Min/Max output range
+#
+# 3. Para análisis avanzado (Python → OSC → Resolume):
+
+import librosa
+import sounddevice as sd
+from pythonosc import udp_client
+import numpy as np
+
+osc = udp_client.SimpleUDPClient("127.0.0.1", 7000)  # puerto OSC Resolume
+BLOCK = 1024
+SR = 48000
+
+def audio_callback(indata, frames, time, status):
+    audio = indata[:, 0]
+    D = np.abs(np.fft.rfft(audio * np.hanning(len(audio))))
+    freqs = np.fft.rfftfreq(len(audio), 1/SR)
+
+    def band_rms(f_lo, f_hi):
+        mask = (freqs >= f_lo) & (freqs < f_hi)
+        return float(np.sqrt(np.mean(D[mask]**2))) if mask.any() else 0.0
+
+    bass = min(1.0, band_rms(80, 300) * 8)
+    mid  = min(1.0, band_rms(300, 4000) * 5)
+    hi   = min(1.0, band_rms(4000, 20000) * 12)
+
+    # Enviar a Resolume via OSC
+    osc.send_message("/composition/layers/1/video/opacity", bass)
+    osc.send_message("/composition/layers/2/video/speed", 0.5 + mid)
+    osc.send_message("/composition/video/brightness", 0.7 + hi * 0.3)
+
+with sd.InputStream(callback=audio_callback, blocksize=BLOCK, samplerate=SR):
+    input("Ctrl+C para parar...")</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m2')">← M2</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m3','m4')">Completar M3 →</button>
+  </div>
+</section>
+
+<!-- M4 -->
+<section class="module" id="m4">
+  <div class="module-header">
+    <div class="module-tag">M4 · Sincronización</div>
+    <div class="module-title">Ableton Link y SMPTE LTC</div>
+    <div class="module-sub">P2P UDP consensus, Quantum, biphase mark, HH:MM:SS:FF</div>
+  </div>
+
+  <div class="card">
+    <h3>Ableton Link — Sincronización de Fase P2P</h3>
+    <p>Link usa consenso peer-to-peer sobre UDP (sin maestro/esclavo). Todos los nodos en la red calculan continuamente el offset entre sus relojes y acuerdan una línea de tiempo compartida. El parámetro <strong>Quantum</strong> define la unidad de cuantización de la fase (ej. Quantum=4 = sincroniza al compás de 4 beats).</p>
+    <pre>
+# Python — Ableton Link via pylinkthon
+import link  # biblioteca Python de Ableton Link
+
+a_link = link.Link(120.0)  # tempo inicial 120 BPM
+a_link.enabled = True
+a_link.startStopSyncEnabled = True
+
+def on_tempo_change(tempo: float):
+    print(f"Nuevo tempo de la red: {tempo:.2f} BPM")
+
+# Obtener estado de la sesión (beat, phase, tempo)
+clock = a_link.clock()
+session_state = a_link.captureAppSessionState()
+
+beat  = session_state.beatAtTime(clock.micros(), quantum=4)
+phase = session_state.phaseAtTime(clock.micros(), quantum=4)
+tempo = session_state.tempo()
+print(f"Beat: {beat:.3f} | Phase: {phase:.3f}/4 | Tempo: {tempo:.2f}")
+
+# Forzar Resolume a seguir Link:
+# Resolume → Preferences → Sync → Enable Ableton Link
+# Quantum debe coincidir con el set de Ableton (típico: 4 o 8)</pre>
+  </div>
+
+  <div class="card">
+    <h3>SMPTE LTC — Timecode Frame-Accurate</h3>
+    <p>LTC (Linear/Longitudinal Timecode) es una señal de audio digital que codifica una estampa de tiempo absoluta en formato <strong>HH:MM:SS:FF</strong> (horas:minutos:segundos:frames). Se inyecta como señal de audio (típicamente en el canal derecho de la mesa del DJ mientras la música va al izquierdo) y Resolume la decodifica para disparar eventos en frames exactos.</p>
+    <pre>
+# Framerate estándares SMPTE:
+# 24fps  — cine
+# 25fps  — PAL (Europa, se usa en tours europeos)
+# 29.97  — NTSC (USA, se usa en tours americanos)
+# 30fps  — digital moderno
+
+# Setup en show de DJ con SMPTE:
+# Canal izquierdo mesa → PA (música del DJ en mono)
+# Canal derecho mesa → interfaz de audio de la laptop de Resolume
+#   → Resolume: Preferences → Timecode → Input: ASIO canal 2
+#   → Framerate: 25fps (o 29.97 según el proveedor del show)
+#   → Offset: 01:00:00:00 (hora inicio del LTC)
+
+# El técnico de show programa el LTC en la timeline de audio:
+# - Drop 01:00:00:00 = inicio del show
+# - Drop 01:00:32:15 = primer visual de drop del DJ
+# - Resolume activa el clip correspondiente frame-accurate
+
+# Verificar recepción LTC en Resolume:
+# Dashboard → Timecode → muestra HH:MM:SS:FF en tiempo real
+# Si el contador avanza = LTC llegando correctamente
+
+# Generar LTC de prueba con Python:
+import mido
+# (o usar hardware: MOTU, RME, Apogee con word clock out)</pre>
+    <div class="info-box"><strong>Pro tip DJ Shows:</strong> El canal derecho de la mesa es la ruta más común en festivals porque el DJ no lo usa para música (trabaja en mono hacia el PA). El técnico de visuales conecta un cable de ese canal directo al input de la interfaz de audio de la laptop de visuales. Latencia cero y sin necesidad de hardware adicional.</div>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa de Protocolos de Sincronización</h3>
+    <table>
+      <tr><th>Protocolo</th><th>Precisión</th><th>Tipo</th><th>Caso de uso</th></tr>
+      <tr><td>Ableton Link</td><td>±1ms (beat)</td><td>P2P UDP</td><td>Improvisación, sesiones live</td></tr>
+      <tr><td>SMPTE LTC</td><td>Frame-exact</td><td>Audio analógico</td><td>Touring, shows pre-programados</td></tr>
+      <tr><td>MIDI Clock</td><td>±5ms</td><td>MIDI serial</td><td>Hardware synths, drum machines</td></tr>
+      <tr><td>OSC</td><td>sub-ms (LAN)</td><td>UDP IP</td><td>Control paramétrico en tiempo real</td></tr>
+      <tr><td>Dante/AES67</td><td>&lt;1ms hardware</td><td>PTP+Ethernet</td><td>Instalaciones permanentes</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m3')">← M3</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m4','m5')">Completar M4 →</button>
+  </div>
+</section>
+
+<!-- M5 -->
+<section class="module" id="m5">
+  <div class="module-header">
+    <div class="module-tag">M5 · Encoding</div>
+    <div class="module-title">Batch Encoding con FFmpeg — HAP y DXV</div>
+    <div class="module-sub">Scripts .bat, hap/hap_alpha/hap_q, Resolume Alley, verificación</div>
+  </div>
+
+  <div class="card">
+    <h3>Scripts FFmpeg para Conversión en Lote</h3>
+    <pre>
+:: ================================================
+:: Windows Batch Script — Convertir MP4 a HAP
+:: Guardar como "convert_to_hap.bat" en carpeta con .mp4
+:: ================================================
+@echo off
+echo Convirtiendo archivos MP4 a HAP (GPU codec)...
+
+:: HAP estándar (sin alfa)
+for %%i in (*.mp4) do (
+    echo Procesando: %%i
+    ffmpeg -i "%%i" ^
+           -c:v hap ^
+           -format hap ^
+           -compressor snappy ^
+           -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" ^
+           "%%~ni_HAP.mov"
+)
+
+:: HAP Alpha (con canal de transparencia) — desde .mov con alfa
+for %%i in (*_alpha.mov) do (
+    ffmpeg -i "%%i" ^
+           -c:v hap ^
+           -format hap_alpha ^
+           "%%~ni_Converted.mov"
+)
+
+:: HAP Q (máxima calidad, mayor bitrate — para outputs 4K)
+for %%i in (*_4k.mp4) do (
+    ffmpeg -i "%%i" ^
+           -c:v hap ^
+           -format hap_q ^
+           "%%~ni_HAPQ.mov"
+)
+
+echo Conversión completada.
+pause</pre>
+  </div>
+
+  <div class="card">
+    <h3>FFmpeg — Equivalente macOS/Linux</h3>
+    <pre>
+#!/bin/bash
+# macOS/Linux — convertir carpeta completa a HAP
+
+# HAP estándar
+for f in *.mp4; do
+    ffmpeg -i "$f" \
+           -c:v hap \
+           -format hap \
+           "${f%.mp4}_HAP.mov"
+done
+
+# HAP Alpha desde ProRes con canal alfa
+for f in *_alpha.mov; do
+    ffmpeg -i "$f" \
+           -c:v hap \
+           -format hap_alpha \
+           "${f%.mov}_Converted.mov"
+done
+
+# Verificar que el codec es HAP (no H.264 accidental)
+ffprobe -v quiet -show_streams -select_streams v:0 "archivo.mov" | grep codec_name
+# Debe mostrar: codec_name=hap
+
+# Calcular bitrate resultante vs H.264:
+# HAP típico 1080p30: ~800 Mbps
+# HAP Q 1080p30: ~1.5 Gbps
+# H.264 1080p30: ~10-25 Mbps
+# → HAP es 30-80× más pesado pero 0ms seek latency</pre>
+  </div>
+
+  <div class="card">
+    <h3>Comparativa de Codecs para VJ</h3>
+    <table>
+      <tr><th>Codec</th><th>CPU Load (10 clips)</th><th>Seek</th><th>Alfa</th><th>Bitrate 1080p30</th></tr>
+      <tr><td>H.264</td><td>80-100%</td><td>Lento (GOP)</td><td>No</td><td>10-25 Mbps</td></tr>
+      <tr><td>H.265/HEVC</td><td>100%+</td><td>Muy lento</td><td>No</td><td>5-15 Mbps</td></tr>
+      <tr><td>HAP</td><td>5-15%</td><td>Instantáneo</td><td>HAP Alpha</td><td>~800 Mbps</td></tr>
+      <tr><td>HAP Q</td><td>8-20%</td><td>Instantáneo</td><td>HAP Q Alpha</td><td>~1.5 Gbps</td></tr>
+      <tr><td>DXV 3</td><td>3-10%</td><td>Instantáneo</td><td>Sí</td><td>~600 Mbps</td></tr>
+      <tr><td>NotchLC</td><td>5-12%</td><td>Instantáneo</td><td>Sí</td><td>~1 Gbps</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m4')">← M4</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m5','m6')">Completar M5 →</button>
+  </div>
+</section>
+
+<!-- M6 -->
+<section class="module" id="m6">
+  <div class="module-header">
+    <div class="module-tag">M6 · Advanced Output</div>
+    <div class="module-title">Advanced Output — Slices y Projection Mapping</div>
+    <div class="module-sub">Slices geométricos, Match Output Shape, warping de LED walls</div>
+  </div>
+
+  <div class="card">
+    <h3>Workflow de Output Avanzado para LED Walls</h3>
+    <p>Un procesador de video LED (ej. Novastar, Brompton) exige secciones discontinuas de la señal de video organizada como una textura única. El Advanced Output de Resolume permite mapear regiones específicas del lienzo a salidas físicas distintas.</p>
+    <ol>
+      <li><strong>Diseñar la topología:</strong> El técnico LED te dará un plano con la disposición de los procesadores (ej. Procesador A = píxeles 0–383, Procesador B = 384–767)</li>
+      <li><strong>Crear slices:</strong> Advanced Output → Add Slice → definir posición y tamaño (ej. 384×192px) → asignar nombre descriptivo ("Panel_A_izquierda")</li>
+      <li><strong>Match Output Shape:</strong> Seleccionar el slice → botón "Match Output Shape" → la relación de aspecto del input se ajusta automáticamente al slice</li>
+      <li><strong>Posicionar sobre el lienzo:</strong> Mantener Shift+Alt mientras se arrastra = escala desde el centro conservando proporciones</li>
+      <li><strong>Asignar fuente:</strong> Input Source del slice → seleccionar capa o composición específica</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h3>Cálculo de Resolución de Composición</h3>
+    <pre>
+# Para un LED wall de 400m² con paneles de 500×500mm @ 7.9mm pixel pitch:
+# Resolución por panel: 500/7.9 ≈ 63×63 pixels
+# Si la pared es 20m×20m: 20000/7.9 ≈ 2531×2531 pixels
+
+# Problema: renderizar a 2531×2531 @ 60fps = ~400MP/s → satura la GPU
+
+# SOLUCIÓN: composición de trabajo a menor resolución + slices escalados
+# Composición: 1920×1080 (máximo rendimiento)
+# Slices: definidos según la topología del procesador
+# Resolume escala internamente cada slice al output físico
+
+# Ejemplo: 10 procesadores Novastar N4, cada uno @ 1920×1080:
+# → 10 slices de 1920×1080 sobre composición maestra
+# → Datapath Fx4 divide en 4 salidas DisplayPort independientes
+# → 3 tarjetas Datapath = 12 salidas (10 procesadores + 2 backup)
+
+# Regla de thumb para composición base:
+# 1 procesador HD → composición 1920×1080
+# 2-4 procesadores → composición 3840×1080 o 3840×2160
+# 5-10 procesadores → múltiples laptops con Barco Encore switcher</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m5')">← M5</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m6','m7')">Completar M6 →</button>
+  </div>
+</section>
+
+<!-- M7 -->
+<section class="module" id="m7">
+  <div class="module-header">
+    <div class="module-tag">M7 · Layer-to-Slice</div>
+    <div class="module-title">Layer-to-Slice Routing (L2S)</div>
+    <div class="module-sub">Ignore Opacity, Bypass, ruteo directo evitando compositor maestro</div>
+  </div>
+
+  <div class="formula">L2S: Capa → Slice directo, saltando blend modes y opacity del compositor maestro<br>
+Bypass: desactiva el pipeline matemático del bus → 0 ciclos GPU en esa ruta<br>
+Ignore Opacity: la capa puede estar "apagada" visualmente pero la señal llega limpia al slice</div>
+
+  <div class="card">
+    <h3>¿Por qué L2S salva la GPU?</h3>
+    <p>Sin L2S: Resolume renderiza toda la composición maestra (ej. 7680×4320), aplica todos los blend modes de todas las capas, y luego recorta slices de ese lienzo gigante. Esto es enormemente ineficiente para setups multi-pantalla con contenidos independientes.</p>
+    <p>Con L2S: cada capa se envía directamente a su slice de destino sin pasar por el compositor maestro. El motor de render de Resolume solo procesa la resolución del slice (ej. 1920×1080) para esa capa, no la composición entera.</p>
+    <pre>
+# Configuración L2S en Resolume Arena:
+# 1. Capa en la composición: reducida (ej. 1080p)
+# 2. Advanced Output → seleccionar Slice de destino
+# 3. Input Source del Slice → "Layer 3" (nombre de la capa)
+# 4. Activar en las propiedades del routing:
+#    ✓ "Ignore Opacity" — la capa puede tener opacity=0 visible
+#                          pero la señal viaja al slice sin atenuación
+#    ✓ "Bypass"         — elimina del pipeline de la composición maestra
+#                          (0 ciclos GPU en el compositor maestro)
+
+# RESULTADO: renderizar 4 capas 1080p independientes → 4 slices
+# vs renderizar 1 composición 4K con 4 capas:
+# L2S: 4 × 1920×1080 = 8.3 MP por frame
+# Sin L2S: 1 × 3840×2160 = 8.3 MP por frame → MISMO coste, pero...
+# → L2S: 0 blend modes maestros, 0 mezclas intermedias, 0 copies
+# → Sin L2S: N blend modes por capa, copia de texturas entre capas
+
+# Para muchos procesadores (7-10+), L2S reduce dropped frames >50%
+
+# OSC para activar/desactivar bypass en tiempo real:
+from pythonosc import udp_client
+osc = udp_client.SimpleUDPClient("127.0.0.1", 7000)
+
+# Desactivar capa del compositor maestro (pero mantener señal al slice):
+osc.send_message("/composition/layers/3/bypassed", 1)  # 1=bypass on
+# La capa 3 no se ve en el preview maestro, pero el slice sigue recibiendo.</pre>
+  </div>
+
+  <div class="card">
+    <h3>Cuándo usar L2S</h3>
+    <table>
+      <tr><th>Escenario</th><th>¿L2S?</th><th>Razón</th></tr>
+      <tr><td>1-2 proyectores, composición unificada</td><td>No</td><td>El compositor maestro es suficiente</td></tr>
+      <tr><td>3+ pantallas con contenido independiente</td><td>Sí</td><td>Evita renderizar composición gigante</td></tr>
+      <tr><td>LED wall + proyector de fondo independiente</td><td>Sí</td><td>Fuentes distintas, no mezclan</td></tr>
+      <tr><td>Festival 10+ procesadores (Storm Shanghai style)</td><td>Obligatorio</td><td>Única forma de no saturar GPU</td></tr>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m6')">← M6</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m7','m8')">Completar M7 →</button>
+  </div>
+</section>
+
+<!-- M8 -->
+<section class="module" id="m8">
+  <div class="module-header">
+    <div class="module-tag">M8 · OS Optimization</div>
+    <div class="module-title">Optimización del Sistema Operativo</div>
+    <div class="module-sub">Nvidia 3D Settings, triple buffering, power mode, proceso RT</div>
+  </div>
+
+  <div class="card">
+    <h3>Nvidia Control Panel — 3D Settings para Resolume</h3>
+    <pre>
+# Panel de Control Nvidia → Gestionar configuración 3D → Resolume Arena
+# ================================================================
+
+# 1. DESACTIVAR "Custom Nvidia Profile" de Resolume (si existe)
+#    → algunos perfiles preexistentes añaden vsync y buffering no deseados
+
+# 2. Power management mode → "Prefer maximum performance"
+#    → por defecto: "Adaptive" (la GPU reduce frecuencia en reposo)
+#    → en un show en vivo: la GPU NUNCA debe bajar su frecuencia
+#    → sin esto: primer trigger de clip = spike de latencia mientras
+#      la GPU vuelve a su frecuencia máxima (~100ms de stutter)
+
+# 3. Triple Buffering → ON
+#    → Sin triple buffering: double buffering puede provocar tearing
+#      si el framerate de Resolume no coincide exactamente con el
+#      refresh rate del output (ej. 59.94 vs 60.000 Hz)
+#    → Triple buffer: la GPU siempre tiene un frame renderizado
+#      disponible aunque el timing no sea perfecto
+
+# 4. Vertical Sync → "Fast" (no "On" estándar)
+#    → "On" limita al refresh rate y añade latencia
+#    → "Fast" permite superar el refresh rate internamente sin tearing
+
+# 5. Texture filtering — Quality → "High performance"
+#    → en VJ no necesitamos anisotropic filtering máximo
+#    → la ganancia en throughput de texturas justifica la pérdida visual</pre>
+  </div>
+
+  <div class="card">
+    <h3>Windows — Optimización del Sistema</h3>
+    <pre>
+# Antes de un show en Windows 10/11:
+
+# 1. Modo rendimiento máximo
+#    Panel de Control → Opciones de Energía → "Alto rendimiento"
+#    (o usar el plan "Ultimate Performance" en Windows 11 Pro)
+
+# 2. Desactivar actualizaciones de Windows (durante el show)
+#    Settings → Windows Update → Pause updates → 1 semana
+
+# 3. Prioridad de proceso Resolume al máximo
+# Task Manager → Details → resolume.exe → Set Priority → Realtime
+# (o via PowerShell):
+Start-Process -FilePath "resolume.exe" -Priority "RealTime"
+
+# 4. Deshabilitar notificaciones y Apps en segundo plano
+# Settings → System → Notifications → Off
+# Settings → Privacy → Background apps → Off (todas)
+
+# 5. Modo de juego de Windows → ON (reduce latencia scheduler)
+# Settings → Gaming → Game Mode → On
+
+# 6. Verificar que la GPU no tiene throttling térmico:
+# GPU-Z → Sensors → Core Clock debe estar en boost clock máximo
+# Si baja: problema de ventilación → añadir pad térmico o GPU cooler
+
+# macOS equivalentes:
+# - Desactivar Time Machine durante show
+# - Spotlight: sudo mdutil -a -i off (reactivar después)
+# - Desactivar notificaciones: Do Not Disturb → siempre activo</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m7')">← M7</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m8','m9')">Completar M8 →</button>
+  </div>
+</section>
+
+<!-- M9 -->
+<section class="module" id="m9">
+  <div class="module-header">
+    <div class="module-tag">M9 · OSC</div>
+    <div class="module-title">OSC — Open Sound Control para VJ</div>
+    <div class="module-sub">32-bit float, URI addressing, Python → Resolume, ZeroConf</div>
+  </div>
+
+  <div class="formula">OSC: protocolo UDP + mensajes semánticos (URIs)<br>
+Resolución MIDI: 127 pasos (7-bit) → 0-127<br>
+Resolución OSC: float32 → ~16.7 millones de valores entre 0.0 y 1.0<br>
+Ejemplo: /composition/layers/1/video/opacity → 0.75</div>
+
+  <div class="card">
+    <h3>OSC vs MIDI — Por qué OSC en VJ profesional</h3>
+    <table>
+      <tr><th>Característica</th><th>MIDI</th><th>OSC</th></tr>
+      <tr><td>Resolución de control</td><td>7-bit (127 pasos)</td><td>float32 (~16M valores)</td></tr>
+      <tr><td>Tipo de dato</td><td>Integer 0-127</td><td>float, int, string, blob</td></tr>
+      <tr><td>Direccionamiento</td><td>Canal+CC (limitado)</td><td>URI arbitraria (ilimitado)</td></tr>
+      <tr><td>Transporte</td><td>Serial (5-pin DIN) / USB</td><td>UDP/IP (Ethernet, WiFi)</td></tr>
+      <tr><td>Jitter</td><td>~1ms (serial) / variable USB</td><td>&lt;0.1ms en LAN</td></tr>
+      <tr><td>Distancia</td><td>15m (DIN) / USB 5m</td><td>Ilimitada (IP)</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Python → Resolume vía OSC</h3>
+    <pre>
+from pythonosc import udp_client, dispatcher, osc_server
+import threading
+import time
+
+# ==========================================
+# ENVÍO: Python → Resolume Arena
+# ==========================================
+# Resolume OSC input: puerto 7000 por defecto (configurable en Preferences)
+sender = udp_client.SimpleUDPClient("127.0.0.1", 7000)
+
+# Controlar parámetros de composición:
+sender.send_message("/composition/video/opacity", 0.8)
+sender.send_message("/composition/layers/1/video/opacity", 0.5)
+sender.send_message("/composition/layers/2/video/speed", 1.5)
+sender.send_message("/composition/layers/3/clips/1/connect", 1)  # trigger clip
+sender.send_message("/composition/crossfader/value", 0.0)         # crossfader
+
+# Controlar efectos (FFGL plugins):
+sender.send_message("/composition/layers/1/effects/1/video/param/amount", 0.3)
+
+# ==========================================
+# RECEPCIÓN: Resolume → Python (feedback)
+# ==========================================
+# Resolume puede enviar su estado por OSC (para UIs externas)
+# Resolume OSC output: Preferences → OSC → Enable Broadcast
+
+disp = dispatcher.Dispatcher()
+
+def handle_opacity(addr, *args):
+    print(f"Opacity cambiada: {args[0]:.3f}")
+
+disp.map("/composition/layers/*/video/opacity", handle_opacity)
+
+server = osc_server.ThreadingOSCUDPServer(("0.0.0.0", 7001), disp)
+thread = threading.Thread(target=server.serve_forever)
+thread.daemon = True
+thread.start()
+print("Escuchando OSC en puerto 7001...")</pre>
+  </div>
+
+  <div class="card">
+    <h3>ZeroConf / Bonjour — Descubrimiento Automático de Red</h3>
+    <p>En setups multi-máquina, encontrar las IPs manualmente es propenso a errores. ZeroConf (Bonjour en macOS, Avahi en Linux) permite que los dispositivos se encuentren por nombre sin configuración DNS:</p>
+    <pre>
+# macOS: Resolume se anuncia como "_osc._udp" via Bonjour
+# En la misma red: descubrir automáticamente
+import zeroconf
+import socket
+
+class OSCServiceDiscovery:
+    def __init__(self):
+        self.zc = zeroconf.Zeroconf()
+        self.browser = zeroconf.ServiceBrowser(
+            self.zc, "_osc._udp.local.", self
+        )
+
+    def add_service(self, zc, type_, name):
+        info = zc.get_service_info(type_, name)
+        ip = socket.inet_ntoa(info.addresses[0])
+        print(f"Resolume encontrado: {ip}:{info.port}")
+        # Automáticamente conectar OSC a esa IP</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m8')">← M8</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m9','m10')">Completar M9 →</button>
+  </div>
+</section>
+
+<!-- M10 -->
+<section class="module" id="m10">
+  <div class="module-header">
+    <div class="module-tag">M10 · NDI &amp; Spout</div>
+    <div class="module-title">NDI, Spout y Syphon — Video Sharing</div>
+    <div class="module-sub">Texture sharing GPU, latencia sub-frame, pipelines multi-app</div>
+  </div>
+
+  <div class="card">
+    <h3>Spout / Syphon — Compartir Textura GPU Sin Copia</h3>
+    <p>Spout (Windows) y Syphon (macOS) comparten la textura OpenGL/DirectX directamente en la VRAM. No hay copia de datos CPU, no hay serialización, no hay red. La latencia es <strong>exactamente 0</strong> porque el segundo programa lee la misma textura de la misma GPU.</p>
+    <pre>
+# Python → Syphon (macOS) → Resolume como fuente
+import syphon
+import numpy as np
+
+server = syphon.SyphonServer("GenerativeArt")
+
+def render_and_share(t: float, bass: float):
+    # Generar frame (cualquier fuente: OpenGL, Metal, numpy)
+    W, H = 1920, 1080
+    frame = np.zeros((H, W, 4), dtype=np.uint8)
+    # ... renderizado procedural ...
+
+    # Compartir vía Syphon (0 copia CPU, 0 latencia)
+    server.publish_frame_pixels(frame, W, H)
+
+# En Resolume Arena (macOS):
+# Fuente del clip → "Syphon" → seleccionar "GenerativeArt"
+# La textura aparece como clip nativo, sin latencia adicional
+
+# Windows — SpoutGL desde Python:
+import SpoutGL
+
+sender = SpoutGL.SpoutSender()
+sender.setSenderName("GenerativeArt")
+# sender.sendTexture(texture_id, GL_TEXTURE_2D, W, H, False)</pre>
+  </div>
+
+  <div class="card">
+    <h3>NDI — Video en Red Local</h3>
+    <pre>
+# NDI (Network Device Interface) — video sobre Ethernet 1Gb
+# Latencia: ~16ms (1 frame @ 60fps) vs 0ms de Spout
+# Ventaja: funciona ENTRE MÁQUINAS en la misma red
+
+import NDIlib as ndi
+
+# Servidor NDI — envía video desde Python
+ndi.initialize()
+settings = ndi.SendCreate()
+settings.ndi_name = "VJ_Output_Machine_A"
+sender = ndi.send_create(settings)
+
+def send_ndi(frame_bgra: np.ndarray):
+    H, W = frame_bgra.shape[:2]
+    vf = ndi.VideoFrameV2()
+    vf.data = frame_bgra
+    vf.FourCC = ndi.FOURCC_VIDEO_TYPE_BGRA
+    vf.xres, vf.yres = W, H
+    vf.frame_rate_N, vf.frame_rate_D = 60, 1
+    ndi.send_send_video_v2(sender, vf)
+
+# En Resolume (Machine B, misma red LAN):
+# Fuente del clip → NDI → "VJ_Output_Machine_A"
+# Aparece como fuente de video en tiempo real
+
+# Comparativa final:
+# Spout/Syphon: 0 latencia, misma máquina, misma GPU
+# NDI: ~1 frame latencia, multi-máquina, Ethernet 1Gb
+# Syphon out → NDI encode: ~16ms (para cruzar a otra máquina)</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m9')">← M9</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m10','m11')">Completar M10 →</button>
+  </div>
+</section>
+
+<!-- M11 -->
+<section class="module" id="m11">
+  <div class="module-header">
+    <div class="module-tag">M11 · Hardware</div>
+    <div class="module-title">Hardware Stack — Datapath, Blackmagic, MST</div>
+    <div class="module-sub">DisplayPort splitting, 4 salidas desde 1 GPU, sincronización hardware</div>
+  </div>
+
+  <div class="card">
+    <h3>Datapath Fx4 / Blackmagic Quad 2</h3>
+    <p>El problema: conectar 4-8 pantallas independientes requeriría 4-8 GPUs → inviable por costo, calor y overhead PCIe. La solución: un frame grabber / expander de video que se presenta ante el SO como una <strong>única textura de alta resolución</strong> y la divide en múltiples salidas sincronizadas por hardware.</p>
+    <table>
+      <tr><th>Dispositivo</th><th>Entradas</th><th>Salidas</th><th>Resolución máx.</th><th>Sync</th></tr>
+      <tr><td>Datapath Fx4</td><td>1× HDMI/DP</td><td>4× HDMI/DP</td><td>4K@60fps en</td><td>Hardware genlock</td></tr>
+      <tr><td>Datapath 4kTwo</td><td>2× HDMI/DP</td><td>4× HDMI</td><td>4K@30fps×2</td><td>Hardware genlock</td></tr>
+      <tr><td>Blackmagic Quad 2</td><td>8× SDI in</td><td>8× SDI out</td><td>1080p60×8</td><td>Tri-level sync</td></tr>
+      <tr><td>MST Hub (DisplayPort)</td><td>1× DP 1.4</td><td>2-4× DP</td><td>limitado por BW</td><td>No hardware sync</td></tr>
+    </table>
+    <div class="warn-box"><strong>MST Hub limitación:</strong> Un hub MST segmenta el ancho de banda del conector DP existente — NO añade resolución. Si la GPU tiene 1× DP 1.4 (32.4 Gbps), un MST hub divide ese ancho de banda entre las salidas. Datapath usa su propia lógica de expansión sin este límite.</div>
+  </div>
+
+  <div class="card">
+    <h3>Setup Storm Festival Shanghai — Arquitectura Real</h3>
+    <pre>
+# 400m² LED @ 7.9mm → 10 procesadores de video Novastar
+# 2 laptops en balanceo con Barco Encore switcher
+# ================================================
+
+# Laptop A (MSI GT72):
+# → GPU: GTX 1080 → Resolume Arena
+# → Datapath 4kTwo → 4× HDMI → Procesadores 1-4
+# → DXV / HAP Q codecs en NVMe 1TB
+
+# Laptop B (Apple MBP Retina):
+# → GPU: AMD Radeon → Resolume Arena (backup + layers extra)
+# → Datapath Fx4 → 4× DP → Procesadores 5-8
+
+# Barco Encore (hardware switcher):
+# → Recibe output de ambas laptops
+# → Puede hacer corte limpio entre A y B en 1 frame
+# → Procesadores 9-10 → output directo desde Encore
+
+# Plugin Chaser FFGL:
+# → Instalado en canal EFX de cada capa
+# → Programa "chases" automáticos entre slices
+# → Ej: efecto que barre de izquierda a derecha entre 5 slices
+#    controlado por MIDI note desde mesa de DJ
+
+# Sincronización:
+# → SMPTE LTC @ 25fps desde canal derecho de DJ
+# → Resolume Laptop A = maestro del timecode
+# → Laptop B sincroniza al timecode de A vía OSC bridge</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m10')">← M10</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m11','m12')">Completar M11 →</button>
+  </div>
+</section>
+
+<!-- M12 -->
+<section class="module" id="m12">
+  <div class="module-header">
+    <div class="module-tag">M12 · FFGL</div>
+    <div class="module-title">Plugins FFGL — Chaser y Shaders en Resolume</div>
+    <div class="module-sub">FreeFrame GL, Chaser plugin, ISF, desarrollo de plugins custom</div>
+  </div>
+
+  <div class="card">
+    <h3>FFGL — FreeFrame OpenGL Plugin Architecture</h3>
+    <p>FFGL es el estándar abierto para plugins de efectos de video en Resolume, VDMX, Millumin, etc. Un plugin FFGL es una DLL (Windows) o dylib (macOS) que implementa callbacks de OpenGL y se inyecta en el pipeline de renderizado de Resolume.</p>
+    <pre>
+// FFGL Plugin mínimo — C++
+// Requiere: FFGL SDK (https://github.com/resolume/ffgl)
+#include "FFGL.h"
+#include "FFGLLib.h"
+
+class ChaserPlugin : public CFreeFrameGLPlugin {
+public:
+    FFResult ProcessOpenGL(ProcessOpenGLStruct* pGL) override {
+        // pGL->inputTextures[0] = textura de la capa de entrada
+        // Aquí ejecutamos nuestro shader GLSL
+        glUseProgram(m_shader_program);
+        glUniform1f(m_param_speed,    m_speed);
+        glUniform1f(m_param_offset,   m_offset);
+        glUniform2f(m_param_resolution, pGL->width, pGL->height);
+
+        // Dibujar quad con la textura procesada
+        draw_fullscreen_quad(pGL->inputTextures[0]);
+        glUseProgram(0);
+        return FF_SUCCESS;
+    }
+
+    // Exponer parámetros a la UI de Resolume
+    FFResult SetFloatParameter(unsigned int index, float value) override {
+        if (index == 0) m_speed = value;
+        if (index == 1) m_offset = value;
+        return FF_SUCCESS;
+    }
+
+private:
+    float m_speed = 1.0f;
+    float m_offset = 0.0f;
+    GLuint m_shader_program;
+};</pre>
+  </div>
+
+  <div class="card">
+    <h3>ISF — Interactive Shader Format (alternativa sin compilar)</h3>
+    <pre>
+/*{
+  "DESCRIPTION": "Chaser sweep entre slices",
+  "CREDIT": "lifeOS VJ MOOC",
+  "CATEGORIES": ["Stylize"],
+  "INPUTS": [
+    {"NAME": "sweep_pos",  "TYPE": "float", "DEFAULT": 0.5},
+    {"NAME": "edge_soft",  "TYPE": "float", "DEFAULT": 0.05},
+    {"NAME": "direction",  "TYPE": "float", "DEFAULT": 0.0}
+  ]
+}*/
+// ISF es GLSL con metadatos JSON — Resolume lo carga directamente como FFGL
+
+void main() {
+    vec2 uv = isf_FragNormCoord;
+
+    // Sweep horizontal (direction=0) o vertical (direction=1)
+    float pos = mix(uv.x, uv.y, direction);
+    float mask = smoothstep(sweep_pos - edge_soft,
+                            sweep_pos + edge_soft, pos);
+
+    // Fuente A (izquierda/arriba del sweep)
+    vec4 colorA = IMG_NORM_PIXEL(inputImage, uv);
+    // Mezcla con negro en la zona de sweep
+    gl_FragColor = colorA * mask;
+}
+
+// Uso en Resolume: Effects → Custom → cargar archivo .fs
+// El plugin Chaser de terceros (https://github.com/JonathanFriedman/chaser-ffgl)
+// implementa chases entre slices con control MIDI/OSC completo</pre>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m11')">← M11</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m12','m13')">Completar M12 →</button>
+  </div>
+</section>
+
+<!-- M13 -->
+<section class="module" id="m13">
+  <div class="module-header">
+    <div class="module-tag">M13 · Casos</div>
+    <div class="module-title">Casos de Estudio — Tours, Festivales y Mapping</div>
+    <div class="module-sub">Storm Festival Shanghai, multicubo, SMPTE en DJ touring</div>
+  </div>
+
+  <div class="card">
+    <h3>Caso 1 — Storm Festival Shanghai (400m² LED)</h3>
+    <ul>
+      <li><strong>Problema:</strong> 400m² de paneles LED 7.9mm, 10 procesadores de video, necesidad de contenido continuo sin dropped frames</li>
+      <li><strong>Solución:</strong> 2 laptops (MSI GT72 + MBP) balanceadas con Barco Encore. Datapath 4kTwo en cada laptop para 4 salidas HD por máquina</li>
+      <li><strong>Plugins Chaser FFGL:</strong> canal EFX de cada capa, programando chases entre slices controlados por MIDI de la mesa</li>
+      <li><strong>Codecs:</strong> DXV 3 en NVMe M.2 → 0 carga CPU, GPU libre para efectos</li>
+      <li><strong>Resultado:</strong> Show de 4 horas continuas a 60fps sin un solo dropped frame</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Caso 2 — Video Mapping Multicúbico</h3>
+    <pre>
+# 8 cubos físicos → mapping de video sobre sus caras
+# Composición base: 1080×1080 píxeles (cuadrada)
+
+# División en 8 sectores:
+# Cada cubo recibe una slice de 360×360 píxeles
+# (1080 / 3 = 360, para grilla 3×3 menos 1 = 8 cubos)
+
+# Proceso:
+# 1. Composición 1080×1080 en Resolume
+# 2. Advanced Output → 8 slices de 360×360
+# 3. "Match Input Shape" en cada slice → la fuente se adapta
+# 4. Posicionar cada slice sobre el proyector correspondiente
+# 5. Para usar la misma fuente en múltiples cubos:
+#    → Duplicar la capa → cada duplicado va a un slice diferente
+#    → Offset de tiempo / rotación diferente en cada capa
+#    → Efecto de "propagación" del patrón entre cubos
+
+# Matemática: 360×360 × 8 = 1,036,800 px vs 1080×1080 = 1,166,400 px
+# → Casi idéntico al renderizar la composición completa,
+#    pero con L2S se evita el compositor maestro en cada capa</pre>
+  </div>
+
+  <div class="card">
+    <h3>Caso 3 — SMPTE en DJ Touring</h3>
+    <p>En un tour de DJ con 80 fechas, la sincronía entre visuales y música no puede depender de que el VJ pulse botones manualmente. El técnico de visuales programa el show una vez y SMPTE lo ejecuta de forma automática y reproducible:</p>
+    <ul>
+      <li><strong>Setup:</strong> Canal derecho de la mesa del DJ → interfaz de audio de la laptop de visuales → Resolume</li>
+      <li><strong>Framerate:</strong> 25fps en Europa (compatible con PAL), 29.97fps en USA</li>
+      <li><strong>Offset:</strong> 01:00:00:00 (el timecode empieza en hora 1 para evitar el cero)</li>
+      <li><strong>Pre-programado:</strong> Cada visual, cada efecto y cada trigger de clip tiene un timecode exacto en la timeline de audio del DJ</li>
+      <li><strong>Drops y láseres:</strong> El técnico de CO2 y láser también recibe el mismo LTC → todos los efectos se disparan en el mismo frame exacto</li>
+      <li><strong>Tolerancia humana:</strong> ±1 frame (25fps = ±40ms) es imperceptible para la audiencia. SMPTE es frame-exact.</li>
+    </ul>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m12')">← M12</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m13','m14')">Completar M13 →</button>
+  </div>
+</section>
+
+<!-- M14 HERO -->
+<section class="module" id="m14">
+  <div class="module-header">
+    <div class="module-tag">M14 · HERO</div>
+    <div class="module-title">Proyecto Final — Show VJ Completo End-to-End</div>
+    <div class="module-sub">Desde encoding hasta show en vivo con sincronización y audio-reactividad</div>
+  </div>
+
+  <div class="card">
+    <h3>Rúbrica HERO (100 pts)</h3>
+    <div class="hero-rubric">
+      <table>
+        <tr><th>Componente</th><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>Codecs HAP/DXV</td><td>Librería de ≥20 clips en HAP, CPU Load Meter &lt;20% con 8 capas activas</td><td>20</td></tr>
+        <tr><td>Blend Modes</td><td>Demostrar Add, Multiply, Screen en composición, explicar matemática de cada uno</td><td>20</td></tr>
+        <tr><td>Audio-Reactividad FFT</td><td>≥3 parámetros mapeados a bandas de frecuencia distintas, suavizado aplicado</td><td>20</td></tr>
+        <tr><td>Sincronización</td><td>Ableton Link activo o SMPTE recibido correctamente, 0 desalineaciones en 5min</td><td>20</td></tr>
+        <tr><td>Set VJ 5 minutos</td><td>Performance grabada, transiciones fluidas, narrativa visual coherente</td><td>20</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Examen Feynman</h3>
+
+    <div class="quiz-block">
+      <h4>Q1 · Codecs</h4>
+      <p class="quiz-q">¿Por qué H.264 causa stuttering en VJ y HAP no? Describe el camino de los datos desde el disco hasta la pantalla en ambos casos.</p>
+      <details><summary>Ver respuesta</summary><p>H.264 usa compresión inter-frame (GOP): para reconstruir el frame 87, la CPU necesita el I-frame más cercano (ej. frame 60) + todos los P/B-frames intermedios. En VJ, el scrubbing no-lineal y los triggers fuerzan decodificaciones fuera de orden → CPU saturada → dropped frames. Camino H.264: NVMe → CPU (decodificación software) → RAM → PCIe → VRAM (2 copias + cómputo CPU).<br><br>HAP/DXV usa compresión intra-frame: cada frame es una imagen DXT1/DXT5 completa e independiente. Camino HAP: NVMe → PCIe (DMA directo) → VRAM → Texture Units GPU (decompresión paralela en hardware) → compositor. Seek = O(1), 0 carga CPU.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q2 · Blend Modes</h4>
+      <p class="quiz-q">¿Por qué el modo Multiply equivale a un VCA en síntesis de audio? Si la capa A tiene valor RGB (0.3, 0.3, 0.3) y la capa B tiene (0.8, 0.5, 0.2), ¿cuál es el resultado en Multiply?</p>
+      <details><summary>Ver respuesta</summary><p>Un VCA (Voltage Controlled Amplifier) en síntesis modula la amplitud de una señal por otra: Output = Signal × Control_Voltage. Multiply hace exactamente lo mismo con píxeles: Z = A × B. La capa A actúa como "señal de control" que modula (atenúa o amplifica) la capa B. Los píxeles negros de A (valor 0) suprimen completamente B → efecto máscara. Los blancos de A (valor 1) dejan pasar B sin cambio.<br><br>Cálculo: Z = (0.3×0.8, 0.3×0.5, 0.3×0.2) = <strong>(0.24, 0.15, 0.06)</strong>. El resultado es significativamente más oscuro que B original, porque A es una gris medio-oscuro que atenúa todo.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q3 · FFT bins</h4>
+      <p class="quiz-q">Resolume hace una FFT de 1024 puntos a 48kHz. ¿Cuántos bins cubren la banda de bass [80-300Hz]? ¿Y por qué hay menos resolución espectral en graves que en agudos?</p>
+      <details><summary>Ver respuesta</summary><p>df = (48000/2) / 1024 = 24000 / 1024 ≈ <strong>23.4 Hz/bin</strong>. Bin de 80Hz: round(80/23.4) = bin 3. Bin de 300Hz: round(300/23.4) = bin 13. Total: 13 - 3 = <strong>10 bins</strong> para toda la banda de bass [80-300Hz].<br><br>La FFT lineal distribuye los bins de forma uniforme en frecuencia. Los graves tienen muy poco espacio en escala lineal (80-300Hz = 220Hz de rango) vs los agudos (4000-20000Hz = 16000Hz de rango). Por eso el oído humano percibe frecuencias de forma logarítmica (escala Mel/Bark), y para análisis perceptualmente correcto se usan CQT (Constant-Q Transform) o filtros de tercio de octava.</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q4 · SMPTE vs Ableton Link</h4>
+      <p class="quiz-q">¿En qué situación usarías SMPTE LTC en lugar de Ableton Link, y qué hace técnicamente que SMPTE sea "frame-accurate"?</p>
+      <details><summary>Ver respuesta</summary><p>SMPTE se usa en <strong>shows pre-programados</strong> donde el contenido visual está coreografiado frame a frame con la música (tours de DJ, shows de arena con láseres y CO2). Ableton Link es para <strong>improvisación en tiempo real</strong> donde el tempo puede cambiar y varios artistas necesitan beat alignment dinámico.<br><br>SMPTE LTC es "frame-accurate" porque es una señal de audio analógica (biphase mark) que codifica HH:MM:SS:FF directamente en la onda sonora. No pasa por red (sin jitter de red), no pasa por software scheduler (sin jitter de OS). La interfaz de audio lo decodifica directamente a timecode y Resolume lee ese valor con la misma precisión del sample rate de audio (44100 o 48000Hz → resolución de ~20µs), mucho más preciso que el frame rate del video (25fps = 40ms entre frames).</p></details>
+    </div>
+
+    <div class="quiz-block">
+      <h4>Q5 · Layer-to-Slice</h4>
+      <p class="quiz-q">¿Por qué activar "Ignore Opacity" y "Bypass" en Layer-to-Slice routing mejora el rendimiento? ¿Qué ocurre matemáticamente en el compositor sin estas opciones?</p>
+      <details><summary>Ver respuesta</summary><p>Sin L2S, el compositor maestro procesa cada capa: lee su textura, aplica los efectos, aplica el blend mode (Add, Multiply, etc.) contra las capas inferiores, y acumula el resultado en el frame buffer de la composición completa. Esto ocurre para TODAS las capas, incluso si sus outputs van a pantallas separadas que no necesitan mezclarse.<br><br><strong>Bypass</strong> detiene completamente el pipeline matemático del bus de esa capa → 0 ciclos GPU en el compositor maestro. La textura de la capa sigue existiendo pero no se procesa en la mezcla principal.<br><br><strong>Ignore Opacity</strong> permite que la capa tenga opacity=0 en el compositor (invisible en el preview) pero la señal se envía al slice con su valor real (1.0). Sin esta opción, al poner opacity=0 para "ocultarla" del compositor, Resolume también dejaría de enviar señal al slice. Juntos permiten gestión independiente del canal visual por pantalla.</p></details>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('m13')">← M13</button>
+    <button class="btn btn-primary" onclick="completeAndNext('m14',null)">Finalizar MOOC ✓</button>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'mooc_resolume_performance_v3';
+  const MODULES = [
+    {id:'m0',  label:'M0 · Arquitectura VJ'},
+    {id:'m1',  label:'M1 · DXV/HAP vs H.264'},
+    {id:'m2',  label:'M2 · Blend Modes Math'},
+    {id:'m3',  label:'M3 · FFT Audio-Reactivo'},
+    {id:'m4',  label:'M4 · Ableton Link & SMPTE'},
+    {id:'m5',  label:'M5 · Batch Encoding FFmpeg'},
+    {id:'m6',  label:'M6 · Advanced Output Slices'},
+    {id:'m7',  label:'M7 · Layer-to-Slice Routing'},
+    {id:'m8',  label:'M8 · OS Optimization'},
+    {id:'m9',  label:'M9 · OSC Protocol'},
+    {id:'m10', label:'M10 · NDI & Spout/Syphon'},
+    {id:'m11', label:'M11 · Hardware Stack'},
+    {id:'m12', label:'M12 · FFGL Plugins'},
+    {id:'m13', label:'M13 · Casos de Estudio'},
+    {id:'m14', label:'M14 · HERO Final'},
+  ];
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"done":[],"current":"m0"}');
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function buildNav(){
+    const nav = document.getElementById('nav-list');
+    nav.innerHTML = '';
+    MODULES.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (state.done.includes(m.id)?' done':'') + (state.current===m.id?' active':'');
+      el.innerHTML = `<div class="nav-dot"></div><span class="nav-label">${m.label}</span>`;
+      el.onclick = () => goTo(m.id);
+      nav.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const pct = Math.round((state.done.length / MODULES.length)*100);
+    document.getElementById('pct').textContent = pct+'%';
+    document.getElementById('progress-bar').style.width = pct+'%';
+  }
+
+  window.goTo = function(id){
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    state.current = id;
+    save();
+    buildNav();
+    window.scrollTo(0,0);
+  };
+
+  window.completeAndNext = function(current, next){
+    if(!state.done.includes(current)) state.done.push(current);
+    save();
+    if(next) goTo(next);
+    else buildNav();
+  };
+
+  buildNav();
+  goTo(state.current);
+})();
+</script>
+</body>
+</html>
